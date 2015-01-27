@@ -6,7 +6,17 @@ using namespace std;
 
 
 HistsBase::HistsBase(string saveName){
+  resultFile=saveName;
   TH1::AddDirectory(kFALSE);
+
+  if(!gROOT->GetListOfCanvases()->IsEmpty())
+    can = gROOT->MakeDefCanvas();
+  else
+    can = new TCanvas("can", "can", 600, 700); 
+
+
+  can->cd();
+  can->Print(resultFile+"[");
 
   // general appearance and style
   gROOT->SetStyle("Plain");
@@ -35,13 +45,15 @@ HistsBase::HistsBase(string saveName){
   gStyle->SetNdivisions(510, "XYZ");
   gStyle->UseCurrentStyle();
 
-
-
 }
 
 
 
-HistsBase::~HistsBase(){}
+HistsBase::~HistsBase(){
+
+  can->Print(resultFile+"]");
+  delete can;
+}
 
 
 
