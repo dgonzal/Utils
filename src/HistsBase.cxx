@@ -59,9 +59,5 @@ HistsBase::~HistsBase(){
 
 void HistsBase::addFolder(const string dir, const string contains, const string ends){
 
-  
-
-
-
 
 }

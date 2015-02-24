@@ -25,7 +25,7 @@ class HistsBase{
   void addFolder(string dir, string contains ="", string ends="");
 
   TCanvas* get_can(){return can;}
-  TLegend* get_leg(){return leg;}
+  //TLegend* get_leg(){return leg;}
   
   vector<string> get_filedirs(){return filedirs;}
   TString get_resultFile(){return resultFile;}
@@ -35,7 +35,7 @@ class HistsBase{
   TString resultFile;
   vector<string> filedirs;
   TCanvas* can;
-  TLegend* leg;
+  //TLegend* leg;
 
 };
 
