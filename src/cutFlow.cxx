@@ -2,8 +2,13 @@
 
 using namespace std;
 
-cutFlow::cutFlow(string saveName): HistsBase(saveName){}
-cutFlow::~cutFlow(){}
+cutFlow::cutFlow(string TxtName,string saveName): HistsBase(saveName){
+  outFile.open(TxtName);
+  title = "";
+}
+cutFlow::~cutFlow(){
+  outFile.close();
+}
 
 void cutFlow::printToFile(string histname){
   vector<TH1F*> cutflow_h;
@@ -11,6 +16,11 @@ void cutFlow::printToFile(string histname){
   vector<string> filenames;
   unsigned int longest_cutname = 0;
   unsigned int longest_filename = 0;
+
+  outFile<<"=============================="<<endl;
+  outFile<<title<<endl;
+  outFile<<"=============================="<<endl;
+
   vector<vector<double>> numbers;
   for(const auto & fileDir : get_filedirs()){
     TFile* file = new TFile(fileDir.c_str());
@@ -23,7 +33,7 @@ void cutFlow::printToFile(string histname){
   for(unsigned int i=0; i<cutflow_h.size(); ++i){
     TH1F* hist  = cutflow_h.at(i);
     vector<double> hist_num;
-    for(int m=1; m<hist->GetNbinsX()+1; ++m){ //GetXaxis()->)
+    for(int m=1; m<hist->GetNbinsX()+1; ++m){
       if(i==0){
 	cuts.push_back(hist->GetXaxis()->GetBinLabel(m));
 	if(strlen(hist->GetXaxis()->GetBinLabel(m)) > longest_cutname) longest_cutname = strlen(hist->GetXaxis()->GetBinLabel(m)); 
@@ -35,35 +45,34 @@ void cutFlow::printToFile(string histname){
   longest_cutname++;
   longest_filename++;
   for(unsigned int it =0; it<longest_filename+1; ++it)
-    cout<<" ";
+    outFile<<" ";
   for(unsigned int p=0; p<cuts.size(); ++p){
-    cout<<cuts[p];
-    for(unsigned int ip=0; ip<longest_cutname-strlen(cuts[p].c_str()); ++ip) cout<<" ";
+    outFile<<cuts[p];
+    for(unsigned int ip=0; ip<longest_cutname-strlen(cuts[p].c_str()); ++ip) outFile<<" ";
   }
-  cout<<endl;
+  outFile<<endl;
   unsigned int i=0;
   for(const auto & fileDir : get_filedirs()){
-    cout<<fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
+    outFile<<fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
     for(unsigned int it = 0; it<longest_filename-strlen(fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4).c_str());++it)
-      cout<<" ";
+      outFile<<" ";
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
       string what_is_printed = to_string(trunc(numbers.at(i).at(m)));
-      cout<<" "<<what_is_printed.substr(0,what_is_printed.find("."));
+      outFile<<" "<<what_is_printed.substr(0,what_is_printed.find("."));
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
-	cout<<" ";
+	outFile<<" ";
     }
-    cout<<endl;
+    outFile<<endl;
       for(unsigned int itt =0; itt<longest_filename; ++itt)
-	cout<<" ";
+	outFile<<" ";
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
-      string what_is_printed = to_string(numbers.at(i).at(m)/numbers.at(i).at(2)*100);
-      cout<<" "<<what_is_printed.substr(0,what_is_printed.find(".")+2);
+      string what_is_printed = numbers.at(i).at(2) > 0 ? to_string(numbers.at(i).at(m)/numbers.at(i).at(2)*100) : "-1";
+      outFile<<" "<<what_is_printed.substr(0,what_is_printed.find(".")+2);
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")+2).c_str())-1;++mp)
-	cout<<" ";
+	outFile<<" ";
     }
-    cout<<endl;
-    
-    
+    outFile<<endl;
     ++i;
   }
+  outFile<<endl;
 }

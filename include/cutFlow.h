@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iomanip> 
 #include <math.h> 
+#include <fstream>
 
 #include "HistsBase.h"
 
@@ -14,7 +15,13 @@
 
 class cutFlow : public HistsBase{
  public: 
-  cutFlow(std::string saveName);
+  cutFlow(std::string TxtName,std::string saveName="");
   ~cutFlow();
   void printToFile(std::string histname);
+  void setTitle(std::string title_){title=title_;}
+  void normToCut(unsigned int cuti){normcut=cuti;}
+ private:
+  std::string title;
+  unsigned int normcut;
+  std::ofstream outFile;
 };
