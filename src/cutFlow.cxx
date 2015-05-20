@@ -5,6 +5,7 @@ using namespace std;
 cutFlow::cutFlow(string TxtName,string saveName): HistsBase(saveName){
   outFile.open(TxtName);
   title = "";
+  normcut =0;
 }
 cutFlow::~cutFlow(){
   outFile.close();
@@ -16,11 +17,11 @@ void cutFlow::printToFile(string histname){
   vector<string> filenames;
   unsigned int longest_cutname = 0;
   unsigned int longest_filename = 0;
-
-  outFile<<"=============================="<<endl;
-  outFile<<title<<endl;
-  outFile<<"=============================="<<endl;
-
+  if(!title.empty()){
+    outFile<<"=============================="<<endl;
+    outFile<<title<<endl;
+    outFile<<"=============================="<<endl;
+  }
   vector<vector<double>> numbers;
   for(const auto & fileDir : get_filedirs()){
     TFile* file = new TFile(fileDir.c_str());
@@ -66,7 +67,7 @@ void cutFlow::printToFile(string histname){
       for(unsigned int itt =0; itt<longest_filename; ++itt)
 	outFile<<" ";
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
-      string what_is_printed = numbers.at(i).at(2) > 0 ? to_string(numbers.at(i).at(m)/numbers.at(i).at(2)*100) : "-1";
+      string what_is_printed = numbers.at(i).at(normcut) > 0 ? to_string(numbers.at(i).at(m)/numbers.at(i).at(normcut)*100) : "-1";
       outFile<<" "<<what_is_printed.substr(0,what_is_printed.find(".")+2);
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")+2).c_str())-1;++mp)
 	outFile<<" ";
@@ -75,4 +76,6 @@ void cutFlow::printToFile(string histname){
     ++i;
   }
   outFile<<endl;
+  if(title.empty()) outFile<<"=============================="<<endl;
+
 }
