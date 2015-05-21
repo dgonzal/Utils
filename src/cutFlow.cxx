@@ -22,6 +22,11 @@ void cutFlow::printToFile(string histname){
     outFile<<title<<endl;
     outFile<<"=============================="<<endl;
   }
+  else{
+    outFile<<"=============================="<<endl;
+    outFile<<histname<<endl;
+    outFile<<"=============================="<<endl;
+  }
   vector<vector<double>> numbers;
   for(const auto & fileDir : get_filedirs()){
     TFile* file = new TFile(fileDir.c_str());
@@ -76,6 +81,4 @@ void cutFlow::printToFile(string histname){
     ++i;
   }
   outFile<<endl;
-  if(title.empty()) outFile<<"=============================="<<endl;
-
 }
