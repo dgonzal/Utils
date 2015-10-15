@@ -16,6 +16,8 @@
 
 //ClassImp(RooDoubleSidedCball) 
 
+using namespace std;
+
 RooDoubleSidedCball::RooDoubleSidedCball(const char *name, const char *title, 
 					 RooAbsReal& _x,
 					 RooAbsReal& _mu,

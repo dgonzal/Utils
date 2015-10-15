@@ -6,8 +6,10 @@ cutFlow::cutFlow(string TxtName,string saveName): HistsBase(saveName){
   outFile.open(TxtName);
   title = "";
   normcut =0;
+  decimals_places=2;
 }
 cutFlow::~cutFlow(){
+  cout<<" writing cutflow txt file "<<endl;
   outFile.close();
 }
 
@@ -63,7 +65,7 @@ void cutFlow::printToFile(string histname){
     for(unsigned int it = 0; it<longest_filename-strlen(fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4).c_str());++it)
       outFile<<" ";
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
-      string what_is_printed = to_string(trunc(numbers.at(i).at(m)));
+      string what_is_printed = to_string(numbers.at(i).at(m));
       outFile<<" "<<what_is_printed.substr(0,what_is_printed.find("."));
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
 	outFile<<" ";
@@ -72,9 +74,9 @@ void cutFlow::printToFile(string histname){
       for(unsigned int itt =0; itt<longest_filename; ++itt)
 	outFile<<" ";
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
-      string what_is_printed = numbers.at(i).at(normcut) > 0 ? to_string(numbers.at(i).at(m)/numbers.at(i).at(normcut)*100) : "-1";
-      outFile<<" "<<what_is_printed.substr(0,what_is_printed.find(".")+2);
-      for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")+2).c_str())-1;++mp)
+      string what_is_printed = numbers.at(i).at(normcut) > 0 ? to_string(numbers.at(i).at(m)/numbers.at(i).at(normcut)*100) : "-";
+      outFile<<" "<<what_is_printed.substr(0,what_is_printed.find(".")+decimals_places);
+      for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")+decimals_places).c_str())-1;++mp)
 	outFile<<" ";
     }
     outFile<<endl;

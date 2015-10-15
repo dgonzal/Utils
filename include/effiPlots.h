@@ -10,6 +10,7 @@
 #include "TGraphAsymmErrors.h"
 #include "TMultiGraph.h"
 #include "TEfficiency.h"
+#include "TGaxis.h"
 
 using namespace std;
 
@@ -29,30 +30,27 @@ struct effiContainer{
 class effiPlots: public HistsBase{
  public:
   effiPlots(string saveName);
-
   void loadHists(string denominator, string numerator="");
-
-
   /*Two possible options implemented
-   * option 0: Denominator is integral bin i -> NBins  zB. trigger efficiency
-   * option 1: Denominator is integral bin 1 -> NBins zB. cut efficiency
+   * option 0: Denominator is integral bin i -> NBins  eg trigger efficiency
+   * option 1: Denominator is integral bin 1 -> NBins eg cut efficiency
    *
    */
-
-  void setTitle(string my_title){title.push_back(my_title);}   
-
   void plotEffi(int options=0); 
+  void setTitle(string my_title){title.push_back(my_title);}   
+  void imposeHist(bool impose_switch =true);
   void setRange(double min, double max){rangeMin =min; rangeMax = max;}
-
   void loadTHHists(string denominator, string numerator="");
   void plotTH(); 
-  
+  void switch_legend(bool myswitch =false){legend_bool=myswitch;}
  private:
+  void drawDistri(TH1F* hist,double max);
   TLegend* leg;
+  bool legend_bool;
   vector<string> title;
   vector<effiContainer> histos;
   vector<TH1EffiCont> histsTH;
-
+  bool imposeDistri;
   double rangeMax, rangeMin;
 
 };

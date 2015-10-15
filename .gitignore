@@ -1,6 +1,7 @@
-*.py
 *.pyc
 *~
 *.ps
 *#*
 *.eps
+obj/*.o
+
