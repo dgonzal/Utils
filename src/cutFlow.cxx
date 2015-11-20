@@ -34,7 +34,11 @@ void cutFlow::printToFile(string histname){
     TFile* file = new TFile(fileDir.c_str());
     TH1F* hist = (TH1F*) file->Get(histname.c_str());
     cutflow_h.push_back(hist);
-    string name_help = fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
+    string name_help = "NONAME";
+    if(fileDir.find("MC") != std::string::npos)
+      name_help = fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
+    else if(fileDir.find("DATA") != std::string::npos)
+      name_help ="DATA";
     filenames.push_back(name_help);
     if(strlen(name_help.c_str())>longest_filename)longest_filename = strlen(name_help.c_str());
   }

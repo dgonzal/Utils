@@ -13,7 +13,8 @@
 #include "TLegend.h"
 #include "TROOT.h"
 #include "TStyle.h"
- #include <TSystem.h> 
+#include <TSystem.h> 
+#include "THStack.h"
 
 //c++ libs
 #include <iostream>
@@ -34,6 +35,9 @@ class simplePlots: public HistsBase{
   void clearLegend(){legend.clear();}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
   void loadHists(string histname);
+  void loadHists(TH1F * hist);
+  void loadStackHists(string histname,int color);
+  void loadStackHists(TH1F * hist);
   void clearHists(){histos.clear();}
   void plotHists(int options=0, bool logy=false); 
   void loadTH2(string histname);
@@ -48,4 +52,5 @@ class simplePlots: public HistsBase{
   double legx1,legx2,legy1,legy2;
   bool normArea;
   double max;
+  THStack* stack;
 };

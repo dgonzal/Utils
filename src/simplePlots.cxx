@@ -1,16 +1,16 @@
-
-
 #include "simplePlots.h"
 
 using namespace std;
-
-
 
 
 simplePlots::simplePlots(string saveName): HistsBase(saveName){
   normArea=false;
   legx1=0.6; legx2= 0.8; legy1=0.7; legy2=0.8;
   max=-1;
+  stack = new THStack("hs","stacked histograms");
+}
+void simplePlots::loadHists(TH1F * hist){
+  histos.push_back(hist);
 }
 
 void simplePlots::loadHists(string histname){
@@ -32,9 +32,34 @@ void simplePlots::loadHists(string histname){
   }
   //cout<<"======================"<<endl;
 }
+void simplePlots::loadStackHists(string histname, int color){
+  Long_t id, size, flag, modtime;
+  for(const auto & fileDir : get_filedirs()){
+    if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
+      cerr<<fileDir.c_str()<<" does not exist"<<endl;
+      return;
+    }
+    TFile* file = new TFile(fileDir.c_str());
+    if(file->GetListOfKeys()->Contains(histname.c_str())!=0){
+      cerr<<histname.c_str()<<" does not exist"<<endl;
+      return;
+    }
+    TH1F * hist = (TH1F*) file->Get(histname.c_str());
+    hist->SetFillStyle(1001);
+    hist->SetFillColor(color);
+    stack->Add(hist);
+    //cout<<"read Histo "<<histname.c_str()<<" from File "<<fileDir.c_str()<<endl;;
+    delete file;
+  }
+  //cout<<"======================"<<endl;
+}
+
+void simplePlots::loadStackHists(TH1F * hist){
+    hist->SetFillStyle(1001);
+    stack->Add(hist);
+}
 
 void simplePlots::plotHists(int options, bool logy){
-   
   leg = new TLegend(legx1, legy1, legx2, legy2);
   if(logy) get_can()->SetLogy();
   double maximum =0;
@@ -57,13 +82,15 @@ void simplePlots::plotHists(int options, bool logy){
     }
     else{
       if(normArea)histos[m]->DrawNormalized("same"); 
-      else histos[m]->Draw("same"); 
+      else histos[m]->Draw("same hist"); 
     }
     if(m+1== histos.size()){
       if(legend.size()>0&&options==1 )leg->Draw();
-      get_can()->Print(get_resultFile());
+      //get_can()->Print(get_resultFile());
     }
   }
+  if(stack->Sizeof()>0)stack->Draw("same hist");
+  get_can()->Print(get_resultFile());
   if(logy) get_can()->SetLogy(0);  
 }
 
