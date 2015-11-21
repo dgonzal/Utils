@@ -3,87 +3,88 @@
 """
 *
 * Usage :
-* ./CrabConfig.py [options] 
+* ./CrabConfig.py ConfigFile [options] 
 *
 *
 """
 import argparse
-import os, glob
-
-
-from CRABClient.UserUtilities import config, getUsernameFromSiteDB
+import os, glob, sys
 
 from CrabScript import *
 from create_dataset_xmlfile import create_dataset_xml
 from readaMCatNloEntries import readEntries
 
-#requestNames = ['MC_BprimeTToTW_M-1200_LH_25ns']
-inputDatasets = ['/BprimeTToTW_M-1200_LH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/MINIAODSIM',
-		 '/BprimeTToTW_M-1000_LH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1/MINIAODSIM',
-		 '/BprimeTToTW_M-800_LH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1/MINIAODSIM',
-		 '/BprimeTToTW_M-800_RH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1/MINIAODSIM',			'/BprimeTToTW_M-1000_RH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/MINIAODSIM',
-		 '/BprimeTToTW_M-1200_RH_TuneCUETP8M1_13TeV-madgraph-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v1/MINIAODSIM']
-
-
 
 if __name__ == '__main__':        
         parser = argparse.ArgumentParser(description='Scripts for a simple multicrab')
+        parser.add_argument('ConfigFile', action='store', 
+                            help='Config File which should be processed')
         parser.add_argument('--xml', dest='xml_create',action='store_true',
                             default=False,
                             help="create xml Files for sframe")
         parser.add_argument('--submit','-s', dest='submit_flag', action='store_true',
                             default=False,
                             help='Submit to the grid')
+        parser.add_argument('--status','-c', dest='status_flag', action='store_true',
+                            default=False,
+                            help='check status of all jobs. Have a lok at the dashbord')
+        parser.add_argument('--command', dest='crab_command', action='store',
+                            default='',
+                            help='execute any crab command you want')
+        parser.add_argument('--options','-o',dest='crab_options', action='append',
+                            default=[],
+                            help='Hand any option to your crab command')
         parser.add_argument('--readEntries', dest='readEntries', action='store',
                             default=0,
-                            help='read the Entries by contained in each file. Specify how many core you want to use.')
-        #parse.add_argument('--prostfix','-p', dest="postfix", action
-
+                            help='read the all entries contained in all xml files. Specify how many cores you want to use.')
+        parser.add_argument('--postfix','-p', dest='postfix', action='store',
+                           default='',
+                           help="Posibility to add a postfix to the request names. Don't forget to add it too if using --xml/--readEntries")
         args = parser.parse_args()
 
-	requestNames = []
-	for x in inputDatasets:
-		name = x.split('/')
-		requestNames.append(name[1])
+        for i in range(len(args.crab_options)):
+                print args.crab_options[i]
+                args.crab_options[i] = '--'+args.crab_options[i]
+                
+        if args.ConfigFile.endswith('.py'):
+                args.ConfigFile = args.ConfigFile.replace('.py','')
 
+	#sys.path.append(os.path.abspath("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_15_patch1/src/UHH2/VLQToTopAndLepton/Utils/crab"))
+        
+        module_name = args.ConfigFile
+        __import__(module_name)
+        ConfigFile = sys.modules[module_name]
 
-        config = config()
-        config.General.workArea = 'crab_projects'
-        config.General.transferOutputs = True
-        config.General.transferLogs = True
+        if len(ConfigFile.requestNames) != len(ConfigFile.inputDatasets):
+                print 'Number of Request-Names',len(ConfigFile.requestNames),' unequal to number of Input-Datasets',len(ConfigFile.inputDatasets)
+                print 'prefere to exit'
+                exit(100)
         
-        config.JobType.pluginName = 'Analysis'
-        config.JobType.psetName = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_15_patch1/src/UHH2/core/python/ntuplewriter.py'
-        config.JobType.outputFiles = ["Ntuple.root"]
-        config.JobType.inputFiles = ['Summer15_25nsV2_MC.db']
-        
-        config.Data.inputDBS = 'global'
-        config.Data.splitting = 'EventAwareLumiBased'
-        config.Data.unitsPerJob = 5000
-        config.Data.outLFNDirBase = '/store/user/dagonzal/' # % (getUsernameFromSiteDB())
-        config.Data.publication = False
-        #config.Data.allowNonValidInputDataset = True
-        #config.Data.publishDataName = 'CRAB3_tutorial_May2015_MC_analysis'
+        print 'Goint to print the Request-Name / Input-Dataset pairs'
+        for i in range(len(ConfigFile.requestNames)):
+                print ConfigFile.requestNames[i],ConfigFile.inputDatasets[i]
 
-        config.Site.storageSite = 'T2_DE_DESY'
-        
         if args.submit_flag:
-                work = submit_config(config)
-                work.submitByDatasets(inputDatasets,requestNames,'_v7')
+                work = CrabConfig(ConfigFile.config,'submit',args.crab_options)
+                work.ByDatasets(ConfigFile.inputDatasets,ConfigFile.requestNames,args.postfix)
+        if args.status_flag:
+                work = CrabConfig(ConfigFile.config,'status',args.crab_options)
+                work.ByDatasets(ConfigFile.inputDatasets,ConfigFile.requestNames,args.postfix)
+        if args.crab_command:
+                work = CrabConfig(ConfigFile.config,args.crab_command,args.crab_options)
+                work.ByDatasets(ConfigFile.inputDatasets,ConfigFile.requestNames,args.postfix)
 
         if args.xml_create:
-                for name in requestNames:
-                        dirname = '/pnfs/desy.de/cms/tier2/'+config.Data.outLFNDirBase+name+'/crab*_v7/**/**/*.root'
+                for name in ConfigFile.requestNames:
+                        dirname = '/pnfs/desy.de/cms/tier2/'+config.Data.outLFNDirBase+name+'/crab*'+postfix+'/**/**/*.root'
                         l = glob.glob(dirname)
-                        xmlname = name.replace('_TuneCUETP8M1_13TeV-madgraph-pythia8','')
                         xmlname += '.xml'
                         #print xmlname, l
                         create_dataset_xml(dirname,xmlname)
 
         if args.readEntries > 0:
                 fileList =[]
-                for name in requestNames:
-                        xmlname = name.replace('_TuneCUETP8M1_13TeV-madgraph-pythia8','')
+                for name in ConfigFile.requestNames:
                         xmlname += '.xml'
                         fileList.append(xmlname)
                 readEntries(args.readEntries,fileList)
