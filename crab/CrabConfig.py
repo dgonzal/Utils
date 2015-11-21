@@ -7,6 +7,7 @@
 *
 *
 """
+from fnmatch import fnmatchcase
 import argparse
 import os, glob, sys
 
@@ -40,6 +41,14 @@ if __name__ == '__main__':
         parser.add_argument('--postfix','-p', dest='postfix', action='store',
                            default='',
                            help="Posibility to add a postfix to the request names. Don't forget to add it too if using --xml/--readEntries")
+        parser.add_argument('--filterByDatasets','-D', dest='filter_dataset', action='append',
+                            default=[],
+                            help='Only act on a certain file or a group of files. Filter by dataset, wildcard symbol */?/[] can be used.')
+        parser.add_argument('--filterByRequest','-R', dest='filter_request', action='append',
+                            default=[],
+                            help='Only act on a certain file or a group of files. Filter by request-name, wildcard symbol */?/[] can be used.')
+
+
         args = parser.parse_args()
 
         for i in range(len(args.crab_options)):
@@ -60,6 +69,27 @@ if __name__ == '__main__':
                 print 'prefere to exit'
                 exit(100)
         
+        if len(args.filter_dataset) > 0 or len(args.filter_request) > 0:
+                setList = [] 
+                filterlist =[]
+                if len(args.filter_dataset) > 0 and len(args.filter_request) > 0:
+                        print 'Only one filter list at a time supported. Exit'
+                        exit(110)
+                if len(args.filter_dataset) > 0: setList = ConfigFile.inputDatasets; filterlist = args.filter_dataset
+                if len(args.filter_request) > 0: setList = ConfigFile.requestNames; filterlist = args.filter_request
+                for i, dataset in reversed(list(enumerate(setList))):
+                        found = False
+                        for myfilter in filterlist:
+                                #print dataset,myfilter,fnmatchcase(dataset,myfilter)
+                                if fnmatchcase(dataset,myfilter):
+                                        found = True
+                        if not found:
+                                #print 'deleting',i,ConfigFile.requestNames[i],ConfigFile.inputDatasets[i]
+                                del ConfigFile.requestNames[i]
+                                del ConfigFile.inputDatasets[i]
+        
+
+
         print 'Goint to print the Request-Name / Input-Dataset pairs'
         for i in range(len(ConfigFile.requestNames)):
                 print ConfigFile.requestNames[i],ConfigFile.inputDatasets[i]
