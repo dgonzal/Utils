@@ -1,0 +1,5 @@
+*multicrab
+===============
+
+Thin layer around the crabcommand api. Example of how a multicrab can be easily implemented.
+Some additional functions are provided to create xml files based on the request name and get the number of entries.
