@@ -38,6 +38,9 @@ if __name__ == '__main__':
         parser.add_argument('--readEntries', dest='readEntries', action='store',
                             default=0,
                             help='read the all entries contained in all xml files. Specify how many cores you want to use.')
+        parser.add_argument('--readEntriesFast', dest='readEntriesFast', action='store',
+                            default=0,
+                            help='read the all entries contained in all xml files. Specify how many cores you want to use. This version can be used it no negativ weights are needed')
         parser.add_argument('--postfix','-p', dest='postfix', action='store',
                            default='',
                            help="Posibility to add a postfix to the request names. Don't forget to add it too if using --xml/--readEntries")
@@ -105,23 +108,40 @@ if __name__ == '__main__':
 
         if args.xml_create:
                 for i,name in enumerate(ConfigFile.requestNames):
-                        help_name = ConfigFile.inputDatasets.split('/')
-                        print help_name
-                        exit(0)
-                        #dirname = '/pnfs/desy.de/cms/tier2/'+ConfigFile.config.Data.outLFNDirBase+name+'/crab*'+postfix+'/**/**/*.root'
-                        #l = glob.glob(dirname)
+                        help_name = ConfigFile.inputDatasets[i].split('/')[1]
+                        dirname = '/pnfs/desy.de/cms/tier2/'+ConfigFile.config.Data.outLFNDirBase+help_name+'/crab_'+name+args.postfix+'/**/**/*.root'
                         xmlname = name+'.xml'
+                        #print dirname
+                        print 'For',xmlname 
+                        l = glob.glob(dirname)
                         #print xmlname, l
-                        #create_dataset_xml(dirname,xmlname)
+                        create_dataset_xml(dirname,xmlname)
 
-        if args.readEntries > 0:
+        if args.readEntries > 0 or args.readEntriesFast > 0:
+                if args.readEntries > 0 and args.readEntriesFast > 0:
+                        print 'something went wrong use readEntries OR readEntriesFast!'
+                        exit(120)
+                fast = False
+                cores = args.readEntries
+                method='"weights"'
+                if args.readEntriesFast > 0:
+                        fast=True
+                        method='"fast"'
+                        cores = args.readEntriesFast
                 fileList =[]
                 for name in ConfigFile.requestNames:
                         xmlname = name +'.xml'
                         fileList.append(xmlname)
-                result_list = readEntries(args.readEntries,fileList)
+                result_list = readEntries(cores,fileList,fast)
                 
-                entriesFile = open("entriesFile.txt",'a+')
-                for i in enumerate(fileList):
-                        entriesFile.write(fileList[i],result_list[i],'\n')
+                entriesFile = open("entriesFile.txt",'w+')
+                if fast: 
+                        entriesFile.write('The fast Method used for the number of Entries, no weights used\n')
+                else:
+                        entriesFile.write('Weights have been used\n')
+                for i, name in enumerate(fileList):
+                        entriesFile.write(name+' '+str(result_list[i])+'\n')
+                        xmlFile = open(name,'a')
+                        xmlFile.write('<!-- < NumberEntries="'+str(result_list[i])+'" Method='+method+' /> -->')
                 entriesFile.close()
+                
