@@ -12,7 +12,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdlib.h>
 
+//boost libs
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -21,7 +24,7 @@ class HistsBase{
   HistsBase(string saveName);
   ~HistsBase();
 
-  void addFile(string filedir){filedirs.push_back(filedir);}
+  void addFile(string filedir);
   void addFolder(string dir, string contains ="", string ends="");
 
   TCanvas* get_can(){return can;}
@@ -29,7 +32,8 @@ class HistsBase{
   
   vector<string> get_filedirs(){return filedirs;}
   TString get_resultFile(){return resultFile;}
-
+  
+  void clear_filedirs(){filedirs.clear();}
 
  private:
   TString resultFile;

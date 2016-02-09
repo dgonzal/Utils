@@ -2,18 +2,21 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGET = run 
+TARGETS = run uncer fastsim
 
 SRCDIR  = src
 INCDIR  = include
 OBJDIR  = obj
 BINDIR  = bin
+PYDIR = python
 
-SOURCES  := $(wildcard $(SRCDIR)/*.cxx) 
+SOURCES  := $(wildcard $(SRCDIR)/*.cxx)
 INCLUDES := $(wildcard $(INCDIR)/*.h)
 OBJECTS  := $(patsubst $(SRCDIR)%.cxx,$(OBJDIR)%.o,$(SOURCES))
+MAINSRC  := $(wildcard $(SRCDIR)/*.C) 
+MAINOBJ  := $(patsubst $(SRCDIR)%.C,$(OBJDIR)%.obj,$(MAINSRC))
 
-
+#get staff you need from your cmssw enviroment
 scramtag = $(shell cd $$CMSSW_BASE; scram tool tag $(1) $(2))
 
 ROOTLIBS :=  $(shell root-config --evelibs)  
@@ -24,25 +27,41 @@ ROOFITLIBS :=  -L$(call scramtag, roofitcore, LIBDIR) -lRooFit -lRooFitCore -lMi
 ROOFITFLAGS := 
 ROOFITINC :=  -I$(call scramtag, roofitcore, INCLUDE)  
 
-USERLDFLAGS += $(ROOTLIBS) $(ROOFITLIBS)
-USERCXXFLAGS += -g -Wall -O2 
-USERCXXFLAGS += $(ROOTFLAGS) $(ROOFITFLAGS)
-USERINCFLAGS += $(ROOTINC) $(ROOFITINC) -I$(INCDIR)
+PYTHON_CFLAGS := $(shell python2.7-config --cflags) 
+PYTHONLIBS := $(shell python2.7-config --ldflags)
+PYTHON_INC := -I$(shell python2.7-config --includes)
+PYTHON_LIBPATH := -L$(shell python2.7-config --prefix)/lib
+
+BOOST_INC := -I$(call scramtag,boost,INCLUDE)
+BOOST_LIB := $(call scramtag,boost,LIB) $(call scramtag,boost_filesystem,LIB) $(call scramtag,boost_regex,LIB) $(call scramtag,boost_python,LIB) boost_iostreams boost_program_options boost_timer 
+BOOST_LIB := $(patsubst %,-l%,$(BOOST_LIB)) -L$(call scramtag,boost,LIBDIR)
+
+USERLDFLAGS += $(BOOST_LIB) $(PYTHON_LIBPATH) $(PYTHONLIBS) $(ROOTLIBS) $(ROOFITLIBS)  
+USERCXXFLAGS += -g -Wall -O2  -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=1
+USERCXXFLAGS += $(PYTHON_CFLAGS) $(ROOTFLAGS) $(ROOFITFLAGS)
+USERINCFLAGS += $(BOOST_INC) $(PYTHON_INC) $(ROOTINC) $(ROOFITINC) -I$(INCDIR)
 
 
-$(BINDIR)/$(TARGET): $(OBJECTS)
-	@mkdir -p $(BINDIR)	
-	$(LINKER) $@ $(USERLDFLAGS) $(OBJECTS)
-	@echo "Linking complete!"
+progs : $(TARGETS)
+
+$(TARGETS): $(OBJECTS) $(MAINOBJ)
+	@mkdir -p $(BINDIR)
+	@$(LINKER) $(BINDIR)/$@ $(USERLDFLAGS) $(OBJECTS) $(OBJDIR)/$@.obj
+	@echo "Linking complete for" $@"!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cxx
 	@mkdir -p $(OBJDIR)	
-	$(CXX) $< $(USERINCFLAGS) $(USERCXXFLAGS) -c -o $(OBJDIR)/$(notdir $@) 
+	@$(CXX) $< $(USERINCFLAGS) $(USERCXXFLAGS) -c -o $(OBJDIR)/$(notdir $@) 
+	@echo "Compiled "$<" successfully!"
+
+$(MAINOBJ): $(OBJDIR)/%.obj : $(SRCDIR)/%.C
+	@mkdir -p $(OBJDIR)	
+	@$(CXX) $< $(USERINCFLAGS) $(USERCXXFLAGS) -c -o $@ 
 	@echo "Compiled "$<" successfully!"
 
 
-.PHONEY: clean
-clean:
+.PHONEY: clean	
+clean:	
 	@rm $(OBJDIR)/*
 	@echo "Cleanup complete!"
 

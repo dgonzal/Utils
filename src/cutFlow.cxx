@@ -14,6 +14,7 @@ cutFlow::~cutFlow(){
 }
 
 void cutFlow::printToFile(string histname){
+  
   vector<TH1F*> cutflow_h;
   vector<string> cuts;
   vector<string> filenames;
@@ -30,8 +31,13 @@ void cutFlow::printToFile(string histname){
     outFile<<"=============================="<<endl;
   }
   vector<vector<double>> numbers;
+  vector<vector<double>> errors;
   for(const auto & fileDir : get_filedirs()){
     TFile* file = new TFile(fileDir.c_str());
+    if(file->GetListOfKeys()->Contains(histname.c_str())!=0){
+      cout<<histname<<" does not exist skipping it"<<endl;
+      continue;
+    } 
     TH1F* hist = (TH1F*) file->Get(histname.c_str());
     cutflow_h.push_back(hist);
     string name_help = "NONAME";
@@ -45,14 +51,17 @@ void cutFlow::printToFile(string histname){
   for(unsigned int i=0; i<cutflow_h.size(); ++i){
     TH1F* hist  = cutflow_h.at(i);
     vector<double> hist_num;
+    vector<double> hist_err;
     for(int m=1; m<hist->GetNbinsX()+1; ++m){
       if(i==0){
 	cuts.push_back(hist->GetXaxis()->GetBinLabel(m));
 	if(strlen(hist->GetXaxis()->GetBinLabel(m)) > longest_cutname) longest_cutname = strlen(hist->GetXaxis()->GetBinLabel(m)); 
       }
       hist_num.push_back(hist->GetBinContent(m));
+      hist_err.push_back(hist->GetBinError(m));
     }
     numbers.push_back(hist_num);
+    errors.push_back(hist_err);
   }
   longest_cutname++;
   longest_filename++;
@@ -65,11 +74,27 @@ void cutFlow::printToFile(string histname){
   outFile<<endl;
   unsigned int i=0;
   for(const auto & fileDir : get_filedirs()){
-    outFile<<fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
-    for(unsigned int it = 0; it<longest_filename-strlen(fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4).c_str());++it)
-      outFile<<" ";
+    if(fileDir.find(".MC.") != std::string::npos){
+      outFile<<fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4);
+      for(unsigned int it = 0; it<longest_filename-strlen(fileDir.substr(fileDir.find(".MC.")+4,fileDir.find(".root")-fileDir.find(".MC.")-4).c_str());++it)
+	outFile<<" ";
+    }
+    else{
+      outFile<<"Data";
+      for(unsigned int it = 0; it<longest_filename-4;++it)
+	outFile<<" ";
+    }
     for(unsigned int m =0; m<numbers.at(i).size(); ++m){
       string what_is_printed = to_string(numbers.at(i).at(m));
+      outFile<<" "<<what_is_printed.substr(0,what_is_printed.find("."));
+      for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
+	outFile<<" ";
+    }    
+    outFile<<endl;
+    for(unsigned int itt =0; itt<longest_filename; ++itt)
+      outFile<<" ";
+    for(unsigned int m =0; m<errors.at(i).size(); ++m){
+      string what_is_printed = to_string(errors.at(i).at(m));
       outFile<<" "<<what_is_printed.substr(0,what_is_printed.find("."));
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
 	outFile<<" ";
@@ -88,3 +113,4 @@ void cutFlow::printToFile(string histname){
   }
   outFile<<endl;
 }
+

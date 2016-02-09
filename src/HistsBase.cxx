@@ -14,8 +14,7 @@ HistsBase::HistsBase(string saveName){
     if(!gROOT->GetListOfCanvases()->IsEmpty())
       can = gROOT->MakeDefCanvas();
     else
-      can = new TCanvas("can", "can", 600, 700); 
-
+      can = new TCanvas("can", "can", 800, 700); 
 
     can->cd();
     can->Print(resultFile+"[");
@@ -64,5 +63,13 @@ HistsBase::~HistsBase(){
 
 void HistsBase::addFolder(const string dir, const string contains, const string ends){
 
+}
 
+void HistsBase::addFile(string filedir){
+  if(!boost::filesystem::exists(filedir)){
+    cout<<"File does not exist "<<filedir<<endl;
+    cout<<"Skipping File"<<endl;
+  }
+  else
+    filedirs.push_back(filedir);
 }
