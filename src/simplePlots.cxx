@@ -13,7 +13,7 @@ void simplePlots::loadHists(TH1F * hist){
   histos.push_back(hist);
 }
 
-void simplePlots::loadHists(string histname){
+void simplePlots::loadHists(string histname, string title){
   Long_t id, size, flag, modtime;
   for(const auto & fileDir : get_filedirs()){
     if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
@@ -40,6 +40,8 @@ void simplePlots::loadHists(string histname){
       return;
     }
     TH1F * hist = (TH1F*) file->Get(histname.c_str());
+    if(!title.empty())
+      hist->SetTitle(title.c_str());
     histos.push_back(hist);
     //cout<<"read Histo "<<histname.c_str()<<" from File "<<fileDir.c_str()<<endl;;
     delete file;
@@ -129,7 +131,7 @@ void simplePlots::plotHists(int options, bool logy){
       TH1F* h_ratio = ratio(histos[m],histos[0],normArea);
       h_ratio->SetTitle("");
       h_ratio->SetLineColor(1+m);
-      //h_ratio->SetMaximum(errorband_max);
+      h_ratio->SetMaximum(3);
       h_ratio->SetMinimum(0);
       if(m==0) {
 	h_ratio->SetFillColor(TColor::GetColor( "#aaaaaa" ));

@@ -42,7 +42,7 @@ class simplePlots: public HistsBase{
   void addLegendEntry(string legendEntry){legend.push_back(legendEntry);}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
 
-  void loadHists(string histname);
+  void loadHists(string histname, string title = "");
   void loadHists(TH1F * hist);
   void loadStackHists(string histname,int color);
   void loadStackHists(TH1F * hist);

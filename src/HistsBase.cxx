@@ -9,13 +9,14 @@ HistsBase::HistsBase(string saveName){
   resultFile=saveName;
   TH1::AddDirectory(kFALSE);
 
-
   if(!saveName.empty()){
+    can = gROOT->MakeDefCanvas();
+    /*
     if(!gROOT->GetListOfCanvases()->IsEmpty())
       can = gROOT->MakeDefCanvas();
     else
       can = new TCanvas("can", "can", 800, 700); 
-
+    */
     can->cd();
     can->Print(resultFile+"[");
 
