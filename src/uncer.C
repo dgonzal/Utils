@@ -13,46 +13,54 @@
 #include <iostream>
 #include <string>
 
+#include "boost/algorithm/string.hpp"
+#include "boost/algorithm/string/regex.hpp"
+
 using namespace std;
 
 int main(){
+  string file_dir = "/nfs/dust/cms/user/gonvaq/fast_limits/BpReco_RH_rebinned.root";
 
-  TFile * file = new TFile("/nfs/dust/cms/user/gonvaq/fast_limits/RecoBp.root","READ");
- 
-  simplePlots pdfPlots("plots/PDFPlots.ps");
-  simplePlots scalePlots("plots/ScalePlots.ps");
-  pdfPlots.addFile("/nfs/dust/cms/user/gonvaq/fast_limits/RecoBp.root");
-  scalePlots.addFile("/nfs/dust/cms/user/gonvaq/fast_limits/RecoBp.root");
+  TFile* file = new TFile(file_dir.c_str(),"READ");
   TIter next(file->GetListOfKeys());
-  
   TKey *key;
-  while ((key = (TKey*)next())) {
-    TString histnameCheck(key->GetName());
-    if(histnameCheck.Contains("DATA") || histnameCheck.Contains("Data") )
-      continue;
-    if(histnameCheck.Contains("scale__plus")){
-      histnameCheck.ReplaceAll("__scale__plus","");
-      string name (histnameCheck.Data());
-      //cout<<histnameCheck<<endl;
-      scalePlots.loadHists(name,name);
-      scalePlots.loadHists(name+"__scale__plus");
-      scalePlots.loadHists(name+"__scale__minus");
-      scalePlots.plotHists(2,false);
-      scalePlots.clearHists();
-      scalePlots.clearLegend();
-    }
-    if(histnameCheck.Contains("pdf__plus")){
-      histnameCheck.ReplaceAll("__pdf__plus","");
-      string name (histnameCheck.Data());
-      pdfPlots.loadHists(name,name);
-      pdfPlots.loadHists(name+"__pdf__plus");
-      pdfPlots.loadHists(name+"__pdf__minus");
-      pdfPlots.plotHists(2,false);
-      pdfPlots.clearHists();
-      pdfPlots.clearLegend();
-    }
 
-      
+  vector<string> uncer_names;
+  while ((key = (TKey*)next())) {
+    string histname = key->GetName();
+    if(boost::contains(histname,"DATA"))
+      continue;
+    if(boost::contains(histname,"__plus")){
+      vector<string> splitted_histname;
+      boost::split_regex(splitted_histname,histname, boost::regex("__"));
+      bool saved = false;
+      for(auto name : uncer_names)
+	if(name == splitted_histname[2]) saved =true;
+      if(!saved)
+	uncer_names.push_back(splitted_histname[2]);
+    }
+  }
+  
+  for(auto uncer :uncer_names){ 
+    simplePlots uncerPlots("plots/"+uncer+"_plots.ps");
+    uncerPlots.addFile(file_dir);
+    next = TIter(file->GetListOfKeys());
+    while ((key = (TKey*)next())) {
+      TString histnameCheck(key->GetName());
+      if(histnameCheck.Contains("DATA") || histnameCheck.Contains("Data") )
+	continue;
+      if(histnameCheck.Contains(uncer+"__plus")){
+	histnameCheck.ReplaceAll("__"+uncer+"__plus","");
+	string name (histnameCheck.Data());
+	//cout<<histnameCheck<<endl;
+	uncerPlots.loadHists(name,name);
+	uncerPlots.loadHists(name+"__"+uncer+"__plus");
+	uncerPlots.loadHists(name+"__"+uncer+"__minus");
+	uncerPlots.plotHists(2,false);
+	uncerPlots.clearHists();
+	uncerPlots.clearLegend();
+      }
+    }
   }
 
   cout<<"I'm done with the uncertainties"<<endl;

@@ -17,7 +17,7 @@ void simplePlots::loadHists(string histname, string title){
   Long_t id, size, flag, modtime;
   for(const auto & fileDir : get_filedirs()){
     if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
-      cerr<<fileDir.c_str()<<" does not exist"<<endl;
+      cerr<<"File "<<fileDir.c_str()<<" does not exist"<<endl;
       return;
     }
     TFile* file = new TFile(fileDir.c_str());
@@ -33,7 +33,7 @@ void simplePlots::loadHists(string histname, string title){
       histkeyname.push_back(histname);
 
     if(file->GetListOfKeys()->Contains(histkeyname[0].c_str())==0){
-      cerr<<histkeyname[0].c_str()<<" does not exist"<<endl;
+      cerr<<"Histogram "<<histkeyname[0].c_str()<<" does not exist"<<endl;
       cerr<<"List of Keys: "<<endl;
       for(int i = 0; i< file->GetListOfKeys()->GetSize();i++)
 	cerr<<file->GetListOfKeys()->At(i)->GetName()<<endl;
@@ -125,7 +125,7 @@ void simplePlots::plotHists(int options, bool logy){
       //get_can()->Print(get_resultFile());
     }
   }
-  if(histos.size()>1){ 
+  if(histos.size()>1 && stack->Sizeof()==0){ 
     pad2->cd();
     for(unsigned int m = 0; m < histos.size(); ++m ){  
       TH1F* h_ratio = ratio(histos[m],histos[0],normArea);
@@ -141,6 +141,15 @@ void simplePlots::plotHists(int options, bool logy){
 	h_ratio->Draw("same E");
     }
   }
+  else if(stack->Sizeof()>0){
+    pad2->cd();
+
+
+  }
+
+
+
+
     //if(histos.size()) pad2->Update();
 
   if(stack->Sizeof()>0)stack->Draw("same hist");
