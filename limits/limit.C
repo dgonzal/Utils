@@ -1,60 +1,54 @@
 #include <vector>
+#include <string>
+#include <boost/algorithm/string.hpp>
 
-void create_file(const char *dirname, TString filename, TString histoname, TString Prefix);
+void create_file(const char *dirname, TString filename, TString histoname, TString Prefix, TString ResultFile, string RenameDataHist = "");
 pair<TH1F*,TH1F*> make_envelop_hist(TFile* file, TString folder, TString Prefix, TString type);
 pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TString type);
-void limit(const char *dirname="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_15_patch1/src/UHH2/VLQToTopAndLepton/config/"){
-
-  //dirname2 = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_3/src/UHH2/VLQToTopAndLepton/config/";
-  TString directories[] = {"Selection_v16/","EleSelection_v1/"};
+void limit(const char * signal,const char * resultfile , const char *dirname="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"){
+  //TString directories[] = {"Selection_v16/","BTag_variation_up/","BTag_variation_down/","PU_variation_up/","SF_muonID_up/","BTag_variation_up/","PU_variation_down/","SF_muonID_down/","BTag_variation_down/"};//,"EleSelection_v1/"
+  TString directories[] = {"Selection_v6/"};
   TString dirPrefix[] = {"Mu","Ele"};
-
-  TString names[] = {"SingleTsChannel","SingleTtChannel","SingleTWAntitop","SingleTWTop","ZJetsM50toInf","TTJets","WJets","Bpt_TW_800_LH_25ns","Bpt_TW_1000_LH_25ns","Bpt_TW_1200_LH_25ns","Bpt_TW_800_RH_25ns","Bpt_TW_1000_RH_25ns","Bpt_TW_1200_RH_25ns","QCD","DATA"};
-  //TString names[] ={"Bpt_TW_800_LH_25ns"};
-  //TString names[] = {"TTJets","Bpb_TW_800_LH_25ns","Bpb_TW_800_RH_25ns","Bpb_TW_1200_LH_25ns","Bpb_TW_1200_RH_25ns"};//,"QCD"
-  //TString histograms[] = {"Chi2_AntiBTag_Chi2_BprimeHypHists/mass_hyp","Chi2_BTag_Chi2_BprimeHypHists/mass_hyp","Chi2_2_BTags_Chi2_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"Chi2_AntiHEPTopTag_Chi2_BprimeHypHists/mass_hyp","Chi2_HEPTopTag_Chi2_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"Chi2_AntiTopTag_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_2_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","CMSReco_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_2_BTag_Central_Chi2_BprimeHypHists/mass_hyp","WTagReco_BTag_WTagReco_BprimeHypHists/mass_hyp"};//!!!,"WTagReco_BprimeHypHists/mass_hyp"
-
-  //TString histograms[] = {"Chi2_AntiBTag_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Chi2_BprimeHypHists/mass_hyp","CMSReco_BprimeHypHists/mass_hyp","WTagReco_BprimeHypHists/mass_hyp"};
-
-  //TString histograms[] = {"Chi2_AntiBTag_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Chi2_BprimeHypHists/mass_hyp"};//!!!
-
-  TString histograms[] = {"Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Central_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Forward_TopTagReco_BprimeHypHists/mass_hyp","TopTagReco_Central_TopTagReco_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Forward_Chi2_BprimeUncerHists","Chi2_1_BTag_Forward_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Forward_Chi2_BprimeUncerHists","Chi2_AntiBTag_Central_Chi2_BprimeUncerHists","Chi2_1_BTag_Central_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Central_Chi2_BprimeUncerHists","TopTagReco_Forward_TopTagReco_BprimeUncerHists","TopTagReco_Central_TopTagReco_BprimeUncerHists"};//!!!
-
-
-  //TString histograms[] = {"Chi2_AntiTopTag_AntiBTag_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_BTag_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_2_BTag_Chi2_BprimeHypHists/mass_hyp","CMSReco_AntiBTag_CMSReco_BprimeHypHists/mass_hyp","CMSReco_BTag_CMSReco_BprimeHypHists/mass_hyp","CMSReco_2_BTags_CMSReco_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"CMSReco_AntiBTag_CMSReco_BprimeHypHists/mass_hyp","CMSReco_BTag_CMSReco_BprimeHypHists/mass_hyp","CMSReco_2_BTags_CMSReco_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"Chi2_AntiTopTag_Chi2_BprimeHypHists/mass_hyp","CMSReco_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"Chi2_AntiTopTag_AntiBTag_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_BTag_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiTopTag_2_BTag_Chi2_BprimeHypHists/mass_hyp","CMSReco_BprimeHypHists/mass_hyp"};
-  //TString histograms[] = {"Chi2_BprimeUncerHists"};
-  //TString histograms[] = {"Chi2_Forward_Chi2_BprimeHypHists/mass_hyp"};
-  //TString Prefix[] = {""};
-  //TString histograms[] = {"Chi2_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","CMSReco_BprimeHypHists/mass_hyp","WTagReco_BprimeHypHists/mass_hyp"};//!!!
   
+  TString names[] = {"SingleTsChannel","SingleTtChannel","SingleTWAntitop","SingleTWTop","ZJets","TTJets","WJets","QCD","DATA",signal};
+  TString histograms[] = {"Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Central_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Forward_TopTagReco_BprimeHypHists/mass_hyp","TopTagReco_Central_TopTagReco_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Forward_Chi2_BprimeUncerHists","Chi2_1_BTag_Forward_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Forward_Chi2_BprimeUncerHists","Chi2_AntiBTag_Central_Chi2_BprimeUncerHists","Chi2_1_BTag_Central_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Central_Chi2_BprimeUncerHists","TopTagReco_Forward_TopTagReco_BprimeUncerHists","TopTagReco_Central_TopTagReco_BprimeUncerHists"};
   TString Prefix[] = {"AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","AntiTopTagAntiBTagCentral","AntiTopTag1BTagCentral","AntiTopTag2BTagsCentral","TopTagForward","TopTagCentral","AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","AntiTopTagAntiBTagCentral","AntiTopTag1BTagCentral","AntiTopTag2BTagsCentral","TopTagForward","TopTagCentral"};
+  
+  /*
+  TString names[] = {"DATA",signal};
+  TString histograms[] = {"Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Forward_TopTagReco_BprimeHypHists/mass_hyp"};
+  TString backgroundHist[] = {"Chi2_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Central_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Central_TopTagReco_BprimeHypHists/mass_hyp"};
+  TString Prefix[] = {"AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","TopTagForward"};
+  */
+  //TString histograms[] = {"Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Forward_TopTagReco_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Forward_Chi2_BprimeUncerHists","Chi2_1_BTag_Forward_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Forward_Chi2_BprimeUncerHists","TopTagReco_Forward_TopTagReco_BprimeUncerHists"};
 
+ 
+  //TString Prefix[] = {"AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","TopTagForward","AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","TopTagForward"};
 
-  //TString histograms[] = {"RecoBprime/mass_Bprime"};
-  TFile* file2  = new TFile("RecoBp.root","RECREATE");
+  //TString Prefix[] = {"AntiTopTagAntiBTagForward","AntiTopTag1BTagForward","AntiTopTag2BTagsForward","TopTagForward"};
+
+  TFile* file2  = new TFile(TString(resultfile)+".root","RECREATE");
   file2->Close();
   
  
   for(int p =0; p < sizeof(names)/sizeof(TString); ++p){
     for(int m =0; m< sizeof(directories)/sizeof(TString); ++m){
       for(int i = 0; i< sizeof(histograms)/sizeof(TString); ++i){
-	//if(p<3)
-	  create_file(dirname+directories[m], names[p],histograms[i], "Bprime"+Prefix[i]+dirPrefix[m]);
-	//else
-	//  create_file(dirname2+directories[m], names[p],histograms[i], "Bprime"+Prefix[i]);
+	create_file(dirname+directories[m], names[p],histograms[i], "Bprime"+Prefix[i]+dirPrefix[0],resultfile);
+	/*
+	if(p==0)
+	  create_file(dirname+directories[m], "DATA",backgroundHist[i], "Bprime"+Prefix[i]+dirPrefix[0],resultfile,"Background");
+	*/
       }
       cout<<names[p]<<" --> Done"<<endl;
     }
   }
+  gApplication->Terminate();
 }
  
-void create_file(const char *dirname, TString filename, TString histoname, TString Prefix){
-  
+void create_file(const char *dirname, TString filename, TString histoname, TString Prefix, TString ResultFile, string RenameDataHist){
+  TString filename_old = filename; 
+  TString my_dir(dirname);
   TSystemDirectory dir(dirname, dirname);
   TList *fileslist = dir.GetListOfFiles();
   if (fileslist) {
@@ -63,12 +57,42 @@ void create_file(const char *dirname, TString filename, TString histoname, TStri
     TIter next(fileslist);
     while ((systemfile=(TSystemFile*)next())) {
       fname = systemfile->GetName();
-      //cout<<fname<<endl;
+      //continue;
+      filename = filename_old;
       if (!systemfile->IsDirectory() && fname.Contains(filename+".root")) {
-	cout<<Prefix<<endl;
+	vector<string>  fname_split;
+	string fname_string = fname.Data();
+	boost::split(fname_split,fname_string,boost::is_any_of("."));
+	if(!filename.Contains("DATA"))
+	  filename = fname_split[3];
+	//cout<<fname<<" "<<filename<<endl;
+	//cout<<Prefix<<endl;
 	TFile* file  = new TFile(dirname+fname,"READ");
-	TFile* file2  = new TFile("RecoBp.root","UPDATE");
-	if(!histoname.Contains("/") ){
+	TFile* file2  = new TFile(ResultFile+".root","UPDATE");
+	if((my_dir.Contains("up") ||my_dir.Contains("Up") || my_dir.Contains("UP")) &&  !filename.Contains("DATA")){
+	  string s = my_dir.Data();
+	  vector<string> my_names;
+	  boost::split(my_names,s,boost::is_any_of("/"));
+	  string target = my_names[my_names.size()-2];
+	  boost::replace_all(target,"_up","");
+	  TH1F* h1 = (TH1F*)file->Get(histoname);
+	  TString histname = h1->GetName();
+	  h1->SetName(Prefix+"__"+filename+"__"+target+"__plus");
+	  h1->Write();
+
+	}
+	else if((my_dir.Contains("down") || my_dir.Contains("Down") || my_dir.Contains("DOWN"))&&  !filename.Contains("DATA")){
+	  string s = my_dir.Data();
+	  vector<string> my_names;
+	  boost::split(my_names,s,boost::is_any_of("/"));
+	  string target = my_names[my_names.size()-2];
+	  boost::replace_all(target,"_down","");
+	  TH1F* h1 = (TH1F*)file->Get(histoname);
+	  TString histname = h1->GetName();
+	  h1->SetName(Prefix+"__"+filename+"__"+target+"__minus");
+	  h1->Write();
+	}
+	else if(!histoname.Contains("/") ){
 	  if(!filename.Contains("DATA")){
 	    pair<TH1F*,TH1F*> scale = make_envelop_hist(file,histoname,Prefix+"__"+filename,"scale");
 	    if(scale.first->GetEntries() !=0 || scale.second->GetEntries() !=0){
@@ -86,10 +110,11 @@ void create_file(const char *dirname, TString filename, TString histoname, TStri
 	  TH1F* h1 = (TH1F*)file->Get(histoname);
 	  //if(!fname.Contains("Bpb_TW")) h1->Scale(0.25);
 	  //h1->Scale(15);
+	  if(!RenameDataHist.empty())
+	    filename = RenameDataHist.c_str();
 	  TString histname = h1->GetName();
 	  h1->SetName(Prefix+"__"+filename);
 	  h1->Write();
-	  //part for the uncertainties
 	}
 	file->Close();
 	file2->Close();
@@ -99,7 +124,7 @@ void create_file(const char *dirname, TString filename, TString histoname, TStri
 }
 
 pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TString type){
-  cout<<"entering "<<folder<<" to calculate "<<type<<" uncer"<<endl;
+  //cout<<"entering "<<folder<<" to calculate "<<type<<" uncer"<<endl;
   TDirectory* tdir = (TDirectory*) file->Get(folder);
   TIter next(tdir->GetListOfKeys());
   TKey *key;
@@ -108,12 +133,12 @@ pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TSt
   //load histograms
   vector<TH1F*> uncer_histo;
   while ((key = (TKey*)next())) {
-    nhist++;
     TString hist_name(key->GetName());
     if(!hist_name.Contains(type))
       continue;
+    nhist++;
     uncer_histo.push_back((TH1F*)tdir->Get(key->GetName()));
-    cout<<"loaded histogram: "<<key->GetName()<<endl;
+    //cout<<"loaded histogram: "<<key->GetName()<<endl;
     /*
     cout << "Key number " << nhist << endl;
     cout << "Key name "<<key->GetName()<<endl;
@@ -123,7 +148,9 @@ pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TSt
   }
   //create th1f*
 
-  
+  //cout<<"RMS Histograms found "<<nhist<<endl;
+
+
   TString nominal_name = folder;
   nominal_name.ReplaceAll("UncerHists","HypHists/mass_hyp");
   TH1F* nominal = (TH1F*)file->Get(nominal_name);
@@ -163,7 +190,7 @@ pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TSt
 
 }
 pair<TH1F*,TH1F*> make_envelop_hist(TFile* file, TString folder, TString Prefix, TString type){
-  cout<<"entering "<<folder<<" to calculate "<<type<<" uncer"<<endl;
+  //cout<<"entering "<<folder<<" to calculate "<<type<<" uncer"<<endl;
   TDirectory* tdir = (TDirectory*) file->Get(folder);
   TIter next(tdir->GetListOfKeys());
   TKey *key;
@@ -172,19 +199,23 @@ pair<TH1F*,TH1F*> make_envelop_hist(TFile* file, TString folder, TString Prefix,
   //load histograms
   vector<TH1F*> uncer_histo;
   while ((key = (TKey*)next())) {
-    nhist++;
+    
     TString hist_name(key->GetName());
     if(!hist_name.Contains(type))
       continue;
+    nhist++;
     uncer_histo.push_back((TH1F*)tdir->Get(key->GetName()));
-    cout<<"loaded histogram: "<<key->GetName()<<endl;
-    /*
+    //cout<<"loaded histogram: "<<key->GetName()<<endl;
+   /*
     cout << "Key number " << nhist << endl;
     cout << "Key name "<<key->GetName()<<endl;
     cout << "Classname " <<key->GetClassName() << endl;
     cout << "Title " <<key->GetTitle() << endl; 
     */
   }
+
+  //cout<<"Envelop Histograms found "<<nhist<<endl;
+
   //create result th1f*
   TH1F* up = (TH1F*)uncer_histo[0]->Clone();
   up->SetName(Prefix+"__"+type+"__plus");

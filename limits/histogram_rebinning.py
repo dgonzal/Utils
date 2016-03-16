@@ -17,7 +17,7 @@ class hinfo:
     self.process = fields[1]
     self.systematic = None
     self.shift = None
-    print name
+    #print name
     if len(fields) > 2:
       self.systematic = fields[2]
       self.shift = fields[3]
@@ -69,7 +69,7 @@ def findLowIndex(histogram, rerror):
 
 
 def findBinSize(histogram, highindexes, rerror, minvalue, maxbinsize, start, stop):
-    print "minvalue %f, maxbinsize %d, start %d, stop %d : " % (minvalue, maxbinsize, start, stop), highindexes
+    #print "minvalue %f, maxbinsize %d, start %d, stop %d : " % (minvalue, maxbinsize, start, stop), highindexes
     value = 0.0
     error = 0.0
     for i in range(start, stop, -1):
@@ -99,11 +99,11 @@ def computeBinning(histogram, rerror):
     findBinSize(histogram, highindexes, rerror, 0, histogram.GetNbinsX(), histogram.GetNbinsX(), lowindex)     
     highindexes = sorted(highindexes)
     binning = [histogram.GetBinLowEdge(0), histogram.GetBinLowEdge(lowindex)+histogram.GetBinWidth(lowindex)]
-    print highindexes
+    #print highindexes
     for i in highindexes[1:]:
         binning.append(histogram.GetBinLowEdge(i))
     binning.append(histogram.GetBinLowEdge(histogram.GetNbinsX())+histogram.GetBinWidth(histogram.GetNbinsX()))
-    print binning
+    #print binning
     return binning   
 
 import array
@@ -179,7 +179,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         legend.SetFillColor(10);
         legend.SetBorderSize(0);
         legend.AddEntry(h_bkg[key], "Background", "f")
-        legend.AddEntry(h_data[key], "CMS Data 2012", "lp")
+        legend.AddEntry(h_data[key], "CMS Data 2015", "lp")
         legend.Draw()
 
         labelcms = TLegend(.15, .91, 1, .96)
@@ -187,7 +187,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         labelcms.SetMargin(0.12);
         labelcms.SetFillColor(10);
         labelcms.SetBorderSize(0);
-        labelcms.SetHeader('CMS Preliminary #sqrt{s} = 8 TeV')
+        labelcms.SetHeader('CMS Preliminary #sqrt{s} = 13 TeV')
         labelcms.Draw()
 
         labellumi = TLegend(.73, .91, 1, .96)
@@ -195,7 +195,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         labellumi.SetMargin(0.12);
         labellumi.SetFillColor(10);
         labellumi.SetBorderSize(0);
-        labellumi.SetHeader('L = 19.6 fb^{-1}')
+        labellumi.SetHeader('L = 2.3 fb^{-1}')
         labellumi.Draw()
 
         labellumi2 = TLegend(.67, .70, .89, .75)
@@ -241,6 +241,6 @@ def binFile(rerror, filename, xtitle, backgrounds):
                 histogram.Write()
 
 
-binFile(0.3, 'RecoBp.root', 'M_{B} [GeV/c^{2}]', ['ZJetsM50toInf','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
+#binFile(0.3, 'RecoBp.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
 
 
