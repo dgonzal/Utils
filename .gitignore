@@ -5,3 +5,6 @@
 *.eps
 *.o
 bin/*
+*.txt
+*.pdf
+*.root
