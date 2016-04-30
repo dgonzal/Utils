@@ -109,11 +109,13 @@ void simplePlots::plotHists(int options, bool logy){
    }
     if(m==0){
       if(normArea){
-	histos[m]->DrawNormalized("E")->SetMaximum(maximum);
+	histos[m]->SetMarkerStyle(20);
+	histos[m]->DrawNormalized("p")->SetMaximum(maximum);
       }
       else{
 	histos[m]->SetMaximum(maximum*1.2);
-	histos[m]->Draw();
+	histos[m]->SetMarkerStyle(20);
+	histos[m]->Draw("p");
       }
     }
     else{
@@ -125,7 +127,7 @@ void simplePlots::plotHists(int options, bool logy){
       //get_can()->Print(get_resultFile());
     }
   }
-  if(histos.size()>1 && stack->Sizeof()==0){ 
+  if(histos.size()>1){ 
     pad2->cd();
     for(unsigned int m = 0; m < histos.size(); ++m ){  
       TH1F* h_ratio = ratio(histos[m],histos[0],normArea);
@@ -141,15 +143,6 @@ void simplePlots::plotHists(int options, bool logy){
 	h_ratio->Draw("same E");
     }
   }
-  else if(stack->Sizeof()>0){
-    pad2->cd();
-
-
-  }
-
-
-
-
     //if(histos.size()) pad2->Update();
 
   if(stack->Sizeof()>0)stack->Draw("same hist");

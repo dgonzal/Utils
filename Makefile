@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGETS = run uncer fastsim
+TARGETS = run uncer fastsim cutflow trigger
 
 SRCDIR  = src
 INCDIR  = include

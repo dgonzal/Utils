@@ -32,7 +32,7 @@ class effiPlots: public HistsBase{
   effiPlots(string saveName);
   void loadHists(string denominator, string numerator="");
   /*Two possible options implemented
-   * option 0: Denominator is integral bin i -> NBins  eg trigger efficiency
+   * option 0: Denominator is integral bin i -> NBins eg trigger efficiency
    * option 1: Denominator is integral bin 1 -> NBins eg cut efficiency
    *
    */
@@ -43,6 +43,10 @@ class effiPlots: public HistsBase{
   void loadTHHists(string denominator, string numerator="");
   void plotTH(); 
   void switch_legend(bool myswitch =false){legend_bool=myswitch;}
+  void set_debug(bool debug_ =true){debug=debug_;}
+  void clear_histos(){vector<effiContainer>().swap(histos); vector<TH1EffiCont>().swap(histsTH);}
+  void set_Rebin(int reb){rebin_int = reb;}
+
  private:
   void drawDistri(TH1F* hist,double max);
   TLegend* leg;
@@ -52,5 +56,6 @@ class effiPlots: public HistsBase{
   vector<TH1EffiCont> histsTH;
   bool imposeDistri;
   double rangeMax, rangeMin;
-
+  bool debug = false;
+  int rebin_int=-1;
 };

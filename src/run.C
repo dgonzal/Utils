@@ -12,6 +12,58 @@ using namespace std;
 
 int main(){
 
+  vector<string> qcd_samples = {"QCD","MC_QCD_Pt-1000toInf_Mu","MC_QCD_Pt-800to1000_Mu","MC_QCD_Pt-600to800_Mu","MC_QCD_Pt-470to600_Mu","MC_QCD_Pt-300to470_Mu","MC_QCD_Pt-170to300_Mu","MC_QCD_Pt-120to170_Mu","MC_QCD_Pt-80to120_Mu","MC_QCD_Pt-50to80_Mu","MC_QCD_Pt-20to30_Mu"};
+
+  
+  simplePlots genjetsCheck("plots/QCDJetsCheck.ps");
+  genjetsCheck.setLegend(0.6,0.7,1.,.9);
+
+  vector<string> histnames = {"1_muonCut_muonChannel_JetHists/number","30GeV_JetCut_muonChannel_JetHists/number","2DCut_muonChannel_JetHists/number","50GeV_METCut_muonChannel_JetHists/number"};
+
+
+  string histname76 = "2DCut_muonChannel_JetHists/number";//"2DCut_muonChannel_GenJetHists/number";
+  string hsitname74 = histname76;//"2DCut_muonChannel_GenJetsHists/number"
+
+  for(auto name : qcd_samples){
+    for(auto histname : histnames){
+      genjetsCheck.addLegendEntry("CMSSW_7_6_3 "+name);
+      genjetsCheck.addLegendEntry("CMSSW_7_4_15");
+      TFile * file76 = new TFile(("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/PreSelection_74Comp/uhh2.AnalysisModuleRunner.MC."+name+".root").c_str(),"READ");
+      TFile * file74 = new TFile(("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_15_patch1/src/UHH2/VLQToTopAndLepton/config/PreSelection_v25/uhh2.AnalysisModuleRunner.MC."+name+".root").c_str(),"READ"); 
+
+      TH1F* hist76 = (TH1F*)file76->Get(histname.c_str());
+      TH1F* hist74 = (TH1F*)file74->Get(histname.c_str());
+      hist76->SetTitle(histname.c_str());
+      hist74->SetTitle(histname.c_str());
+      
+
+      genjetsCheck.loadHists(hist76);
+      genjetsCheck.loadHists(hist74);
+      genjetsCheck.normToArea(false);
+      genjetsCheck.plotHists(2,false);
+      genjetsCheck.clearHists();
+     
+      if(hist76->GetEntries()==0 || hist74->GetEntries()==0)
+	continue;
+      genjetsCheck.loadHists(hist76);
+      genjetsCheck.loadHists(hist74);
+      genjetsCheck.normToArea(true,1);
+      genjetsCheck.plotHists(2,false);
+      genjetsCheck.clearHists();
+      /*
+	genjetsCheck.loadHists((TH1F*)file76->Get("muonChannel_GenJetHists/pt_genjet"));
+	genjetsCheck.loadHists((TH1F*)file74->Get("muonChannel_GenJetsHists/pt_genjet"));
+	//genjetsCheck.normToArea(true,1);
+	genjetsCheck.plotHists(2,false);
+	genjetsCheck.clearHists();
+      */
+      genjetsCheck.clearLegend();
+      genjetsCheck.clearFiles();
+    }
+  }
+  return 0;
+
+
   /*
   effiPlots MuonTrigger_Bpb_TW_1000_LH("plots/MuonTrigger_Bpb_TW_1000_LH.ps");
   MuonTrigger_Bpb_TW_1000_LH.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_4_3/src/UHH2/VLQToTopAndLepton/config/Trigger_v1/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1000_LH.root");
