@@ -35,12 +35,17 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
     options.set('main','n_threads','10')
-    exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=0.0, bootstrap_model=True, input=None, n=1, options=options)
+    exp, obs = asymptotic_cls_limits(model, use_data=False, signal_process_groups=None, beta_signal_expected=0.0, bootstrap_model=True, input=None, n=1, options=options)
     #exp, obs = bayesian_limits(model, 'all', n_toy = 20000, n_data = 2000,options=options)
          
 
     if write_report:
-        output_directory = './output_'+Chirality+channel+'/'
+        output_directory =""
+        if channel:
+            output_directory = './output_Bprime'+particle+'_'+Chirality+'_'+channel+'/'
+        else:
+             output_directory = './output_Bprime'+particle+'_'+Chirality+'/'
+            
         report.write_html(output_directory)
         try:
             #options.set('minimizer', 'always_mcmc', 'True')
@@ -67,7 +72,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #plt.ylim([0.4,10])
 
 
-    pp = PdfPages("limit_"+Chirality+".pdf")
+    pp = PdfPages("limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
     if channel:
         pp = PdfPages("limit_"+"Bprime"+particle+"_"+Chirality+'_'+channel+".pdf")
 
@@ -77,7 +82,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     if particle is 'b':
         theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
         theory13TeV_y =numpy.array([3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
-        theory13TeV_y =theory13TeV_y/3
+        theory13TeV_y =theory13TeV_y*0.5
 
     #cross section times branching ratio  limits
     plt.clf()

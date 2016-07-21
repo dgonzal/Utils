@@ -5,13 +5,14 @@
 void create_file(const char *dirname, TString filename, TString histoname, TString Prefix, TString ResultFile, string RenameDataHist = "");
 pair<TH1F*,TH1F*> make_envelop_hist(TFile* file, TString folder, TString Prefix, TString type);
 pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TString type);
+
 void limit(const char * signal,const char * resultfile , const char *dirname="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"){
   //TString directories[] = {"Selection_v16/","BTag_variation_up/","BTag_variation_down/","PU_variation_up/","SF_muonID_up/","BTag_variation_up/","PU_variation_down/","SF_muonID_down/","BTag_variation_down/"};//,"EleSelection_v1/"
-  TString directories[] = {"Selection_v25/"};//,"BTag_variation_up_Mu/","BTag_variation_down_Mu/","PU_variation_up_Mu/","SF_muonID_up_Mu/","PU_variation_down_Mu/","SF_muonID_down_Mu/","EleSelection_v1/","BTag_variation_up_Ele/","BTag_variation_down_Ele/","PU_variation_up_Ele/","PU_variation_down_Ele/"};
-  TString dirPrefix[] = {"Mu","Ele"};
+  TString directories[] = {"Selection_v28_btag/","EleSelection_v4_btag/"};//,"EleSelection_v4_btag/","BTag_variation_up_Mu/","BTag_variation_down_Mu/","PU_variation_up_Mu/","PU_variation_down_Mu/","SF_muonID_up_Mu/","SF_muonID_down_Mu/"
 
-  //,"EleSelection_v1/","BTag_variation_up_Mu/","BTag_variation_down_Mu/","PU_variation_up_Mu/","SF_muonID_up_Mu/","BTag_variation_up_Mu/","PU_variation_down_Mu/","SF_muonID_down_Mu/","BTag_variation_down_Mu/","BTag_variation_up_Ele/","BTag_variation_down_Ele/","PU_variation_up_Ele/","SF_muonID_up_Ele/","BTag_variation_up_Ele/","PU_variation_down_Ele/","SF_muonID_down_Ele/","BTag_variation_down_Ele/"
-  
+  //,"EleSelection_v4_btag/","BTag_variation_up_Mu/","BTag_variation_down_Mu/","PU_variation_up_Mu/","SF_muonID_up_Mu/","PU_variation_down_Mu/","SF_muonID_down_Mu/","EleSelection_v1/","BTag_variation_up_Ele/","BTag_variation_down_Ele/","PU_variation_up_Ele/","PU_variation_down_Ele/"};
+  TString dirPrefix[] = {"Mu","Ele"};  
+
   TString names[] = {"SingleTsChannel","SingleTtChannel","SingleTWAntitop","SingleTWTop","ZJets","TTJets","WJets","QCD","DATA",signal};
 
   vector<TString> histograms = {"Chi2_AntiBTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Forward_Chi2_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_1_BTag_Central_Chi2_BprimeHypHists/mass_hyp","Chi2_2plus_BTags_Central_Chi2_BprimeHypHists/mass_hyp","TopTagReco_Forward_TopTagReco_BprimeHypHists/mass_hyp","TopTagReco_Central_TopTagReco_BprimeHypHists/mass_hyp","Chi2_AntiBTag_Forward_Chi2_BprimeUncerHists","Chi2_1_BTag_Forward_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Forward_Chi2_BprimeUncerHists","Chi2_AntiBTag_Central_Chi2_BprimeUncerHists","Chi2_1_BTag_Central_Chi2_BprimeUncerHists","Chi2_2plus_BTags_Central_Chi2_BprimeUncerHists","TopTagReco_Forward_TopTagReco_BprimeUncerHists","TopTagReco_Central_TopTagReco_BprimeUncerHists"};
@@ -201,7 +202,6 @@ pair<TH1F*,TH1F*> make_rms_hist(TFile* file, TString folder, TString Prefix, TSt
 
   //cout<<"RMS Histograms found "<<nhist<<endl;
 
-
   TString nominal_name = folder;
   nominal_name.ReplaceAll("UncerHists","HypHists/mass_hyp");
   TH1F* nominal = (TH1F*)file->Get(nominal_name);
@@ -257,7 +257,7 @@ pair<TH1F*,TH1F*> make_envelop_hist(TFile* file, TString folder, TString Prefix,
     nhist++;
     uncer_histo.push_back((TH1F*)tdir->Get(key->GetName()));
     //cout<<"loaded histogram: "<<key->GetName()<<endl;
-   /*
+    /*
     cout << "Key number " << nhist << endl;
     cout << "Key name "<<key->GetName()<<endl;
     cout << "Classname " <<key->GetClassName() << endl;
