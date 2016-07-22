@@ -24,7 +24,7 @@ class TreeHists: public HistsBase{
   void SetLegend(double x1=0.6, double y1=0.7, double x2= 0.8, double y2=0.8){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
   void AddErrorWeight(std::string error_string, error_method method=envelop, std::string replace="");
 
-  bool Draw(std::string variable, std::string draw_option="", std::string binning="");
+  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", st::string y_axis="");
  
 
  private:  

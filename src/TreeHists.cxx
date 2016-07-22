@@ -8,22 +8,11 @@ TreeHists::TreeHists(string saveName): HistsBase(saveName){
 
   pad1 = NULL;
   pad2 = NULL;
-  /*
-  get_can()->SetCanvasSize(800,800);
-
-  pad1->SetBottomMargin(0.04);
-  pad2->SetTopMargin(0.04); 
-
-  pad1->SetFillColor(0);
-  pad2->SetFillColor(0);
-
-  get_can()->Divide(2);
-  pad1->Draw();
-  pad2->Draw();
-  */
+  legx1=0.6; legx2= 0.92; legy1=0.6; legy2=0.86;
+  
 }
 
-bool TreeHists::Draw(string variable, string draw_option, string binning){\
+bool TreeHists::Draw(string variable, string draw_option, string binning, std::string x_axis, st::string y_axis){
   vector<vector<TH1F*>> empty_swapvec;
   error_histos.swap(empty_swapvec);
   histos.clear();
@@ -40,6 +29,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning){\
   std::vector<bool> stackInfo = get_stackInfo();
   std::vector<int> histColors = get_histColors();
   std::vector<int> histMarker = get_histMarker();
+  std::vector<std::string> nicknames = get_nicknames();
   
   for(unsigned int i=0; i< error_weights.size();i++){
     vector<TH1F*> tmp_vec;
@@ -100,7 +90,13 @@ bool TreeHists::Draw(string variable, string draw_option, string binning){\
   bool stack_exists = false;
   double histo_max =-9999999;
 
-		     
+  leg = new TLegend(legx1, legy1, legx2, legy2);
+  leg->SetFillColor(0);
+  leg->SetLineColor(1);
+  leg->SetBorderSize(0);
+  leg->SetTextFont(42);
+  leg->SetFillStyle(0);
+  
   THStack *hs = new THStack("hs","");
   for(unsigned int i =0; i<histos.size(); i++){
     TH1F* hist = histos[i];
@@ -111,16 +107,28 @@ bool TreeHists::Draw(string variable, string draw_option, string binning){\
     }
     if(histMarker.at(i)!= -1){
       hist->SetMarkerStyle(histMarker.at(i));
+      hist->SetLineColor(histColors.at(i));
       if(histColors.at(i)!= -1) hist->SetMarkerColor(histColors.at(i));
     }
     if(stackInfo.at(i)){
+      if(!nicknames.at(i).empty())
+	leg->AddEntry( hist, nicknames.at(i).c_str(), "f");
       hs->Add(hist);
       stack_exists = true;
     }
+    else
+      if(!nicknames.at(i).empty()){
+	if(histColors.at(i) ==1)
+	  leg->AddEntry( hist, nicknames.at(i).c_str(), "lpe");
+	else
+	  leg->AddEntry( hist, nicknames.at(i).c_str(), "l");
+      }
   }
-
+  
   pad1 = new TPad("histograms","histograms",0, 0.2, 1, 0.8);
   pad2 = new TPad("ratio_errors","ratio and error",0, 0.05, 1,0.2);
+  
+
   
   get_can()->SetCanvasSize(800,800);
 
@@ -158,7 +166,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning){\
 	hist->Draw(("same "+draw_option).c_str());
     }
   }
-
+  leg->Draw();
   pad2->cd();
   calc_ratio(hs,histos[0])->Draw("");
   
@@ -176,10 +184,11 @@ bool TreeHists::Draw(string variable, string draw_option, string binning){\
   calc_ratio(hs,histos[0])->Draw("same");
   gPad->RedrawAxis();
   get_can()->Print(get_resultFile());
+
+  pad1->Delete();
+  pad2->Delete();
+
   
-  //pad1->Delete();
-  //pad2->Delete();
- 
   return true;
 }
 

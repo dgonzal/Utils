@@ -24,7 +24,7 @@ class HistsBase{
   HistsBase(string saveName);
   ~HistsBase();
 
-  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false);
+  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "");
   void addFolder(string dir, string contains ="", string ends="");
 
   TCanvas* get_can(){return can;}
@@ -35,6 +35,7 @@ class HistsBase{
   std::vector<bool> get_stackInfo(){return hist_stack;}
   std::vector<int> get_histColors(){return hist_colors;}
   std::vector<int> get_histMarker(){return hist_marker;}
+  std::vector<std::string> get_nicknames(){return nicknames;}
   TString get_resultFile(){return resultFile;}
   
   void clear_filedirs(){filedirs.clear();}
@@ -46,6 +47,7 @@ class HistsBase{
   std::vector<int> hist_colors;
   std::vector<bool> hist_stack;
   std::vector<int> hist_marker;
+  std::vector<std::string> nicknames;
   TCanvas* can;
   //TLegend* leg;
 

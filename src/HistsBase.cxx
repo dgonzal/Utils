@@ -66,7 +66,7 @@ void HistsBase::addFolder(const string dir, const string contains, const string 
 
 }
 
-void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack){
+void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname){
   if(!boost::filesystem::exists(filedir)){
     cout<<"File does not exist "<<filedir<<endl;
     cout<<"Skipping File"<<endl;
@@ -77,5 +77,6 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
     hist_colors.push_back(color);
     hist_stack.push_back(stack);
     hist_marker.push_back(marker);
+    nicknames.push_back(nickname);
   }
 }
