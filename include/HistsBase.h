@@ -24,7 +24,7 @@ class HistsBase{
   HistsBase(string saveName);
   ~HistsBase();
 
-  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "");
+  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "", double uncer = 0);
   void addFolder(string dir, string contains ="", string ends="");
 
   TCanvas* get_can(){return can;}
@@ -36,6 +36,7 @@ class HistsBase{
   std::vector<int> get_histColors(){return hist_colors;}
   std::vector<int> get_histMarker(){return hist_marker;}
   std::vector<std::string> get_nicknames(){return nicknames;}
+  std::vector<double> get_uncertainties(){return uncertainties;}
   TString get_resultFile(){return resultFile;}
   
   void clear_filedirs(){filedirs.clear();}
@@ -48,6 +49,7 @@ class HistsBase{
   std::vector<bool> hist_stack;
   std::vector<int> hist_marker;
   std::vector<std::string> nicknames;
+  std::vector<double> uncertainties;
   TCanvas* can;
   //TLegend* leg;
 

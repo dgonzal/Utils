@@ -51,8 +51,6 @@ HistsBase::HistsBase(string saveName){
     cout<<"No Name to Save the Histograms given"<<endl;
 }
 
-
-
 HistsBase::~HistsBase(){
   if(!resultFile.EqualTo("")){
     can->Print(resultFile+"]");
@@ -60,13 +58,11 @@ HistsBase::~HistsBase(){
   }
 }
 
-
-
 void HistsBase::addFolder(const string dir, const string contains, const string ends){
 
 }
 
-void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname){
+void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname, double uncer){
   if(!boost::filesystem::exists(filedir)){
     cout<<"File does not exist "<<filedir<<endl;
     cout<<"Skipping File"<<endl;
@@ -78,5 +74,6 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
     hist_stack.push_back(stack);
     hist_marker.push_back(marker);
     nicknames.push_back(nickname);
+    uncertainties.push_back(uncer);
   }
 }

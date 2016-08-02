@@ -9,6 +9,7 @@
 #include "TSystem.h" 
 #include "THStack.h"
 #include "TGraphAsymmErrors.h"
+#include "TColor.h"
 
 //c++ libs
 #include <string>
@@ -24,14 +25,14 @@ class TreeHists: public HistsBase{
   void SetLegend(double x1=0.6, double y1=0.7, double x2= 0.8, double y2=0.8){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
   void AddErrorWeight(std::string error_string, error_method method=envelop, std::string replace="");
 
-  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", st::string y_axis="");
+  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
  
 
  private:  
   TH1F* calc_MCstat(THStack* stack);
   TH1F* calc_ratio(THStack* stack, TH1F* hist);
   void calc_weightErr(unsigned int i_error,error_method method, TH1F* result);
-
+  void calc_fixedErr(const std::vector<double> & uncertainties, const std::vector<bool> & stacked, TH1F* result, THStack* stack);
 
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
