@@ -12,7 +12,22 @@ TreeHists::TreeHists(string saveName): HistsBase(saveName){
   
 }
 
+TTree* TreeHists::load_tree(std::string fileDir){
+  Long_t id, size, flag, modtime;
+  if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
+    cerr<<"File "<<fileDir.c_str()<<" does not exist"<<endl;
+    exit(EXIT_FAILURE);
+  }
+  TFile* file = new TFile(fileDir.c_str());
+  if(file->IsZombie()){
+    cerr<<"File "<<fileDir<<" is a Zombie"<<endl;
+    exit(EXIT_FAILURE);
+  }
+  return (TTree*)file->Get(treeName.c_str());
+}
+
 bool TreeHists::Draw(string variable, string draw_option, string binning, std::string x_axis, std::string y_axis){
+  vector<TTree*> error_trees;
   vector<vector<TH1F*>> empty_swapvec;
   error_histos.swap(empty_swapvec);
   histos.clear();
@@ -32,62 +47,47 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   std::vector<std::string> nicknames = get_nicknames();
   std::vector<double> uncertainties = get_uncertainties();
 
-  
   for(unsigned int i=0; i< error_weights.size();i++){
     vector<TH1F*> tmp_vec;
     error_histos.push_back(tmp_vec); 
   }
   Long_t id, size, flag, modtime;
+
   int counter= -1;
   for(const auto & fileDir : get_filedirs()){
     counter++;
-    if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
-      cerr<<"File "<<fileDir.c_str()<<" does not exist"<<endl;
-      return false;
+    TTree* mytree = load_tree(fileDir);
+    string file_name = "";
+    if(error_folders.size()> 0){
+      vector<string> splitted_string;
+      boost::split(splitted_string,fileDir,boost::is_any_of("/"));
+      file_name = splitted_string.at(splitted_string.size()-1);
     }
-    TFile* file = new TFile(fileDir.c_str());
-    if(file->IsZombie()){
-      cerr<<"File "<<fileDir<<" is a Zombie"<<endl;
-      return false;
-    }
-    TTree* mytree = (TTree*)file->Get(treeName.c_str());
-    if(binning.empty()){
-      mytree->Draw((variable+">>myTmpHist").c_str(),draw_option.c_str());
-    }
-    else{
-      mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),draw_option.c_str());
-      //mytree->Scan(variable.c_str(),draw_option.c_str());
-    }
-    TH1F* myTmpHist = (TH1F*)gPad->GetPrimitive("myTmpHist");
-    histos.push_back(myTmpHist);
+    for(auto & error_folderDir : error_folders)
+      error_trees.push_back(load_tree(error_folderDir+file_name));
 
+    histos.push_back(make_hist(mytree, variable, binning, draw_option));
     if(!stackInfo.at(counter)) continue;
-
+    int error_folder_counter =0;
     for(unsigned int i = 0; i < error_weights.size();i++){
+      TH1F* myTmpHist;
+      if(boost::algorithm::contains(error_weights[i],"folder::")){
+	myTmpHist = make_hist(error_trees[error_folder_counter], variable, binning, draw_option);
+	error_folder_counter++;
+	error_histos[i].push_back(myTmpHist);
+	continue;
+      }
       for(auto number : replace_strings[i]){
 	string error = error_weights[i];
 	if(boost::algorithm::contains(error,"REPLACE"))
 	  boost::replace_all(error,"REPLACE",number);
-	if(binning.empty()){
-	  mytree->Draw((variable+">>myTmpHist").c_str(),(error+"*"+draw_option).c_str());
-	}
-	else{
-	  mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),(error+"*"+draw_option).c_str());
-	}
-	TH1F* myTmpHist = (TH1F*)gPad->GetPrimitive("myTmpHist");
+	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
 	if(myTmpHist->GetSumOfWeights()<=0){
-	  if(binning.empty()){
-	    mytree->Draw((variable+">>myTmpHist").c_str(),(draw_option).c_str());
-	  }
-	  else{
-	    mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),(draw_option).c_str());
-	  }
-	  myTmpHist = (TH1F*)gPad->GetPrimitive("myTmpHist");
+	  myTmpHist = make_hist(mytree, variable, binning, draw_option);
 	}
 	error_histos[i].push_back(myTmpHist);
       }
     }
-    delete file;
   }
   bool first_draw =false;
   bool stack_exists = false;
@@ -130,27 +130,19 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
       }
   }
 
-  Float_t yplot = 0.64;
-  Float_t yratio = 0.34;
-
-                                                //  coordinates:
-  // set up the coordinates of the two pads:    //  			 
-  Float_t y1, y2, y3;                           //  y3 +-------------+	
-  y3 = 0.99;                                    //     |             |	
-  y2 = y3-yplot;                                //     |     pad1    |	
-  y1 = y2-yratio;                               //  y2 |-------------|	
-  Float_t x1, x2;                               //     |     rp1     |	
-  x1 = 0.01;                                    //  y1 +-------------+	
-  x2 = 0.99;                                    //     x1            x2	
-                                                // 			
-                                            
-  
-
-
+  //  coordinates:
+  //  			 
+  //  y3 +-------------+	
+  //     |             |	
+  //     |     pad1    |	
+  //  y2 |-------------|	
+  //     |     rp1     |	
+  //  y1 +-------------+	
+  //     x1            x2	
+  // 			                                       
+  Float_t y1, y2, y3, x1, x2;
   x1=0;y1=0.05;y2=0.25;x2=1;y3=0.75;
 
-  
-  
   pad1 = new TPad("histograms","histograms",x1, y2, x2, y3);
   pad2 = new TPad("ratio_errors","ratio and error", x1, y1, x2, y2);
   
@@ -168,7 +160,6 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   pad1->Draw();
   pad2->Draw();
 
- 
   //calculate total error before plotting anything
   TH1F* total_error = (TH1F*)(hs->GetStack()->Last())->Clone("total_error");
   for(unsigned int i=0; i<error_weights.size();i++)
@@ -219,7 +210,6 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   }
   leg->Draw();
   pad2->cd();
-
   
   //calculate ratios and its error, use previous calculation
   TH1F* ratio = calc_ratio(hs,histos[0]);
@@ -245,7 +235,6 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 
   pad1->Delete();
   pad2->Delete();
-
   
   return true;
 }
@@ -261,53 +250,22 @@ TH1F* TreeHists::calc_ratio(THStack* stack, TH1F* hist){
   for(int i = 0; i< ratio->GetNcells();i++){
     if(ratio->GetBinContent(i) ==0)
       ratio->SetBinContent(i,-1);
-    //cout<<"Bin "<<i<<" ratio content "<<ratio->GetBinContent(i)<<" error "<<ratio->GetBinError(i)<<" data "<<hist->GetBinContent(i)<<" error "<<hist->GetBinError(i)<<" mc "<<stack_hist->GetBinContent(i)<<" error "<<stack_hist->GetBinError(i) <<endl;
   }
-  
-  //ratio->SetMarkerStyle(0);
-  //ratio->SetMarkerSize(1);
-  //ratio->SetMaximum(1.8);
-  //ratio->GetYaxis()->SetRangeUser(0,1.8);
-  //ratio->SetMinimum(0);
   ratio->GetYaxis()->SetRangeUser(0,1.99);
-
   ratio->SetMarkerColor(1);
   ratio->SetFillColor(15);
   ratio->SetLineColor(1);
   double bottomSize = 0.273;
-
-  /*
-  // x-axis
-  ratio->GetXaxis()->SetLabelSize(0.12);
-  ratio->GetXaxis()->SetTickLength(0.08);
-  ratio->GetXaxis()->SetTitleSize(0.12);
-  ratio->GetXaxis()->SetTitleOffset(1.25);
-
-  //y-axis
-  
-  ratio->GetYaxis()->CenterTitle();
-  ratio->GetYaxis()->SetTitleSize(0.12);
-  ratio->GetYaxis()->SetTitleOffset(0.66);
-  ratio->GetYaxis()->SetLabelSize(0.11);
-  //ratio->GetYaxis()->SetNdivisions(210);
-  ratio->GetYaxis()->SetNdivisions(505);
-  ratio->GetYaxis()->SetTickLength(0.02);
-  ratio->GetYaxis()->SetLabelOffset(0.011);
-  */
-  
   ratio->GetYaxis()->SetTitle("Data/MC");
   ratio->GetXaxis()->SetLabelSize(0.03/bottomSize); //ratio->GetXaxis()->SetNdivisions(100);
   ratio->GetXaxis()->SetTitleOffset(0.2/bottomSize);
   ratio->GetYaxis()->SetLabelSize(0.03/bottomSize); ratio->GetYaxis()->SetNdivisions(505);
   ratio->GetXaxis()->SetTitleSize( 0.04/bottomSize);
   ratio->GetYaxis()->SetTitleSize( 0.13);
-  //cout<<ratio->GetYaxis()->GetTitleOffset()<<endl;
   ratio->GetYaxis()->SetTitleOffset(0.4);
   ratio->GetYaxis()->CenterTitle();
   ratio->SetTickLength( 0.03 / bottomSize );
-  //ratio->GetXaxis()->SetLabelSize(0);
-  //ratio->GetXaxis()->SetLabelOffset(999);
-  
+ 
   return ratio;
 }
 
@@ -381,9 +339,6 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
   else{
     cerr<<"There was a problem with the error calculation method choosen please check!"<<endl;    
   }
-  //result->SetMarkerColor(16);
-  //return result;
-
 }
 
 void TreeHists::AddErrorWeight(string error_string, error_method method, string replace){
@@ -407,7 +362,12 @@ void TreeHists::AddErrorWeight(string error_string, error_method method, string 
     replace_strings.push_back(int_vec);
   }
 }
-
+void TreeHists::AddErrorFolder(std::string folder_name){
+  error_folders.push_back(folder_name); 
+  error_weights.push_back("folder::"+folder_name);
+  methods_forerrors.push_back(envelop);
+  replace_strings.push_back(vector<string>());
+}
 
 void TreeHists::calc_fixedErr(const std::vector<double> & uncertainties, const std::vector<bool> & stacked, TH1F* result, THStack* stack){
   int counter = 0;
@@ -424,4 +384,15 @@ void TreeHists::calc_fixedErr(const std::vector<double> & uncertainties, const s
       }
     }
   }
+}
+
+TH1F* TreeHists::make_hist(TTree* mytree, std::string variable, std::string binning, std::string draw_option){
+  if(binning.empty()){
+    mytree->Draw((variable+">>myTmpHist").c_str(),draw_option.c_str());
+  }
+  else{
+    mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),draw_option.c_str());
+    //mytree->Scan(variable.c_str(),draw_option.c_str());
+  }
+  return (TH1F*)gPad->GetPrimitive("myTmpHist");
 }
