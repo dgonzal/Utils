@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGETS = run uncer fastsim cutflow trigger treehist
+TARGETS = run uncer fastsim cutflow trigger treehist rootfilecreator
 
 SRCDIR  = src
 INCDIR  = include

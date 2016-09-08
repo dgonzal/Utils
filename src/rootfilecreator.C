@@ -164,7 +164,7 @@ std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string 
 int RootFileCreator(string signal="LH_25ns", string resultfile="TESTME1.root" , string dirname="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"){
   TH1::AddDirectory(kFALSE);
   
-  std::vector<std::string> directories = {dirname+"/Selection_v31/"};//,dirname+"/EleSelection_v5_tree/"
+  std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
   std::vector<std::string> samples = {"SingleTsChannel","SingleTtChannel","SingleTWAntitop","SingleTWTop","ZJets","TTJets","WJets","QCD","SingleMuDATA",signal};
   /*
   for(unsigned int i =0; i<samples.size(); i++){

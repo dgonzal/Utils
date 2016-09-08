@@ -27,7 +27,6 @@ TTree* TreeHists::load_tree(std::string fileDir){
 }
 
 bool TreeHists::Draw(string variable, string draw_option, string binning, std::string x_axis, std::string y_axis){
-  vector<TTree*> error_trees;
   vector<vector<TH1F*>> empty_swapvec;
   error_histos.swap(empty_swapvec);
   histos.clear();
@@ -55,6 +54,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 
   int counter= -1;
   for(const auto & fileDir : get_filedirs()){
+    vector<TTree*> error_trees;
     counter++;
     TTree* mytree = load_tree(fileDir);
     string file_name = "";
@@ -63,29 +63,41 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
       boost::split(splitted_string,fileDir,boost::is_any_of("/"));
       file_name = splitted_string.at(splitted_string.size()-1);
     }
-    for(auto & error_folderDir : error_folders)
-      error_trees.push_back(load_tree(error_folderDir+file_name));
-
+    for(auto folders : error_folders){
+      for(auto & error_folderDir : folders){
+	if(stackInfo[counter])
+	  error_trees.push_back(load_tree(error_folderDir+file_name));
+	cout<<"storing tree "<<error_folderDir+file_name<<endl;
+      }
+    }
     histos.push_back(make_hist(mytree, variable, binning, draw_option));
     if(!stackInfo.at(counter)) continue;
-    int error_folder_counter =0;
+    int count_per_error =0;
     for(unsigned int i = 0; i < error_weights.size();i++){
       TH1F* myTmpHist;
       if(boost::algorithm::contains(error_weights[i],"folder::")){
-	myTmpHist = make_hist(error_trees[error_folder_counter], variable, binning, draw_option);
-	error_folder_counter++;
-	error_histos[i].push_back(myTmpHist);
-	continue;
-      }
-      for(auto number : replace_strings[i]){
-	string error = error_weights[i];
-	if(boost::algorithm::contains(error,"REPLACE"))
-	  boost::replace_all(error,"REPLACE",number);
-	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
-	if(myTmpHist->GetSumOfWeights()<=0){
-	  myTmpHist = make_hist(mytree, variable, binning, draw_option);
+	int error_folder_counter = 1;
+	for(auto & tree : error_trees){
+	  if(error_folder_counter > error_folders[count_per_error].size())
+	    continue;
+	  myTmpHist = make_hist(tree, variable, binning, draw_option);
+	  //cout<<"Bin content 5 "<<myTmpHist->GetBinContent(5)<<endl;
+	  error_folder_counter++;
+	  error_histos[i].push_back(myTmpHist);
 	}
-	error_histos[i].push_back(myTmpHist);
+	count_per_error++;
+      }
+      else{
+	for(auto number : replace_strings[i]){
+	  string error = error_weights[i];
+	  if(boost::algorithm::contains(error,"REPLACE"))
+	    boost::replace_all(error,"REPLACE",number);
+	  myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
+	  if(myTmpHist->GetSumOfWeights()<=0){
+	    myTmpHist = make_hist(mytree, variable, binning, draw_option);
+	  }
+	  error_histos[i].push_back(myTmpHist);
+	}
       }
     }
   }
@@ -286,12 +298,13 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
   TH1F* nominal = (TH1F*) result->Clone("nominal");
   int numberOfBins = error_histos[i_error][0]->GetNcells();   
   vector<TH1F*> histo_sum;
-  unsigned int number_of_weights = replace_strings[i_error].size();
+  unsigned int number_of_weights = replace_strings[i_error].size() > 0 ? replace_strings[i_error].size() : error_folders[i_error].size();
   //cout<<"number of error histos "<<error_histos[i_error].size()<<" number of weights "<<number_of_weights<<endl;
   for(unsigned int m =0; m < number_of_weights; m++){
     TH1F* error_histo_sum = (TH1F*)error_histos[i_error][m]->Clone();
     for(unsigned int p = number_of_weights; p < error_histos[i_error].size(); p+= number_of_weights){ 
       error_histo_sum->Add(error_histos[i_error][p+m]);
+      cout<<"number of hist "<<p<<" content i==10 "<<error_histos[i_error][p+m]->GetBinContent(10)<<endl;
     }
     histo_sum.push_back(error_histo_sum);
   }
@@ -309,7 +322,7 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
       //symmetrize and set
       double nomBin = nominal->GetBinContent(i);
       double error = 0;
-      //cout<<"nominal "<<nomBin<<" max "<<max<< " min "<<min<< " error "<<(fabs(max-nomBin)+fabs(nomBin-min))/2 <<endl;
+      cout<<"nominal "<<nomBin<<" max "<<max<< " min "<<min<< " error "<<(fabs(max-nomBin)+fabs(nomBin-min))/2 <<endl;
       //if(max==-1 || min ==-1) continue;
       if(nomBin>0){
 	if(max!=-1 || min !=-1) error = (fabs(max-nomBin)+fabs(nomBin-min))/2;
@@ -362,9 +375,9 @@ void TreeHists::AddErrorWeight(string error_string, error_method method, string 
     replace_strings.push_back(int_vec);
   }
 }
-void TreeHists::AddErrorFolder(std::string folder_name){
+void TreeHists::AddErrorFolder(std::vector<std::string> folder_name){
   error_folders.push_back(folder_name); 
-  error_weights.push_back("folder::"+folder_name);
+  error_weights.push_back("folder::"+folder_name[0]);
   methods_forerrors.push_back(envelop);
   replace_strings.push_back(vector<string>());
 }
