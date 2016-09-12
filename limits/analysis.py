@@ -1,11 +1,14 @@
 from subprocess import call
-channels = ["Mu","Ele",""]
-production_channels = ["b","t"]
+channels = ["Mu"]#,"Ele",""]
+production_channels = ["b"]#,"t"]
 
 for production in production_channels:
-    print 'creating vanilla histograms in one file'
+    print 'creating vanilla histograms in one file',str('Bp'+production+'Reco_LH'), 'and',str('Bp'+production+'Reco_RH')
     call(['root', '-l',' limit.C("LH_25ns","Bp'+production+'Reco_LH")'])
     call(['root', '-l',' limit.C("RH_25ns","Bp'+production+'Reco_RH")'])
+    #call(['./rootfilecreator', 'LH_25ns', str('MuBp'+production+'Reco_LH')])
+    #call(['./rootfilecreator', 'RH_25ns', str('MuBp'+production+'Reco_RH')])
+
 
     execfile("histogram_rebinning.py")
     for channel in channels:

@@ -139,9 +139,11 @@ bool TreeDrawMain::create_file(std::string fileName){
 	}
       }
       nick_number++;
+      delete mytree;
     }
   }
   result_file->Close();
+  delete result_file;
   return true;
 }
 
@@ -212,7 +214,12 @@ int RootFileCreator(string signal="LH_25ns", string resultfile="TESTME1.root" , 
   return 0;
 }
 
-int main(){
-  RootFileCreator();
+int main(int argc, char **argv){
+  if(argc == 1)
+    RootFileCreator();
+  else if(argc == 2)
+    RootFileCreator(argv[1]);
+  else if(argc == 3)
+    RootFileCreator(argv[1],argv[2]);
 }
 
