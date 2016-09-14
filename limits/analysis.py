@@ -1,29 +1,51 @@
 from subprocess import call
-channels = ["Mu"]#,"Ele",""]
+channels = ["Mu","Ele",""]
 production_channels = ["b"]#,"t"]
 
+release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
+Mudirs = ['config/Selection_v31/']
+Eledirs = ['config/EleSelection_v6_tree/']
+
+createfiles = True
+
 for production in production_channels:
-    print 'creating vanilla histograms in one file',str('Bp'+production+'Reco_LH'), 'and',str('Bp'+production+'Reco_RH')
-    call(['root', '-l',' limit.C("LH_25ns","Bp'+production+'Reco_LH")'])
-    call(['root', '-l',' limit.C("RH_25ns","Bp'+production+'Reco_RH")'])
-    #call(['./rootfilecreator', 'LH_25ns', str('MuBp'+production+'Reco_LH')])
-    #call(['./rootfilecreator', 'RH_25ns', str('MuBp'+production+'Reco_RH')])
 
+    if createfiles:
+        for channel in channels:
+            dirstring = ""
+            if "Mu" in channel:
+                for inf in Mudirs:
+                    dirstring = dirstring+release+inf+','
+            elif "Ele" in channel:
+                for inf in Eledirs:
+                    dirstring = dirstring+release+inf+','
+            else:
+                for inf in Mudirs:
+                    dirstring = dirstring+release+inf+','
+                for inf in Eledirs:
+                    dirstring = dirstring+release+inf+','
+            dirstring = dirstring[:-1]
+            #print dirstring
+            #call(['root', '-l',' limit.C("LH_25ns","Bp'+production+'Reco_LH")'])
+            #call(['root', '-l',' limit.C("RH_25ns","Bp'+production+'Reco_RH")'])
+            #print 'creating histograms',str(channel+'Bp'+production+'Reco_LH'), 'and',str(channel+'Bp'+production+'Reco_RH')
+            #print 'Arguments', 'LH_25ns',str(channel+'Bp'+production+'Reco_LH'),dirstring
+            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*LH_25ns', str(channel+'Bp'+production+'Reco_LH'),dirstring])
+            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*RH_25ns', str(channel+'Bp'+production+'Reco_RH'),dirstring])
 
-    execfile("histogram_rebinning.py")
-    for channel in channels:
+    execfile("histogram_rebinning.py")   
+    for channel in channels:   
         print 'working on  the rebinning for', channel
         binFile(0.3, channel+'Bp'+production+'Reco_LH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
         binFile(0.3, channel+'Bp'+production+'Reco_RH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
-
 
     execfile("calculation.py")
     for channel in channels:
         print 'calculating limits for channel',channel,'and production',production
         exp_RH,obs_RH = run_cutopt(channel+"Bp"+production+"Reco_RH_rebinned.root","RH",channel,production,True)
-        print 'calculated limits for channel',channel,'and production',production,'and RH chirality'
+        print 'calculated limits for: channel',channel,'production',production,'chirality RH'
         exp_LH,obs_LH = run_cutopt(channel+"Bp"+production+"Reco_LH_rebinned.root","LH",channel,production,True)
-        print 'calculated limits for channel',channel,'and production',production,'and LH chirality'
+        print 'calculated limits for: channel',channel,'production',production,'chirality LH'
     #comparison plot for left and right handed
     plt.clf()
     plt.semilogy()
