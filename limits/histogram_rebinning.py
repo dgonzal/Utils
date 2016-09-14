@@ -3,6 +3,8 @@
 import sys
 sys.argv.append('-b')
 
+import math
+
 import ROOT
 ROOT.gROOT.SetStyle("Plain")
 ROOT.gStyle.SetOptStat(000000000)
@@ -22,13 +24,10 @@ class hinfo:
       self.systematic = fields[2]
       self.shift = fields[3]
       
-
-
 def name(channel, process, systematic = None, shift = None):
   if not systematic:
     return '__'.join([channel, process])
   return '__'.join([channel, process, systematic, shift])
-
 
 def merge(old,new):
   if not old:
@@ -36,10 +35,6 @@ def merge(old,new):
   else:
     old.Add(new)
   return old
-
-
-import math
-
 
 def findMaximum(histogram):
     index = 1
@@ -49,7 +44,6 @@ def findMaximum(histogram):
             maximum = histogram.GetBinContent(i)
             index = i
     return index, maximum
-
 
 def findLowIndex(histogram, rerror):
     value = 0.0
@@ -66,7 +60,6 @@ def findLowIndex(histogram, rerror):
         if value != 0: ratio = error/value
         if ratio < rerror:
             return i
-
 
 def findBinSize(histogram, highindexes, rerror, minvalue, maxbinsize, start, stop):
     #print "minvalue %f, maxbinsize %d, start %d, stop %d : " % (minvalue, maxbinsize, start, stop), highindexes
@@ -90,7 +83,6 @@ def findBinSize(histogram, highindexes, rerror, minvalue, maxbinsize, start, sto
                 return False
     # highindexes.append(stop+1)
     return True        
-
 
 def computeBinning(histogram, rerror):
     highindexes = []
@@ -136,14 +128,10 @@ def binFile(rerror, filename, xtitle, backgrounds):
     canvas.SetLogy()
 
     keys = file.GetListOfKeys()
-
     output = TFile(filename.split('.')[0]+'_rebinned.root', 'RECREATE')
-
     #print h_bkg[1]	
-
     # print all the histograms for all the channels
     for key in h_bkg:
-
         binning = array.array('d', computeBinning(h_bkg[key], rerror))
         h_bkg[key] = h_bkg[key].Rebin(len(binning)-1, h_bkg[key].GetName(), binning)
         h_data[key] = h_data[key].Rebin(len(binning)-1, h_data[key].GetName(), binning)
