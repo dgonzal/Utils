@@ -52,10 +52,12 @@ private:
   std::vector<std::string> Sample;
   std::string treename;
   std::string binning;
+  std::string channel="";
 };
 
 TTree* TreeDrawMain::load_tree(std::string fileDir){
   Long_t id, size, flag, modtime;
+  
   if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
     cerr<<"File "<<fileDir.c_str()<<" does not exist"<<endl;
     exit(EXIT_FAILURE);
@@ -82,20 +84,32 @@ TH1F* TreeDrawMain::make_hist(TTree* mytree, std::string variable, std::string d
 }
 
 bool TreeDrawMain::create_file(std::string fileName){
-  cout<<"Creating file "<<fileName<<endl;
   string fileName_ = fileName;
-  if(!boost::algorithm::contains(fileName,".root"))
+  if(!boost::algorithm::ends_with(fileName,".root"))
     fileName_ = fileName_+".root";
+  cout<<"Creating file "<<fileName<<endl;  
   TFile* result_file  = new TFile(fileName_.c_str(),"RECREATE");
   for(auto & dir : FileDir){
     std::vector<std::string> working_samples;
     std::vector<std::string> nicks;
+    string lower_filedir = dir;
+    //boost::algorithm::to_lower(lower_filedir);
+      if(boost::algorithm::contains(lower_filedir,"Ele"))
+	channel = "Ele";
+      else
+	channel = "Mu";
+
     for(unsigned int i =0 ; i < Sample.size(); i++){
       for(auto match : find_matches(dir,Sample[i])){
 	working_samples.push_back(match);
 	std::vector<std::string> splitted_match;
 	boost::split(splitted_match,match,boost::is_any_of("."));
-	nicks.push_back(splitted_match[splitted_match.size()-2]);
+	string lower_nick = splitted_match[splitted_match.size()-2];
+	boost::algorithm::to_lower(lower_nick);
+	if(boost::algorithm::contains(lower_nick,"data"))
+	  nicks.push_back("DATA");
+	else
+	  nicks.push_back(splitted_match[splitted_match.size()-2]);
 	//cout<<splitted_match[splitted_match.size()-2]<<endl;
       }
     }
@@ -109,7 +123,7 @@ bool TreeDrawMain::create_file(std::string fileName){
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
 	//cout<<"histogram done"<<endl;
 	//missing some naming part
-	tmp_hist->SetName((hist.hist_name+"__"+nick).c_str());
+	tmp_hist->SetName((hist.hist_name+channel+"__"+nick).c_str());
 	result_file->cd();
 	tmp_hist->Write();
 	string test_string = nick;
@@ -121,17 +135,17 @@ bool TreeDrawMain::create_file(std::string fileName){
 	  error_method method  = error_methods_container.at(error_counter);
 	  if(method == envelop){
 	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection);
-	    tmp_errorHist->SetName((hist.hist_name+"__"+nick+"__"+error_names.at(error_counter)).c_str());
+	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)).c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
 	  }
 	  else if(method == rms){
 	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"+"+hist.selection);
-	    tmp_errorHist->SetName((hist.hist_name+"__"+nick+"__"+error_names.at(error_counter)+"__plus").c_str());
+	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__plus").c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
 	    tmp_errorHist = make_hist(mytree,hist.draw_command,hist.selection+"-"+error+"*"+hist.selection);
-	    tmp_errorHist->SetName((hist.hist_name+"__"+nick+"__"+error_names.at(error_counter)+"__minus").c_str());
+	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__minus").c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
 	  }
@@ -150,36 +164,45 @@ bool TreeDrawMain::create_file(std::string fileName){
 std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string name){
   std::vector<std::string> matches;
   std::vector<std::string> splitted_name;
-  //boost::split(splitted_name,name,boost::is_any_of("*"));
+  boost::split(splitted_name,name,boost::is_any_of("*"));
   boost::filesystem::directory_iterator end_iter;
   for(boost::filesystem::directory_iterator dir_iter(dir) ; dir_iter != end_iter ; ++dir_iter){
-    //bool contains_parts = true;
-    //for(auto part : splitted_name)
-    //if(!boost::algorithm::contains(dir_iter->path().filename().string(),part)) contains_parts = false;
-    if(boost::algorithm::ends_with(dir_iter->path().filename().string(),name+".root")){
+    if(!boost::algorithm::ends_with(dir_iter->path().filename().string(),".root")) continue;
+    bool contains_parts = true;
+    /*
+    cout<<"=================="<<endl;
+    cout<<dir_iter->path().filename().string()<<endl;
+    */
+    for(auto part : splitted_name){
+      if(!boost::algorithm::contains(dir_iter->path().filename().string(),part)) contains_parts = false;
+      //cout<<part<<" ? "<<contains_parts<<endl;;
+    }
+    if(boost::algorithm::ends_with(dir_iter->path().filename().string(),".root") && contains_parts){
       matches.push_back(dir_iter->path().filename().string());
       //cout<<dir_iter->path().filename().string()<<endl;
     }
   }
+  /*
+  cout<<"Matches ";
+  for(auto match : matches)
+    cout<<match<<" ";
+  cout<<endl;
+  */
   return matches;
 }
-int RootFileCreator(string signal="LH_25ns", string resultfile="TESTME1.root" , string dirname="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"){
+int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/"){
   TH1::AddDirectory(kFALSE);
-  
-  std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
-  std::vector<std::string> samples = {"SingleTsChannel","SingleTtChannel","SingleTWAntitop","SingleTWTop","ZJets","TTJets","WJets","QCD","SingleMuDATA",signal};
+  //std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
+  std::vector<std::string> directories; 
+  boost::split(directories,dirnames,boost::is_any_of(","));
   /*
-  for(unsigned int i =0; i<samples.size(); i++){
-    string test_string = samples[i];
-    boost::algorithm::to_lower(test_string);
-    //cout<<test_string<<endl;
-    if(boost::algorithm::contains(test_string,"data")){
-       samples[i] = "uhh2.AnalysisModuleRunner.DATA."+samples[i]+".root";
-    }
-    else
-      samples[i] = "uhh2.AnalysisModuleRunner.MC."+samples[i]+".root";
-    //cout<<samples[i]<<endl;
-    }*/
+  std::cout<<"Directories"<<std::endl;
+  for(auto it : directories)
+    std::cout<<it<<std::endl;
+  std::cout<<"Result File "<<resultfile<<std::endl;
+  */
+  std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
+ 
   //cout<<"Starting histogram production"<<endl;
   
 
@@ -221,5 +244,7 @@ int main(int argc, char **argv){
     RootFileCreator(argv[1]);
   else if(argc == 3)
     RootFileCreator(argv[1],argv[2]);
+  else if(argc == 4)
+    RootFileCreator(argv[1],argv[2],argv[3]);
 }
 
