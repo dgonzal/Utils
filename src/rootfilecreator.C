@@ -34,6 +34,7 @@ public:
 
   void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_));}
   void AddWeightError(std::string weight_option, std::string error_name, error_method method=envelop){error_weight.push_back(weight_option);error_methods_container.push_back(method);error_names.push_back(error_name);}
+  void AddDirError(std::string dir_error, std::string nick){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick);}
 
   bool create_file(std::string fileName);
 
@@ -41,15 +42,21 @@ private:
   TH1F* make_hist(TTree* mytree, std::string variable, std::string draw_option);
   TTree* load_tree(std::string fileDir);
   std::vector<std::string> find_matches(std::string dir,std::string name);
+  void find_samples_nicks (std::string dir);
+  void set_channel(std::string dir);
 
   //std::vector<TH1F*> hist;
   //std::vector<TH1F*> error_hist;
   std::vector<std::string> error_weight;
   std::vector<error_method> error_methods_container;
   std::vector<std::string> error_names;
+  std::vector<std::string> dir_errors;
+  std::vector<std::string> dir_errors_nick;
   std::vector<TreeDrawInfo> infoVec;
   std::vector<std::string> FileDir;
   std::vector<std::string> Sample;
+  std::vector<std::string> working_samples;
+  std::vector<std::string> nicks;
   std::string treename;
   std::string binning;
   std::string channel="";
@@ -90,30 +97,10 @@ bool TreeDrawMain::create_file(std::string fileName){
   cout<<"Creating file "<<fileName<<endl;  
   TFile* result_file  = new TFile(fileName_.c_str(),"RECREATE");
   for(auto & dir : FileDir){
-    std::vector<std::string> working_samples;
-    std::vector<std::string> nicks;
-    string lower_filedir = dir;
-    //boost::algorithm::to_lower(lower_filedir);
-      if(boost::algorithm::contains(lower_filedir,"Ele"))
-	channel = "Ele";
-      else
-	channel = "Mu";
-
-    for(unsigned int i =0 ; i < Sample.size(); i++){
-      for(auto match : find_matches(dir,Sample[i])){
-	working_samples.push_back(match);
-	std::vector<std::string> splitted_match;
-	boost::split(splitted_match,match,boost::is_any_of("."));
-	string lower_nick = splitted_match[splitted_match.size()-2];
-	boost::algorithm::to_lower(lower_nick);
-	if(boost::algorithm::contains(lower_nick,"data"))
-	  nicks.push_back("DATA");
-	else
-	  nicks.push_back(splitted_match[splitted_match.size()-2]);
-	//cout<<splitted_match[splitted_match.size()-2]<<endl;
-      }
-    }
+    find_samples_nicks(dir);
+    set_channel(dir);
     int nick_number = 0;
+    //The main histograms + errors that can be stored into weights
     for(auto & process : working_samples){
       std::string nick =  nicks[nick_number];
       //cout<<"loading tree for "<< process<<endl;
@@ -130,6 +117,7 @@ bool TreeDrawMain::create_file(std::string fileName){
 	boost::algorithm::to_lower(test_string);
 	if(boost::algorithm::contains(test_string,"data"))continue;
 	int error_counter=0;
+	//All errors that can be stored into weights in the final tree
 	for(auto & error : error_weight){
 	  TH1F* tmp_errorHist;
 	  error_method method  = error_methods_container.at(error_counter);
@@ -156,11 +144,54 @@ bool TreeDrawMain::create_file(std::string fileName){
       delete mytree;
     }
   }
+  //For the cases I need a to run the preselection again and things are stored into a different dir
+  for(auto dir :  dir_errors){
+    set_channel(dir);
+    find_samples_nicks(dir);
+    int nick_number = 0;
+    for(auto & process : working_samples){
+      std::string nick =  nicks[nick_number];
+      if(boost::algorithm::ends_with(nick,"DATA")) continue;
+      TTree* mytree = load_tree(dir+"/"+process);
+      for(auto & hist : infoVec){
+	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
+	tmp_hist->SetName((hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[nick_number]).c_str());
+	result_file->cd();
+	tmp_hist->Write();
+      }
+      nick_number++;
+    }
+  }
   result_file->Close();
   delete result_file;
   return true;
 }
 
+void TreeDrawMain::set_channel(std::string dir){
+  string lower_filedir = dir;
+  if(boost::algorithm::contains(lower_filedir,"Ele"))
+    channel = "Ele";
+  else
+    channel = "Mu";
+}
+void TreeDrawMain::find_samples_nicks(std::string dir){
+  std::vector<std::string> empty_nicks, empty_work;
+  nicks.swap(empty_nicks);working_samples.swap(empty_work);
+  for(unsigned int i =0 ; i < Sample.size(); i++){
+    for(auto match : find_matches(dir+"/",Sample[i])){
+      working_samples.push_back(match);
+      std::vector<std::string> splitted_match;
+      boost::split(splitted_match,match,boost::is_any_of("."));
+      string lower_nick = splitted_match[splitted_match.size()-2];
+      boost::algorithm::to_lower(lower_nick);
+      if(boost::algorithm::contains(lower_nick,"data"))
+	nicks.push_back("DATA");
+      else
+	nicks.push_back(splitted_match[splitted_match.size()-2]);
+      //cout<<splitted_match[splitted_match.size()-2]<<endl;
+    }
+  }
+}
 std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string name){
   std::vector<std::string> matches;
   std::vector<std::string> splitted_name;
@@ -230,6 +261,8 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
   mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
   mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
+
+  //mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_up_Sel/","jec__plus")
 
   mainClass.create_file(resultfile);
 
