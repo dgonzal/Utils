@@ -28,7 +28,7 @@ class TreeHists: public HistsBase{
   void AddErrorFolder(std::vector<std::string> folder_name);
 
   bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
- 
+  std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
 
  private:
   TTree* load_tree(std::string fileDir);
@@ -37,7 +37,8 @@ class TreeHists: public HistsBase{
   TH1F* calc_ratio(THStack* stack, TH1F* hist);
   void calc_weightErr(unsigned int i_error,error_method method, TH1F* result);
   void calc_fixedErr(const std::vector<double> & uncertainties, const std::vector<bool> & stacked, TH1F* result, THStack* stack);
-
+  void calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1F* nominal);
+  
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
   double max, normArea;
@@ -48,7 +49,9 @@ class TreeHists: public HistsBase{
   std::vector<error_method> methods_forerrors;
   std::vector<std::vector<std::string>> replace_strings;
   std::vector<std::vector<std::string>> error_folders;
+  std::vector<std::vector<TH1F*>> error_folder_histos;
 
+  
   //Tpads for pretty print
   TPad *pad1, *pad2;
 };

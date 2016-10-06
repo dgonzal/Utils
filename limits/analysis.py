@@ -1,17 +1,18 @@
 from subprocess import call
 channels = ["Mu","Ele",""]
-production_channels = ["b"]#,"t"]
+production_channels = ["b","t"]
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
 Mudirs = ['config/Selection_v31/']
 Eledirs = ['config/EleSelection_v6_tree/']
 
-createfiles = True
+createfiles = False
+rebin = False
 
 for production in production_channels:
-
     if createfiles:
         for channel in channels:
+            print 'Creating Files',production,channel
             dirstring = ""
             if "Mu" in channel:
                 for inf in Mudirs:
@@ -30,14 +31,15 @@ for production in production_channels:
             #call(['root', '-l',' limit.C("RH_25ns","Bp'+production+'Reco_RH")'])
             #print 'creating histograms',str(channel+'Bp'+production+'Reco_LH'), 'and',str(channel+'Bp'+production+'Reco_RH')
             #print 'Arguments', 'LH_25ns',str(channel+'Bp'+production+'Reco_LH'),dirstring
-            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*LH_25ns', str(channel+'Bp'+production+'Reco_LH'),dirstring])
-            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*RH_25ns', str(channel+'Bp'+production+'Reco_RH'),dirstring])
+            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*LH_25ns', str(channel+'Bp'+production+'Reco_LH'),dirstring,channel])
+            call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*RH_25ns', str(channel+'Bp'+production+'Reco_RH'),dirstring,channel])
 
-    execfile("histogram_rebinning.py")   
-    for channel in channels:   
-        print 'working on  the rebinning for', channel
-        binFile(0.3, channel+'Bp'+production+'Reco_LH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
-        binFile(0.3, channel+'Bp'+production+'Reco_RH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
+    execfile("histogram_rebinning.py")
+    if rebin:
+        for channel in channels:   
+            print 'working on  the rebinning for', channel
+            binFile(0.3, channel+'Bp'+production+'Reco_LH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
+            binFile(0.3, channel+'Bp'+production+'Reco_RH.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])
 
     execfile("calculation.py")
     for channel in channels:

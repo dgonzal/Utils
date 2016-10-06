@@ -60,6 +60,8 @@ private:
   std::string treename;
   std::string binning;
   std::string channel="";
+  bool debug= false;
+  
 };
 
 TTree* TreeDrawMain::load_tree(std::string fileDir){
@@ -103,12 +105,11 @@ bool TreeDrawMain::create_file(std::string fileName){
     //The main histograms + errors that can be stored into weights
     for(auto & process : working_samples){
       std::string nick =  nicks[nick_number];
-      //cout<<"loading tree for "<< process<<endl;
+      //if(debug)cout<<"loading tree for "<< process<<endl;
       TTree* mytree = load_tree(dir+"/"+process);
       for(auto & hist : infoVec){
-	//cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
+	if(debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
-	//cout<<"histogram done"<<endl;
 	//missing some naming part
 	tmp_hist->SetName((hist.hist_name+channel+"__"+nick).c_str());
 	result_file->cd();
@@ -144,23 +145,38 @@ bool TreeDrawMain::create_file(std::string fileName){
       delete mytree;
     }
   }
+  if(debug)cout<<"****************************************************"<<endl;
   //For the cases I need a to run the preselection again and things are stored into a different dir
+  int error_nick = 0;
   for(auto dir :  dir_errors){
+    if(debug)cout<<"==================================================="<<endl;
+    if(debug)cout<<"==================================================="<<endl;
+    if(debug)cout<<dir<<endl;
     set_channel(dir);
     find_samples_nicks(dir);
     int nick_number = 0;
     for(auto & process : working_samples){
       std::string nick =  nicks[nick_number];
-      if(boost::algorithm::ends_with(nick,"DATA")) continue;
+      if(boost::algorithm::ends_with(nick,"DATA")){
+	nick_number++;
+	continue;
+      }
+      if(debug)cout<<"==================================================="<<endl;
+      if(debug)cout<<dir+"/"+process<<endl;
+      if(debug)cout<<"nick number "<<nick_number<<" of "<< nicks.size()<<" error nick "<< error_nick <<" of "<<dir_errors_nick.size() <<endl;
       TTree* mytree = load_tree(dir+"/"+process);
-      for(auto & hist : infoVec){
+      for(auto & hist : infoVec){ 
+	if(debug)cout<<hist.draw_command<<" "<<hist.selection<<endl;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
-	tmp_hist->SetName((hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[nick_number]).c_str());
+	if(debug)cout<<dir_errors_nick[error_nick]<<endl;
+	if(debug)cout<<(hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str()<<endl;
+	tmp_hist->SetName((hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str());
 	result_file->cd();
 	tmp_hist->Write();
-      }
-      nick_number++;
+      } 
+       nick_number++;
     }
+    error_nick++;
   }
   result_file->Close();
   delete result_file;
@@ -188,7 +204,7 @@ void TreeDrawMain::find_samples_nicks(std::string dir){
 	nicks.push_back("DATA");
       else
 	nicks.push_back(splitted_match[splitted_match.size()-2]);
-      //cout<<splitted_match[splitted_match.size()-2]<<endl;
+      if(debug)cout<<splitted_match[splitted_match.size()-2]<<endl;
     }
   }
 }
@@ -221,7 +237,7 @@ std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string 
   */
   return matches;
 }
-int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/"){
+int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/", string channel = ""){
   TH1::AddDirectory(kFALSE);
   //std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
   std::vector<std::string> directories; 
@@ -232,6 +248,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
     std::cout<<it<<std::endl;
   std::cout<<"Result File "<<resultfile<<std::endl;
   */
+
   std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
  
   //cout<<"Starting histogram production"<<endl;
@@ -248,8 +265,8 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < 2.4 && Chi2Dis.btagEventNumber ==1)","Chi2_Central_1_BTag");
   mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < 2.4 && Chi2Dis.btagEventNumber > 1)","Chi2_Central_2_BTag");
   mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.forwardJetAbsEta >= 2.4)","TopTag_Forward");
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.forwardJetAbsEta < 2.4)","TopTag_Centraln");
-  
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.forwardJetAbsEta < 2.4)","TopTag_Central");
+  /*
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
   mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
@@ -261,9 +278,17 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
   mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
   mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
-
-  //mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_up_Sel/","jec__plus")
-
+  */
+  vector<string> channel_dirs;
+  if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
+  if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");
+  
+  for(auto chan : channel_dirs){
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_up_Sel_"+chan+"/","jec__plus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_down_Sel_"+chan+"/","jec__minus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_up_Sel_"+chan+"/","jer__plus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_down_Sel_"+chan+"/","jer__minus");
+  }
   mainClass.create_file(resultfile);
 
   gApplication->Terminate();
@@ -279,5 +304,7 @@ int main(int argc, char **argv){
     RootFileCreator(argv[1],argv[2]);
   else if(argc == 4)
     RootFileCreator(argv[1],argv[2],argv[3]);
+  else if(argc == 5)
+    RootFileCreator(argv[1],argv[2],argv[3],argv[4]);
 }
 

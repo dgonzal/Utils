@@ -5,15 +5,18 @@ using namespace std;
 
 simplePlots::simplePlots(string saveName): HistsBase(saveName){
   normArea=false;
-  legx1=0.6; legx2= 0.8; legy1=0.7; legy2=0.8;
+  legx1=0.6; legx2= 0.8; legy1=0.6; legy2=0.8;
   max=-1;
   stack = new THStack("hs","stacked histograms");
 }
-void simplePlots::loadHists(TH1F * hist){
+void simplePlots::loadHists(TH1F * hist, string legend_entry,string plotting_style){
   histos.push_back(hist);
+  if(!legend_entry.empty()) legend.push_back(legend_entry);
+  plotting_styles.push_back(plotting_style);
+
 }
 
-void simplePlots::loadHists(string histname, string title){
+void simplePlots::loadHists(string histname, string title,string plotting_style){
   Long_t id, size, flag, modtime;
   for(const auto & fileDir : get_filedirs()){
     if(gSystem->GetPathInfo(fileDir.c_str(),&id, &size, &flag, &modtime)!=0){
@@ -47,6 +50,7 @@ void simplePlots::loadHists(string histname, string title){
     delete file;
   }
   //cout<<"======================"<<endl;
+  plotting_styles.push_back(plotting_style);
 }
 void simplePlots::loadStackHists(string histname, int color){
   Long_t id, size, flag, modtime;
@@ -70,13 +74,21 @@ void simplePlots::loadStackHists(string histname, int color){
   //cout<<"======================"<<endl;
 }
 
-void simplePlots::loadStackHists(TH1F * hist){
+void simplePlots::loadStackHists(TH1F * hist, string legend_entry){
     hist->SetFillStyle(1001);
     stack->Add(hist);
+    if(!legend_entry.empty()) stack_legend.push_back(legend_entry);
 }
 
 void simplePlots::plotHists(int options, bool logy){
   leg = new TLegend(legx1, legy1, legx2, legy2);
+  leg->SetFillColor(0);
+  leg->SetLineColor(1);
+  leg->SetBorderSize(0);
+  leg->SetTextFont(42);
+  leg->SetFillStyle(0);
+
+
   TPad *pad1 = new TPad("pad1","This is pad1",0.02,0.02,0.48,0.83,33);
   TPad *pad2 = new TPad("pad2","This is pad2",0.52,0.02,0.98,0.83,33);
   pad1->SetFillColor(0);
@@ -105,17 +117,23 @@ void simplePlots::plotHists(int options, bool logy){
       leg->AddEntry( histos[m], legend[m].c_str(), "l");
     else if(options==2 && legend.size()>m){ 
       leg->AddEntry( histos[m], legend[m].c_str(), "l");
-      leg->AddEntry((TObject*)0,("Entries: "+to_string( int(histos[m]->GetEntries()))).c_str(),"");
-   }
+      //leg->AddEntry((TObject*)0,("Entries: "+to_string( int(histos[m]->GetEntries()))).c_str(),"");
+    }
     if(m==0){
       if(normArea){
 	histos[m]->SetMarkerStyle(20);
-	histos[m]->DrawNormalized("p")->SetMaximum(maximum);
+	if(plotting_styles[m].empty())
+	  histos[m]->DrawNormalized("p")->SetMaximum(maximum);
+	else
+	  histos[m]->DrawNormalized(plotting_styles[m].c_str())->SetMaximum(maximum);
       }
       else{
 	histos[m]->SetMaximum(maximum*1.2);
 	histos[m]->SetMarkerStyle(20);
-	histos[m]->Draw("p");
+	if(plotting_styles[m].empty())
+	  histos[m]->Draw("p");
+	else
+	  histos[m]->Draw(plotting_styles[m].c_str());
       }
     }
     else{
@@ -144,8 +162,22 @@ void simplePlots::plotHists(int options, bool logy){
     }
   }
     //if(histos.size()) pad2->Update();
-
-  if(stack->Sizeof()>0)stack->Draw("same hist");
+  if(stack->Sizeof()>0){
+    TList * stack_list = stack->GetHists();
+    for(unsigned int i=0; i<stack_legend.size();i++){
+      leg->AddEntry(stack_list->At(i), stack_legend[i].c_str(), "f");
+    }
+    stack->Draw("same hist");
+    gPad->RedrawAxis();  
+    //stack->GetHistogram()->Draw("same");	
+  }
+  if(histos.size()>0){
+    if(plotting_styles[0].empty())
+      histos[0]->Draw("same p");
+    else
+      histos[0]->Draw(("same "+plotting_styles[0]).c_str());
+  }
+  leg->Draw();
   get_can()->Print(get_resultFile());
   if(logy) get_can()->SetLogy(0);  
   pad1->Close();

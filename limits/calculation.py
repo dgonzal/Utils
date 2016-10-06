@@ -1,7 +1,10 @@
 execfile("ThetaPostFitPlot.py")
 import numpy
+import matplotlib
+#matplotlib.rcParams['text.usetex']=True
+#matplotlib.rcParams['text.latex.unicode']=True
+import cPickle as pickle
 from matplotlib.backends.backend_pdf import PdfPages
-
 
 
 # -*- coding: utf-8 -*-
@@ -47,6 +50,11 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
              output_directory = './output_Bprime'+particle+'_'+Chirality+'/'
             
         report.write_html(output_directory)
+        savelimits = open(output_directory+"limits.pickle",'w+') 
+        pickle.dump(exp,savelimits)   
+        pickle.dump(obs,savelimits)
+        savelimits.close()
+
         try:
             #options.set('minimizer', 'always_mcmc', 'True')
             #options.set('global','debug','True')
@@ -67,9 +75,16 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     print "observed limit "+Chirality+' '+channel +":"
     print obs
 
+    
+
+
     #x = np.linspace(0, 2, 100)
     #plt.title("B+t -> tW 100%")
     #plt.ylim([0.4,10])
+
+
+    sigma2_color = 'yellow' #"yellow"
+    sigma1_color = 'darkgreen' #"green"
 
 
     pp = PdfPages("limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
@@ -79,28 +94,48 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500]
     theory13TeV_y =[0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540]
 
+    legend_string =""
+    if "LH" in Chirality:
+        legend_string = "Bt, $c_L=1.0, BR(tW)=100\%$"
+    elif "RH" in Chirality:
+        legend_string = "Bt, $\mathbf{c_R=1.0}$, BR(tW)=100$\%$"
+
     if particle is 'b':
         theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
         theory13TeV_y =numpy.array([3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
         theory13TeV_y =theory13TeV_y*0.5
+        if "LH" in Chirality:
+            legend_string = "Bb, c$_L$=1.0, BR(tW)=50$\%$"
+        elif "RH" in Chirality:
+            legend_string = "Bb, c$_R$=1.0, BR(tW)=50$\%$"
+            
+    
 
     #cross section times branching ratio  limits
     plt.clf()
     plt.semilogy()
-    plt.plot(exp.x, exp.y, label= Chirality+' Chirality', color ='black',linestyle='--')#,color = exp_LH.bands[0][2])
+    #plt.rc('text', usetex=True)
+    #plt.title("2.2 $fb^{-1}$ (13 TeV) ",horizontalalignment='center')
+    #matplotlib.rcParams['text.usetex']=True
+    #matplotlib.rcParams['text.latex.unicode']=True
+    #f,ax = plt.subplots()
+    plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
+    plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
+    plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
-                     alpha=0.6, facecolor='yellow', edgecolor='yellow',
-                     linewidth=0)
+                     alpha=0.6, facecolor=sigma2_color, edgecolor=sigma2_color,
+                     linewidth=0, label="$\pm$ 2 std. deviation")
     plt.fill_between(exp.x, exp.bands[1][0] ,  exp.bands[1][1],
-                     alpha=0.8, facecolor = 'green', edgecolor='green', # exp_LH.bands[1][2],
-                     linewidth=0)
+                     alpha=0.8, facecolor=sigma1_color, edgecolor=sigma1_color, # exp_LH.bands[1][2],
+                     linewidth=0, label="$\pm$ 1 std. deviation")
+    #workaround since normal mode does not work!
+    plt.plot([],[],label="$\pm$ 1 std. deviation",color=sigma1_color,linewidth=10)
+    plt.plot([],[],label="$\pm$ 2 std. deviation",color=sigma2_color,linewidth=10)
 
-    plt.plot(theory13TeV_x, theory13TeV_y, label='Theory cross section 13TeV')
-    if obs: plt.plot(obs.x, obs.y, label='Obs', color ='black')
-    plt.xlabel('Mass B [GeV]')
-    plt.ylabel('cross section times branching ratio [pb]')
-    plt.legend(loc=2,prop={'size':7})
-   
+    if obs: plt.plot(obs.x, obs.y, label='Obs $95\%$ CL', color ='black')
+    plt.xlabel('B quark Mass (GeV)')
+    plt.ylabel(r'$\mathbf{\sigma \times}$  BR(B$\mathbf{\rightarrow}$tW) (pb)')
+    plt.legend(loc="upper center",prop={'size':12},frameon=False)
     plt.savefig(pp, format='pdf')
 
     # coupling limits
@@ -139,7 +174,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     if obs: plt.plot(obs.x, obs_cl_y, label='Obs', color ='black')
     plt.xlabel('Mass B [GeV]')
     plt.ylabel('|cL|')
-    plt.legend(loc=2,prop={'size':7})
+    plt.legend(loc=2,prop={'size':12},frameon=False)
     plt.savefig(pp, format='pdf')
     
     pp.close()

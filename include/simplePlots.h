@@ -18,6 +18,8 @@
 #include "TPad.h"
 #include "TGraphAsymmErrors.h"
 #include "TColor.h"
+#include "TList.h"
+
 
 //c++ libs
 #include <iostream>
@@ -34,18 +36,16 @@
 
 using namespace std;
 
-
-
 class simplePlots: public HistsBase{
  public:
   simplePlots(string saveName);
   void addLegendEntry(string legendEntry){legend.push_back(legendEntry);}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
 
-  void loadHists(string histname, string title = "");
-  void loadHists(TH1F * hist);
+  void loadHists(string histname, string title = "",string plotting_style = "");
+  void loadHists(TH1F * hist, string legend_entry="",string plotting_style = "");
   void loadStackHists(string histname,int color);
-  void loadStackHists(TH1F * hist);
+  void loadStackHists(TH1F * hist, string legend_entry="");
   void loadTH2(string histname);
 
   void plotHists(int options=0, bool logy=false); 
@@ -54,14 +54,18 @@ class simplePlots: public HistsBase{
   void setErrorBand(double min_, double max_){errorband_max = max_; errorband_min =min_;}//used for the ratio plot
 
   void clearHists(){histos.clear();}
-  void clearLegend(){legend.clear();}
+  void clearLegend(){legend.clear();stack_legend.clear();}
   void clearFiles(){clear_filedirs();}
-  
+  void clearStack(){stack =  new THStack("hs","stacked histograms");}
+
+  void clearAll(){clearHists();clearLegend();clearFiles();clearStack();}
+
  private:
   TH1F* ratio(TH1F* num, TH1F* denom, bool norm);
   vector<TH2F*> twoDhists;
   vector<TH1F*> histos;
-  vector<string> legend;
+  vector<string> legend, stack_legend;
+  std::vector<std::string> plotting_styles;
   double errorband_max = 2, errorband_min = 0;
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
