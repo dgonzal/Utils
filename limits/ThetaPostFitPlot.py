@@ -66,13 +66,13 @@ class ThetaPostFitPlot():
         ax_2.SetTitleSize(0.050)
         ax_1.SetTitleOffset(1.4)
         ax_2.SetTitleOffset(1.0)
-        ax_1.SetLabelSize(0.05)
+        ax_1.SetLabelSize(0.03)
         #ax_2.SetLabelSize(0.05)
         ax_1.SetRangeUser(0, n_items+2)
         ax_2.SetRangeUser(-2.4, 2.4)
 
         ax_1.Set(n_items+2, 0, n_items+2)
-        ax_1.SetNdivisions(-414)
+        ax_1.SetNdivisions(-414) 
         for i, (uncert_name, _) in enumerate(post_fit_items):
             ax_1.SetBinLabel(i+2, uncert_name)
 

@@ -1,13 +1,16 @@
 from subprocess import call
-channels = ["Mu","Ele",""]
-production_channels = ["b","t"]
+channels = ['Mu']#,"Ele",""]
+production_channels = ["b"]#,"t"]
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
 Mudirs = ['config/Selection_v31/']
 Eledirs = ['config/EleSelection_v6_tree/']
 
-createfiles = False
-rebin = False
+createfiles = True;
+rebin = True
+
+if not rebin:
+    createfiles = False
 
 for production in production_channels:
     if createfiles:

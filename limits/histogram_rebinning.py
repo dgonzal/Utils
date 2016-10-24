@@ -3,7 +3,7 @@
 import sys
 sys.argv.append('-b')
 
-import math
+import math, warnings
 
 import ROOT
 ROOT.gROOT.SetStyle("Plain")
@@ -11,6 +11,8 @@ ROOT.gStyle.SetOptStat(000000000)
 ROOT.gStyle.SetOptTitle(0)
 
 from ROOT import TCanvas, TFile, TH1, THStack, TLegend
+
+debug = False
 
 class hinfo:
   def __init__(self, name):
@@ -101,7 +103,7 @@ def computeBinning(histogram, rerror):
 import array
 
 def binFile(rerror, filename, xtitle, backgrounds): 
-
+    warnings.simplefilter("ignore")
     file = TFile(filename)
     keys = file.GetListOfKeys()
 
@@ -204,29 +206,43 @@ def binFile(rerror, filename, xtitle, backgrounds):
                 # Hack to fix the data lowercase names
                 #if info.systematic == 'pdf':
                 #    continue
-                if (info.systematic == 'scale' or info.systematic == 'matching') and 'light' in info.process and '1btag' in info.channel:
-                    print "Excluding : ", info.systematic, info.process, info.channel
-                    continue
+
+                #if (info.systematic == 'scale' or info.systematic == 'matching') and 'light' in info.process and '1btag' in info.channel:
+                #    print "Excluding : ", info.systematic, info.process, info.channel
+                #    continue
                 if 'data' in info.process:
                     histogram.SetName(histogram.GetName().replace('data','DATA'))
-                if 'ttbar' in info.process and info.systematic == 'scale':
+
+                if info.systematic:
+                  if 'ttjets' in info.process.lower() and 'scale' in info.systematic:
                     orig = histogram.GetName()
-                    histogram.SetName(histogram.GetName().replace('scale','scale_ttbar'))
-                    print "Renaming: %s to %s" % (orig, histogram.GetName())
-                if ('wlight' in info.process or 'zlight' in info.process) and info.systematic == 'scale':
+                    histogram.SetName(histogram.GetName().replace('scaleWeight','scale_ttbar'))
+                    if debug: print "Renaming: %s to %s" % (orig, histogram.GetName())
+                  elif ('wjets' in info.process.lower() or 'zjets' in info.process.lower()) and 'scale' in info.systematic:
                     orig = histogram.GetName()
-                    histogram.SetName(histogram.GetName().replace('scale','scale_vjets'))
-                    print "Renaming: %s to %s" % (orig, histogram.GetName())
+                    histogram.SetName(histogram.GetName().replace('scaleWeight','scale_vjets'))
+                    if debug:print "Renaming: %s to %s" % (orig, histogram.GetName())
+                  elif 'singlet' in info.process.lower() and 'scale' in info.systematic:
+                    orig = histogram.GetName()
+                    histogram.SetName(histogram.GetName().replace('scaleWeight','scale_singletop'))
+                    if debug:print "Renaming: %s to %s" % (orig, histogram.GetName())
+                  elif ('bpb' in info.process.lower() or 'bpt' in info.process.lower()) and 'scale' in info.systematic:
+                    orig = histogram.GetName()
+                    histogram.SetName(histogram.GetName().replace('scaleWeight','scale_bp'))
+                    if debug:print "Renaming: %s to %s" % (orig, histogram.GetName())
+                  elif 'qcd' in  info.process.lower() and 'scale' in info.systematic:
+                    if debug: print "ignoring QCD scale uncertainties"
+                    continue
+                  
+                #following not used at the moment!
                 if ('wlight' in info.process or 'zlight' in info.process) and info.systematic == 'matching':
                     orig = histogram.GetName()
                     histogram.SetName(histogram.GetName().replace('matching','matching_vjets'))
                     print "Renaming: %s to %s" % (orig, histogram.GetName())
-                if info.process.startswith('zp') or info.process.startswith('rsg'):
-                    print "Scaling signal sample %s by x0.1" % histogram.GetName()
-                    histogram.Scale(0.1)
                 histogram = histogram.Rebin(len(binning)-1, histogram.GetName(), binning)
                 output.cd()
                 histogram.Write()
+    #return binning
 
 
 #binFile(0.3, 'RecoBp.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])

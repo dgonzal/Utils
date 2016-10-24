@@ -17,6 +17,7 @@
 #include <iostream>
 #include <stdlib.h> 
 
+
 class TreeHists: public HistsBase{
  public: 
   TreeHists(string saveName);
@@ -51,7 +52,7 @@ class TreeHists: public HistsBase{
   std::vector<std::vector<std::string>> error_folders;
   std::vector<std::vector<TH1F*>> error_folder_histos;
 
-  
+  bool debug = false;
   //Tpads for pretty print
   TPad *pad1, *pad2;
 };

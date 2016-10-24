@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGETS = run uncer fastsim cutflow trigger treehist rootfilecreator
+TARGETS = run uncer fastsim cutflow trigger treehist rootfilecreator  matchingPlots regionsratio moneyplots scan_forwardJet
 
 SRCDIR  = src
 INCDIR  = include
@@ -23,7 +23,7 @@ ROOTLIBS :=  $(shell root-config --evelibs)
 ROOTFLAGS := $(shell root-config --cflags)
 ROOTINC :=  -I$(call scramtag, root_interface, INCLUDE)
 
-ROOFITLIBS :=  -L$(call scramtag, roofitcore, LIBDIR) -lRooFit -lRooFitCore -lMinuit 
+ROOFITLIBS :=  -L$(call scramtag, roofitcore, LIBDIR) -lRooFit -lRooFitCore -lMinuit
 ROOFITFLAGS := 
 ROOFITINC :=  -I$(call scramtag, roofitcore, INCLUDE)  
 
@@ -41,7 +41,7 @@ USERCXXFLAGS += -g -Wall -O2  -funroll-loops -ftree-vectorize -ftree-vectorizer-
 USERCXXFLAGS += $(PYTHON_CFLAGS) $(ROOTFLAGS) $(ROOFITFLAGS)
 USERINCFLAGS += $(BOOST_INC) $(PYTHON_INC) $(ROOTINC) $(ROOFITINC) -I$(INCDIR)
 
-
+# do the work
 progs : $(TARGETS)
 
 $(TARGETS): $(OBJECTS) $(MAINOBJ)

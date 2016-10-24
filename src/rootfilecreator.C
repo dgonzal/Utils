@@ -17,10 +17,11 @@
 using namespace std;
 
 struct TreeDrawInfo{
-  TreeDrawInfo( std::string draw_command_, std::string selection_, std::string hist_name_):draw_command(draw_command_),selection(selection_),hist_name(hist_name_){;}
+  TreeDrawInfo( std::string draw_command_, std::string selection_, std::string hist_name_, std::string binning_):draw_command(draw_command_),selection(selection_),hist_name(hist_name_), binning(binning_){;}
   std::string draw_command;
   std::string selection;
   std::string hist_name;
+  std::string binning;
 };
 
 class TreeDrawMain{
@@ -32,14 +33,14 @@ public:
   void AddFileDir(std::vector<std::string> dirs){ FileDir = dirs;}
   void AddSamples(std::vector<std::string> sample_){Sample =sample_;}
 
-  void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_));}
+  void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_, std::string hist_binning_=""){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_, hist_binning_.empty() ? binning: hist_binning_));}
   void AddWeightError(std::string weight_option, std::string error_name, error_method method=envelop){error_weight.push_back(weight_option);error_methods_container.push_back(method);error_names.push_back(error_name);}
   void AddDirError(std::string dir_error, std::string nick){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick);}
 
   bool create_file(std::string fileName);
 
 private:
-  TH1F* make_hist(TTree* mytree, std::string variable, std::string draw_option);
+  TH1F* make_hist(TTree* mytree, std::string variable, std::string draw_option, std::string hist_binning);
   TTree* load_tree(std::string fileDir);
   std::vector<std::string> find_matches(std::string dir,std::string name);
   void find_samples_nicks (std::string dir);
@@ -80,13 +81,13 @@ TTree* TreeDrawMain::load_tree(std::string fileDir){
   return (TTree*)file->Get(treename.c_str());
 }
 
-TH1F* TreeDrawMain::make_hist(TTree* mytree, std::string variable, std::string draw_option){
-  if(binning.empty()){
+TH1F* TreeDrawMain::make_hist(TTree* mytree, std::string variable, std::string draw_option,string hist_binning){
+  if(hist_binning.empty()){
     mytree->Draw((variable+">>myTmpHist").c_str(),draw_option.c_str());
   }
   else{
     //std::cout<<"binning "<<binning<<std::endl;
-    mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),draw_option.c_str());
+    mytree->Draw((variable+">>myTmpHist("+hist_binning+")").c_str(),draw_option.c_str());
     //std::cout<<"Hist drawn "<<std::endl; 
   }
   return (TH1F*)gPad->GetPrimitive("myTmpHist");
@@ -105,35 +106,56 @@ bool TreeDrawMain::create_file(std::string fileName){
     //The main histograms + errors that can be stored into weights
     for(auto & process : working_samples){
       std::string nick =  nicks[nick_number];
+      string test_string = nick;
+      boost::algorithm::to_lower(test_string);
       //if(debug)cout<<"loading tree for "<< process<<endl;
       TTree* mytree = load_tree(dir+"/"+process);
       for(auto & hist : infoVec){
 	if(debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
-	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
+	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
 	//missing some naming part
 	tmp_hist->SetName((hist.hist_name+channel+"__"+nick).c_str());
+	tmp_hist->SetTitle("B mass (GeV)");
+	cout<<"Hist Name: "<<tmp_hist->GetName()<<" pre fit entries "<<tmp_hist->GetEntries()<<endl;
+	if(!boost::algorithm::contains(test_string,"data") && boost::algorithm::contains(hist.hist_name,"background")){
+	  continue;
+	}
+	if(boost::algorithm::contains(hist.hist_name,"background"))
+	  tmp_hist->SetName((hist.hist_name.substr(0,hist.hist_name.size()-11)+channel+"__"+"Background").c_str());
 	result_file->cd();
 	tmp_hist->Write();
-	string test_string = nick;
-	boost::algorithm::to_lower(test_string);
 	if(boost::algorithm::contains(test_string,"data"))continue;
 	int error_counter=0;
 	//All errors that can be stored into weights in the final tree
 	for(auto & error : error_weight){
 	  TH1F* tmp_errorHist;
 	  error_method method  = error_methods_container.at(error_counter);
-	  if(method == envelop){
-	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection);
+	  if(method == envelop){    
+	    if(debug)std::cout<< error_names.at(error_counter)<<endl;
+	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"*("+error+">-1)",hist.binning);
+	    if(tmp_errorHist->GetEntries() ==0 ){
+	      error_counter++;
+	      continue;
+	    }
 	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)).c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
 	  }
 	  else if(method == rms){
-	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"+"+hist.selection);
+	    double hist_integral = tmp_hist->Integral();
+	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"*("+error+">-1)",hist.binning);
+	    tmp_errorHist->Scale(1/hist_integral);
+	    tmp_errorHist->Add(tmp_hist);
 	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__plus").c_str());
+	    if(tmp_errorHist->GetEntries() ==0 ){
+	      error_counter++;
+	      continue;
+	    }
 	    result_file->cd();
 	    tmp_errorHist->Write();
-	    tmp_errorHist = make_hist(mytree,hist.draw_command,hist.selection+"-"+error+"*"+hist.selection);
+	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"*("+error+">-1)",hist.binning);
+	    tmp_errorHist->Scale(1/hist_integral);
+	    tmp_errorHist->Add(tmp_errorHist,tmp_hist,-1);
 	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__minus").c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
@@ -167,7 +189,8 @@ bool TreeDrawMain::create_file(std::string fileName){
       TTree* mytree = load_tree(dir+"/"+process);
       for(auto & hist : infoVec){ 
 	if(debug)cout<<hist.draw_command<<" "<<hist.selection<<endl;
-	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection);
+	if(boost::algorithm::contains(hist.hist_name,"background")) continue;
+	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
 	if(debug)cout<<dir_errors_nick[error_nick]<<endl;
 	if(debug)cout<<(hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str()<<endl;
 	tmp_hist->SetName((hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str());
@@ -249,36 +272,67 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   std::cout<<"Result File "<<resultfile<<std::endl;
   */
 
-  std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
- 
+  //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
+  std::vector<std::string> samples = {"DATA.root",signal};  
   //cout<<"Starting histogram production"<<endl;
   
 
-  TreeDrawMain mainClass("100,50,3000","AnalysisTree");
+  TreeDrawMain mainClass("50,100,3000","AnalysisTree");
   mainClass.AddFileDir(directories);
   mainClass.AddSamples(samples);
 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= 2.4 && Chi2Dis.btagEventNumber ==0)","Chi2_Forward_AntiBTag");
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= 2.4 && Chi2Dis.btagEventNumber ==1)","Chi2_Forward_1_BTag");
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= 2.4 && Chi2Dis.btagEventNumber > 1)","Chi2_Forward_2_BTag");
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < 2.4 && Chi2Dis.btagEventNumber ==0)","Chi2_Central_AntiBTag");
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < 2.4 && Chi2Dis.btagEventNumber ==1)","Chi2_Central_1_BTag");
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < 2.4 && Chi2Dis.btagEventNumber > 1)","Chi2_Central_2_BTag");
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.forwardJetAbsEta >= 2.4)","TopTag_Forward");
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.forwardJetAbsEta < 2.4)","TopTag_Central");
+  
+  string eta = "2.4";
+  string energy = "250";
+  string jetiso = "2";
+  //if(boost::algorithm::contains(channel,"Ele"))
+  //  eta = 2.1;
   /*
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= "+eta+" && Chi2Dis.btagEventNumber ==0)","Chi2_Forward_AntiBTag");
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= "+eta+" && Chi2Dis.btagEventNumber ==1)","Chi2_Forward_1_BTag");
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta >= "+eta+" && Chi2Dis.btagEventNumber > 1)","Chi2_Forward_2_BTag");
+  //mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >-1 && TopTagDis.forwardJetAbsEta >= "+eta+")","TopTag_Forward");
+  
+  
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < "+eta+" && Chi2Dis.btagEventNumber ==0)","Chi2_Central_AntiBTag");
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < "+eta+" && Chi2Dis.btagEventNumber ==1)","Chi2_Central_1_BTag");
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJetAbsEta < "+eta+" && Chi2Dis.btagEventNumber > 1)","Chi2_Central_2_BTag");
+  //mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >-1 && TopTagDis.forwardJetAbsEta < "+eta+")","TopTag_Central");
+  */
+  
+
+
+  /*
+  **
+  ** Data driven background
+  */
+ 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","55,250,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"35,250,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"25,250,2500");	    
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(TopTagDis.forwardJetAbsEta>="+eta+"||TopTagDis.jetiso>="+jetiso+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","15,500,3000");					    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","55,250,3000"); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"35,250,3000"); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"25,250,2500"); 
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((TopTagDis.forwardJetAbsEta<"+eta+"&&TopTagDis.jetiso<"+jetiso+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","15,500,3000");                            
+  
+
+  
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
   mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
   mainClass.AddWeightError("weight_btag_down/weight_btag","btag__minus");
   mainClass.AddWeightError("weight_pu_up/weight_pu","pu__plus");
   mainClass.AddWeightError("weight_pu_down/weight_pu","pu__minus");
-  mainClass.AddWeightError("weight_sfmu_mediumID_up/weight_sfmu_mediumID","SFmu__plus");
-  mainClass.AddWeightError("weight_sfmu_mediumID_down/weight_sfmu_mediumID","SFmu__minus");
-  mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
-  mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
+  if(!boost::algorithm::contains(channel,"Ele")){
+    mainClass.AddWeightError("weight_sfmu_mediumID_up/weight_sfmu_mediumID","SFmu__plus");
+    mainClass.AddWeightError("weight_sfmu_mediumID_down/weight_sfmu_mediumID","SFmu__minus");
+  }
+  
+  //mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
+  //mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
   mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
-  */
+  /*
   vector<string> channel_dirs;
   if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
   if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");
@@ -289,6 +343,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
     mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_up_Sel_"+chan+"/","jer__plus");
     mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_down_Sel_"+chan+"/","jer__minus");
   }
+  */
   mainClass.create_file(resultfile);
 
   gApplication->Terminate();

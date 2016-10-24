@@ -42,8 +42,8 @@ class simplePlots: public HistsBase{
   void addLegendEntry(string legendEntry){legend.push_back(legendEntry);}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
 
-  void loadHists(string histname, string title = "",string plotting_style = "");
-  void loadHists(TH1F * hist, string legend_entry="",string plotting_style = "");
+  void loadHists(string histname, string title = "",string plotting_style = "",bool ratio=true);
+  void loadHists(TH1F * hist, string legend_entry="",string plotting_style = "",bool ratio=true);
   void loadStackHists(string histname,int color);
   void loadStackHists(TH1F * hist, string legend_entry="");
   void loadTH2(string histname);
@@ -52,6 +52,7 @@ class simplePlots: public HistsBase{
   void plotTH2(int options=0); 
   void normToArea(bool area=true, double max_ =-1){normArea=area;max=max_;}
   void setErrorBand(double min_, double max_){errorband_max = max_; errorband_min =min_;}//used for the ratio plot
+  void change_colors(bool col){changecolors = col;}
 
   void clearHists(){histos.clear();}
   void clearLegend(){legend.clear();stack_legend.clear();}
@@ -66,10 +67,12 @@ class simplePlots: public HistsBase{
   vector<TH1F*> histos;
   vector<string> legend, stack_legend;
   std::vector<std::string> plotting_styles;
+  vector<bool> plotInratio;
   double errorband_max = 2, errorband_min = 0;
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
-  bool normArea;
+  bool normArea,changecolors=true;
   double max;
   THStack* stack;
+  bool using_stack=false;
 };

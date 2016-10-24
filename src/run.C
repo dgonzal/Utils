@@ -61,7 +61,7 @@ int main(){
       genjetsCheck.clearFiles();
     }
   }
-  return 0;
+  //return 0;
 
 
   /*
@@ -140,7 +140,7 @@ int main(){
   */    
 
   string cms_string = "CMSSW_7_6_3";
-  string sel_version ="4";
+  string sel_version ="31";
 
   simplePlots TopTagForwardSplit("plots/TopTagForwardCentralSplit.ps");
   TopTagForwardSplit.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cms_string+"/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root");
