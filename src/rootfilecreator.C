@@ -37,6 +37,8 @@ public:
   void AddWeightError(std::string weight_option, std::string error_name, error_method method=envelop){error_weight.push_back(weight_option);error_methods_container.push_back(method);error_names.push_back(error_name);}
   void AddDirError(std::string dir_error, std::string nick){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick);}
 
+  void inject_signal(std::string signal, std::string signal_weight_){signal_name = signal; signal_weight = signal_weight_;}
+  
   bool create_file(std::string fileName);
 
 private:
@@ -61,7 +63,9 @@ private:
   std::string treename;
   std::string binning;
   std::string channel="";
+  std::string signal_name, signal_weight;
   bool debug= false;
+  
   
 };
 
@@ -103,6 +107,25 @@ bool TreeDrawMain::create_file(std::string fileName){
     find_samples_nicks(dir);
     set_channel(dir);
     int nick_number = 0;
+    TTree* signal_tree;
+    if(!signal_name.empty() && !signal_weight.empty()){
+      for(auto & process : working_samples){
+	if(signal_name.compare(nicks[nick_number])==0){
+	  signal_tree = load_tree(dir+"/"+process);
+	  nick_number=0;
+	  break;
+	}
+	nick_number++;
+      }
+      if(nick_number>0){
+	std::cerr<<"Did not find the signal to inject. Aborting!"<<std::endl;
+	std::cerr<<"Signal "<< signal_name<<std::endl;
+	std::cerr<<"List of nicks"<<std::endl;
+	for(auto i : nicks)
+	  std::cerr<<i<<std::endl;
+	return 10;
+      }
+    }
     //The main histograms + errors that can be stored into weights
     for(auto & process : working_samples){
       std::string nick =  nicks[nick_number];
@@ -113,10 +136,15 @@ bool TreeDrawMain::create_file(std::string fileName){
       for(auto & hist : infoVec){
 	if(debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
+	if(!signal_name.empty() && !signal_weight.empty() && (!boost::algorithm::contains(hist.hist_name,"Bp") || !boost::algorithm::contains(hist.hist_name,"X"))){
+	  TH1F* signal_injected = make_hist(signal_tree,hist.draw_command,hist.selection,hist.binning);
+	  signal_injected->Scale(stod(signal_weight));
+	  tmp_hist->Add(signal_injected);
+	}
 	//missing some naming part
 	tmp_hist->SetName((hist.hist_name+channel+"__"+nick).c_str());
 	tmp_hist->SetTitle("B mass (GeV)");
-	cout<<"Hist Name: "<<tmp_hist->GetName()<<" pre fit entries "<<tmp_hist->GetEntries()<<endl;
+	 //cout<<"Hist Name: "<<tmp_hist->GetName()<<" pre fit entries "<<tmp_hist->GetEntries()<<endl;
 	if(!boost::algorithm::contains(test_string,"data") && boost::algorithm::contains(hist.hist_name,"background")){
 	  continue;
 	}
@@ -223,6 +251,7 @@ void TreeDrawMain::find_samples_nicks(std::string dir){
       boost::split(splitted_match,match,boost::is_any_of("."));
       string lower_nick = splitted_match[splitted_match.size()-2];
       boost::algorithm::to_lower(lower_nick);
+      //cout<<"nick lowered "<<lower_nick<<endl;
       if(boost::algorithm::contains(lower_nick,"data"))
 	nicks.push_back("DATA");
       else
@@ -260,27 +289,28 @@ std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string 
   */
   return matches;
 }
-int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/", string channel = ""){
+int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/", string channel = "", string signal_injection ="", string signal_weight=""){
   TH1::AddDirectory(kFALSE);
   //std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
   std::vector<std::string> directories; 
   boost::split(directories,dirnames,boost::is_any_of(","));
+
+  //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
+  std::vector<std::string> samples = {"DATA.root",signal};  
+  //cout<<"Starting histogram production"<<endl;
   /*
   std::cout<<"Directories"<<std::endl;
   for(auto it : directories)
     std::cout<<it<<std::endl;
   std::cout<<"Result File "<<resultfile<<std::endl;
+  for(auto it : samples)
+    std::cout<<it<<std::endl;
   */
-
-  //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
-  std::vector<std::string> samples = {"DATA.root",signal};  
-  //cout<<"Starting histogram production"<<endl;
-  
 
   TreeDrawMain mainClass("50,100,3000","AnalysisTree");
   mainClass.AddFileDir(directories);
   mainClass.AddSamples(samples);
-
+  mainClass.inject_signal(signal_injection,signal_weight);
   
   string eta = "2.4";
   string energy = "250";
@@ -361,5 +391,9 @@ int main(int argc, char **argv){
     RootFileCreator(argv[1],argv[2],argv[3]);
   else if(argc == 5)
     RootFileCreator(argv[1],argv[2],argv[3],argv[4]);
+  else if(argc == 6)
+    RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5]);
+  else if(argc == 7)
+    RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
 }
 
