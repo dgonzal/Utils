@@ -110,6 +110,7 @@ void simplePlots::plotHists(int options, bool logy){
   TPad* pad2 = new TPad("ratio_errors","ratio and error", x1, y1, x2, y2);
   
   get_can()->SetCanvasSize(800,800);
+  if(!draw_ratio) get_can()->SetCanvasSize(800,600);
   //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
   pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
   //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
@@ -127,7 +128,7 @@ void simplePlots::plotHists(int options, bool logy){
   for(unsigned int m = 0; m < histos.size(); ++m ){
     if(histos[m]->GetMaximum() > maximum) maximum = histos[m]->GetMaximum();
   }
-  if(histos.size()>1){
+  if(histos.size()>1 && draw_ratio){
     get_can()->Divide(2);
     pad1->Draw();
     if(logy){
@@ -140,7 +141,7 @@ void simplePlots::plotHists(int options, bool logy){
   //cout<<maximum<<" "<<max<<" "<<normArea<<" "<<histos.size()<<endl;
   for(unsigned int m = 0; m < histos.size(); ++m ){  
     if(changecolors)histos[m]->SetLineColor(1+m);
-    if(histos.size()>1)pad1->cd();
+    if(histos.size()>1 && draw_ratio)pad1->cd();
     if(options==1 && legend.size()>m) 
       leg->AddEntry( histos[m], legend[m].c_str(), "l");
     else if(options==2 && legend.size()>m){ 
@@ -171,7 +172,7 @@ void simplePlots::plotHists(int options, bool logy){
       else histos[m]->Draw("same hist"); 
     }
   }
-  if(histos.size()>1){ 
+  if(histos.size()>1 && draw_ratio){ 
     pad2->cd();
     for(unsigned int m = 0; m < histos.size(); ++m ){  
       if(!plotInratio[m])continue;
@@ -199,8 +200,8 @@ void simplePlots::plotHists(int options, bool logy){
     //stack->GetHistogram()->Draw("same");	
   }
   //go back to first pad!
-  pad1->cd();
-  if(using_stack && histos.size()>0){
+  if(draw_ratio)pad1->cd();
+  if(using_stack || histos.size()>0){
     if(plotting_styles[0].empty())
       histos[0]->Draw("same p");
     else

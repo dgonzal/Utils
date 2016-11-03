@@ -5,7 +5,7 @@
 
 
 int main(){
-  string version = "v40";
+  string version = "v47";
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
   
@@ -13,7 +13,10 @@ int main(){
 
   TreeHists treehists("plots/"+folder+".ps");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root","PE",1,20,false,"Data");
-  
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_800_RH_25ns.root","hist",4,-1,false,"B+b M(800)");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_800_RH_25ns.root","hist",7,-1,false,"B+t M(800)");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1000_RH_25ns.root","hist",4,-1,false,"B+b M(1000)");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_1000_RH_25ns.root","hist",7,-1,false,"B+t M(1000)");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1500_RH_25ns.root","hist",4,-1,false,"B+b M(1500)");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_1500_RH_25ns.root","hist",7,-1,false,"B+t M(1500)");
 
@@ -58,88 +61,109 @@ int main(){
   std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass > -1 && Chi2Dis.forwardJetAbsEta <   2.4)","50,50,3000","Mass B [GeV]");
   */
 
-  string eta = "2.4";
-  string energy = "150";
-  string jetiso = "1.8";
-
-  std::vector<TH1F*> chi2_0btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==0)","100,400,3000","Mass B [GeV]");
-  std::vector<TH1F*> chi2_1btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==1)","100,400,3000","Mass B [GeV]");
-  std::vector<TH1F*> chi2_2btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber> 1)","100,400,3000","Mass B [GeV]");
-  std::vector<TH1F*> chi2_0btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==0)","100,400,3000","Mass B [GeV]");
-  std::vector<TH1F*> chi2_1btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==1)","100,400,3000","Mass B [GeV]");
-  std::vector<TH1F*> chi2_2btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber> 1)","100,400,3000","Mass B [GeV]");
-
-  std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0&&(TopTagDis.forwardJetAbsEta>="+eta+"||TopTagDis.jetiso>="+jetiso+")&&TopTagDis.forwardJet.E()>="+energy+")","100,400,3000");
-  std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((TopTagDis.forwardJetAbsEta<"+eta+"&&TopTagDis.jetiso<"+jetiso+")||TopTagDis.forwardJet.E()<"+energy+"))","100,400,3000");                            
+  string eta = "2.";
+  string energy = "250.0";
+  string jetiso = "10000";
+  string binning = "30,500,3000";
 
 
+  string no_forward_chi2 = "";//"&& Chi2Dis.forwardJet.pt()>0";
+  string no_forward_tag = "";//"&& TopTagDis.forwardJet.pt()>0";
+  
+  std::vector<TH1F*> chi2_0btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_1btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_2btag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_0btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((abs(Chi2Dis.forwardJet.eta())<"+eta+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_1btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((abs(Chi2Dis.forwardJet.eta())<"+eta+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_2btag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((abs(Chi2Dis.forwardJet.eta())<"+eta+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
 
-  vector<string> sample_nick ={"Data","B+b M(1500)","B+t M(1500)","QCD","Singel Top","Z+Jets","ttbar","W+Jets"};
-  vector<string> category = {"Anti-b-tag","1 b-tag","2 b-tags","" };
+  std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")",binning,"Mass B [GeV]");
+  std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))",binning,"Mass B [GeV]");                            
+
+
+
+  string fitoption = "UUNORM P";
+
+
+  vector<string> sample_nick ={"Data","B+b M(800)","B+t M(800)","B+b M(1000)","B+t M(1000)","B+b M(1500)","B+t M(1500)","QCD","Singel Top","Z+Jets","ttbar","W+Jets"};
+  vector<string> category = {"Anti-b-tag","1 b-tag","2 b-tags","TopTag" };
   vector<vector<TH1F*>> central_hists = {chi2_0btag_central_hist,chi2_1btag_central_hist,chi2_2btag_central_hist,toptag_central_hist};
   vector<vector<TH1F*>> forward_hists = {chi2_0btag_forward_hist,chi2_1btag_forward_hist,chi2_2btag_forward_hist,toptag_forward_hist};
+  vector<TH1F*> sum_central;
+  vector<TH1F*> sum_forward;
+
 
   simplePlots comparison("plots/comparision_forward_central.ps");
-  comparison.normToArea(true,0.2);
+  comparison.normToArea(true,0.25);
   for(unsigned int i =0; i<central_hists.size();i++){
     string recotype = " X^2";
-    if(i==3) recotype = "TopTag";
+    if(i==3) recotype = "";
     for(unsigned int m=0;m<central_hists.at(i).size();m++){
+      if(m==7){
+	sum_forward.push_back((TH1F*)forward_hists.at(i).at(m)->Clone(("Sum Forward"+category[i]).c_str()));
+	sum_central.push_back((TH1F*)central_hists.at(i).at(m)->Clone(("Sum Central"+category[i]).c_str()));
+      }
+      else if(m>7){
+	sum_central[sum_central.size()-1]->Add(central_hists.at(i).at(m));
+	sum_forward[sum_forward.size()-1]->Add(forward_hists.at(i).at(m));
+      }
       central_hists.at(i).at(m)->Sumw2();
       forward_hists.at(i).at(m)->Sumw2();
       string histTitel = sample_nick[m]+" "+category[i]+recotype;
       cout<<histTitel<<" ratio "<<forward_hists.at(i).at(m)->GetEntries()<< " / "<<central_hists.at(i).at(m)->GetEntries()<<" = " <<forward_hists.at(i).at(m)->GetEntries()/central_hists.at(i).at(m)->GetEntries()<<endl;
+      //central_hists.at(i).at(m)->Chi2Test(forward_hists.at(i).at(m),fitoption.c_str());
       central_hists.at(i).at(m)->SetTitle(histTitel.c_str());
       central_hists.at(i).at(m)->SetMarkerStyle(20);
-      comparison.loadHists(central_hists.at(i).at(m),"Central","PE");
-      comparison.loadHists(forward_hists.at(i).at(m),"Forward","hist");
+      //central_hists.at(i).at(m)->Scale(forward_hists.at(i).at(m)->GetEntries()/central_hists.at(i).at(m)->GetEntries());
+      comparison.loadHists((TH1F*)central_hists.at(i).at(m)->Clone(),"Central","PE");
+      comparison.loadHists((TH1F*)forward_hists.at(i).at(m)->Clone(),"Forward","hist");
       comparison.plotHists(2,false);
       comparison.clearAll();
 
     }
   }
-
-  for(int i=4;i<8;i++){
-    chi2_0btag_central_hist[3]->Add(chi2_0btag_central_hist[i]);
-    chi2_1btag_central_hist[3]->Add(chi2_1btag_central_hist[i]);
-    chi2_2btag_central_hist[3]->Add(chi2_2btag_central_hist[i]);
-
-    chi2_0btag_forward_hist[3]->Add(chi2_0btag_forward_hist[i]);
-    chi2_1btag_forward_hist[3]->Add(chi2_1btag_forward_hist[i]);
-    chi2_2btag_forward_hist[3]->Add(chi2_2btag_forward_hist[i]);
-
-    toptag_central_hist[3]->Add(toptag_central_hist[i]);
-    toptag_forward_hist[3]->Add(toptag_forward_hist[i]);
+  for(unsigned int i =0; i<sum_central.size();i++){
+    sum_central[i]->SetTitle(category[i].c_str());
+    sum_forward[i]->SetTitle(category[i].c_str());
+    cout<<"Forward/Central "<<sum_central[i]->GetTitle()<<" ratio "<<sum_forward[i]->GetEntries() <<" / "<<sum_central[i]->GetEntries()<<" "<<sum_forward[i]->GetEntries()/sum_central[i]->GetEntries()<<endl;
+    comparison.loadHists((TH1F*)sum_central[i]->Clone(),"Central","PE");
+    comparison.loadHists((TH1F*)sum_forward[i]->Clone(),"Forward","hist same");
+    comparison.plotHists(2,false);
+    comparison.clearAll();
   }
-  
-  chi2_0btag_central_hist[3]->SetTitle("Anti-b-tag X^{2}");
-  chi2_0btag_central_hist[3]->SetMarkerStyle(20);
-  comparison.loadHists(chi2_0btag_central_hist[3],"Central","PE");
-  comparison.loadHists(chi2_0btag_forward_hist[3],"Forward","hist");
-  comparison.plotHists(2,false);
-  comparison.clearAll();
 
-  chi2_1btag_central_hist[3]->SetTitle("b-tag X^{2}");
-  chi2_1btag_central_hist[3]->SetMarkerStyle(20);
-  comparison.loadHists(chi2_1btag_central_hist[3],"Central","PE");
-  comparison.loadHists(chi2_1btag_forward_hist[3],"Forward","hist");
-  comparison.plotHists(2,false);
-  comparison.clearAll();
-  
-  chi2_2btag_central_hist[3]->SetTitle("2 b-tags X^{2}");
-  chi2_2btag_central_hist[3]->SetMarkerStyle(20);
-  comparison.loadHists(chi2_2btag_central_hist[3],"Central","PE");
-  comparison.loadHists(chi2_2btag_forward_hist[3],"Forward","hist");
-  comparison.plotHists(2,false);
-  comparison.clearAll();
+  //[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
+  // B+b: 3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195
+  // B+t: 0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540
+  vector<double> signal_crosssection =  {3.016,0.365,1.653,0.203,0.415,0.0540};
+  simplePlots signal_contamination("plots/signal_contamination.ps");
+  signal_contamination.switch_ratio(false);
+  for(unsigned int m=0; m<central_hists.size();m++){
+    for(unsigned int i=1;i<7;i++){
+      cout<<central_hists.at(m).at(i)->GetTitle()<<endl;
+      central_hists.at(m).at(i)->SetTitle(("Central "+category[m]).c_str());
+      central_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5);
+      central_hists.at(m).at(i)->Divide(sum_central[m]);
+      string hist_option = "hist same";
+      if(i==1) hist_option ="hist";
+      signal_contamination.loadHists((TH1F*)central_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);
+    }
+    signal_contamination.plotHists(2,false);
+    signal_contamination.clearAll();
+  }
+  for(unsigned int m=0; m<forward_hists.size();m++){
+    for(unsigned int i=1;i<7;i++){
+      forward_hists.at(m).at(i)->SetTitle(("Forward "+category[m]).c_str());
+      forward_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5);
+      forward_hists.at(m).at(i)->Divide(sum_forward[m]);
+      string hist_option = "hist same";
+      if(i==1) hist_option ="hist";
+      signal_contamination.loadHists((TH1F*)forward_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);
+    }
+    signal_contamination.plotHists(2,false);
+    signal_contamination.clearAll();
+  }
 
-
-  toptag_central_hist[3]->SetTitle("Top-Tag");
-  toptag_central_hist[3]->SetMarkerStyle(20);
-  comparison.loadHists(toptag_central_hist[3],"Central","PE");
-  comparison.loadHists(toptag_forward_hist[3],"Forward","hist");
-  comparison.plotHists(2,false);
-  comparison.clearAll();
 
 
   /*

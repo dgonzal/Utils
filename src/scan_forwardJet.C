@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
   string energy = argv[2];//"150";
   string jetiso = argv[3];//"1.8";
 
-  string version = "v40";
+  string version = "v42";
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
   

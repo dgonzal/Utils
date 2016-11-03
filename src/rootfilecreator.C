@@ -17,11 +17,12 @@
 using namespace std;
 
 struct TreeDrawInfo{
-  TreeDrawInfo( std::string draw_command_, std::string selection_, std::string hist_name_, std::string binning_):draw_command(draw_command_),selection(selection_),hist_name(hist_name_), binning(binning_){;}
+  TreeDrawInfo( std::string draw_command_, std::string selection_, std::string hist_name_, std::string binning_,double scale_):draw_command(draw_command_),selection(selection_),hist_name(hist_name_), binning(binning_), scale(scale_){;}
   std::string draw_command;
   std::string selection;
   std::string hist_name;
   std::string binning;
+  double scale;
 };
 
 class TreeDrawMain{
@@ -33,7 +34,7 @@ public:
   void AddFileDir(std::vector<std::string> dirs){ FileDir = dirs;}
   void AddSamples(std::vector<std::string> sample_){Sample =sample_;}
 
-  void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_, std::string hist_binning_=""){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_, hist_binning_.empty() ? binning: hist_binning_));}
+  void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_, std::string hist_binning_="",double scale=-1.0){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_, hist_binning_.empty() ? binning: hist_binning_,scale));}
   void AddWeightError(std::string weight_option, std::string error_name, error_method method=envelop){error_weight.push_back(weight_option);error_methods_container.push_back(method);error_names.push_back(error_name);}
   void AddDirError(std::string dir_error, std::string nick){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick);}
 
@@ -136,6 +137,7 @@ bool TreeDrawMain::create_file(std::string fileName){
       for(auto & hist : infoVec){
 	if(debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
+	if(hist.scale >0) tmp_hist->Scale(hist.scale);
 	if(!signal_name.empty() && !signal_weight.empty() && (!boost::algorithm::contains(hist.hist_name,"Bp") || !boost::algorithm::contains(hist.hist_name,"X"))){
 	  TH1F* signal_injected = make_hist(signal_tree,hist.draw_command,hist.selection,hist.binning);
 	  signal_injected->Scale(stod(signal_weight));
@@ -297,24 +299,24 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 
   //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
   std::vector<std::string> samples = {"DATA.root",signal};  
-  //cout<<"Starting histogram production"<<endl;
-  /*
+  cout<<"Starting histogram production"<<endl;
+  
   std::cout<<"Directories"<<std::endl;
   for(auto it : directories)
     std::cout<<it<<std::endl;
   std::cout<<"Result File "<<resultfile<<std::endl;
   for(auto it : samples)
     std::cout<<it<<std::endl;
-  */
+  
 
   TreeDrawMain mainClass("50,100,3000","AnalysisTree");
   mainClass.AddFileDir(directories);
   mainClass.AddSamples(samples);
   mainClass.inject_signal(signal_injection,signal_weight);
   
-  string eta = "2.4";
+  string eta = "2.0";
   string energy = "250";
-  string jetiso = "2";
+  string jetiso = "200000";
   //if(boost::algorithm::contains(channel,"Ele"))
   //  eta = 2.1;
   /*
@@ -336,17 +338,20 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   **
   ** Data driven background
   */
- 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","55,250,3000");	    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"35,250,3000");	    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && (Chi2Dis.forwardJetAbsEta >="+eta+"||Chi2Dis.jetiso>="+jetiso+")&&Chi2Dis.forwardJet.E()>="+energy+"&&Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"25,250,2500");	    
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(TopTagDis.forwardJetAbsEta>="+eta+"||TopTagDis.jetiso>="+jetiso+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","15,500,3000");					    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","55,250,3000"); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"35,250,3000"); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*(TopTagDis.mass==-1&&((Chi2Dis.forwardJetAbsEta<"+eta+"&&Chi2Dis.jetiso<"+jetiso+")||Chi2Dis.forwardJet.E()<"+energy+")&&Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"25,250,2500"); 
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((TopTagDis.forwardJetAbsEta<"+eta+"&&TopTagDis.jetiso<"+jetiso+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","15,500,3000");                            
-  
 
+  string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
+  string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
+
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","30,500,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"30,500,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"30,500,3000");	    
+ 		    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","30,500,3000",0.388519); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"30,500,3000",0.471137); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"30,500,3000",0.467834); 
+
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","30,500,3000");		
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","30,500,3000",0.445472);                        
   
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");

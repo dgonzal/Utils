@@ -53,6 +53,7 @@ class simplePlots: public HistsBase{
   void normToArea(bool area=true, double max_ =-1){normArea=area;max=max_;}
   void setErrorBand(double min_, double max_){errorband_max = max_; errorband_min =min_;}//used for the ratio plot
   void change_colors(bool col){changecolors = col;}
+  void switch_ratio(bool rat_){draw_ratio=rat_;}
 
   void clearHists(){histos.clear();}
   void clearLegend(){legend.clear();stack_legend.clear();}
@@ -75,4 +76,6 @@ class simplePlots: public HistsBase{
   double max;
   THStack* stack;
   bool using_stack=false;
+  bool draw_ratio =true;
+
 };

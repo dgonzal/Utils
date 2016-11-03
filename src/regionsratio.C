@@ -6,7 +6,7 @@ using namespace std;
 int main(){
 
 string cms_string = "CMSSW_7_6_3";
-  string sel_version ="31";
+  string sel_version ="47";
 
   simplePlots TopTagForwardSplit("plots/TopTagForwardCentralSplit.ps");
    TopTagForwardSplit.normToArea(true,0.2);

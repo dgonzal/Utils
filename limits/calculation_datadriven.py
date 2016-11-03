@@ -36,12 +36,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
-    try:
-        #exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)
-        exp, obs = bayesian_limits(model, 'all', n_toy = 2000, n_data = 100,options=options)
-
-    except:
-        print 'unable to run limits'
+    #exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)
+    exp, obs = bayesian_limits(model, 'all', n_toy = 1000, n_data = 1000,options=options)
 
     #evaluate_prediction(model)
     if write_report:
@@ -58,11 +54,13 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                 os.makedirs(output_directory)
 
         report.write_html(output_directory)
-        savelimits = open(output_directory+"limits.pickle",'w+') 
-        pickle.dump(exp,savelimits)   
-        pickle.dump(obs,savelimits)
+        savelimits = open(output_directory+"/"+injected_signal+"limits.pickle",'w+') 
+        #pickle.dump(exp,savelimits)   
+        #pickle.dump(obs,savelimits)
         savelimits.close()
    
+        fit_result = []
+
         try:
         #options.set('minimizer', 'always_mcmc', 'True')
         #options.set('global','debug','True')
@@ -75,14 +73,15 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                 for pf_vals in mle_background.itervalues():
                     del pf_vals['__nll']
                     for key in pf_vals:
-                        print key
+                        #print key
                         vals = list(a for a, _ in pf_vals[key])
                         errs = list(b for _, b in pf_vals[key])
                         weis = list(1/b for b in errs)
                         wei_mean = numpy.average(vals, weights=weis)
                         mean_err = numpy.average(errs)
                         pf_vals[key] = ((wei_mean, mean_err),)
-                        print 'Mean',math.exp(wei_mean),"Error",math.exp(mean_err) 
+                        print key,'Mean',math.exp(wei_mean),"Error",math.exp(mean_err)
+                        fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
                     #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
             except:
                 print 'Postfit MLE was not possible for background. Channel Bp'+particle+'_TW_'+Chirality
@@ -95,7 +94,11 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         print >> limit_file, exp
         limit_file.write("observed limit "+Chirality+":\n")
         print >> limit_file, obs
+        
+        for item in fit_result:
+            print >> limit_file, item
         limit_file.close()
+
 
     print "expected limit "+Chirality+' '+channel +":"
     print exp
@@ -113,9 +116,12 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     sigma2_color = 'yellow' #"yellow"
     sigma1_color = 'darkgreen' #"green"
 
-    pp = PdfPages(injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
+    pp =None
     if channel:
-        pp = PdfPages(injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+'_'+channel+".pdf")
+        pp = PdfPages(output_directory+injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+'_'+channel+".pdf")
+    else:
+        pp = PdfPages(output_directory+injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
+
 
     theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500]
     theory13TeV_y =[0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540]

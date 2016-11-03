@@ -6,19 +6,20 @@ production_channels = ["b"]#,"t"]
 chiralitys = ["RH","LH"]
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
-Mudirs = ['config/Selection_v40/']
+Mudirs = ['config/Selection_v47/']
 Eledirs = ['config/EleSelection_v7_tree/']
 rootDir = "ROOTFiles/"
 createfiles = True
 rebin = True
-signal_injection = True
+signal_injection = False
 
 if not rebin:
     createfiles = False
 
 if not os.path.exists(rootDir):
     os.makedirs(rootDir)
-
+if not os.path.exists("h_"+rootDir):
+    os.makedirs("h_"+rootDir)
 
 
 for chirality in chiralitys:
@@ -52,16 +53,53 @@ for chirality in chiralitys:
             print 'calculated limits for: channel',channel,'ass. production',production,'chirality',chirality
 
             if signal_injection:
+                sigma2_color = 'yellow' #"yellow"
+                sigma1_color = 'darkgreen' #"green"
+                pp = PdfPages("InjectedSignals_Bprime"+production+"_"+chirality+'_'+channel+".pdf")
+                plt.clf()
+                plt.semilogy()
+                plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')   
+                plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
+                plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
+                                 alpha=0.6, facecolor=sigma2_color, edgecolor=sigma2_color,
+                                 linewidth=0, label="$\pm$ 2 std. deviation")
+                plt.fill_between(exp.x, exp.bands[1][0] ,  exp.bands[1][1],
+                                 alpha=0.8, facecolor=sigma1_color, edgecolor=sigma1_color, # exp_LH.bands[1][2],
+                                 linewidth=0, label="$\pm$ 1 std. deviation")
+
                 for i in xrange(len(exp.bands[0][0])):
-                    """
-                    print './../bin/rootfilecreator', 'Bp'+production+'_TW_*'+chirality+'_25ns', str('InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel,str('Bp'+production+'_TW_'+str(int(exp.x[i]))+'_'+chirality+'_25ns'),str(exp.bands[0][0][i])
-                    print 0.4, 'InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality+'.root', 'M_{B} [GeV/c^{2}]', ['Background']
-                    print 'InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True
-                    continue
-                    """
                     call(['./../bin/rootfilecreator', str('Bp'+production+'_TW_*'+chirality+'_25ns'), str(rootDir+"InjectedSignal_M"+str(int(exp.x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel,str('Bp'+production+'_TW_'+str(int(exp.x[i]))+'_'+chirality+'_25ns'),str(exp.bands[0][0][i])], shell=False)
                     binFile(0.3, rootDir+'InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality+'.root', 'M_{B} [GeV/c^{2}]', ['Background'])
-                    run_cutopt(rootDir+'InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True,str('Bp'+production+'_TW_'+str(int(exp.x[i]))))
+                    exp_i, obs_i = run_cutopt(rootDir+'InjectedSignal_M'+str(int(exp.x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True,str('Bp'+production+'_TW_'+str(int(exp.x[i]))))
+                    plt.plot(exp_i.x, exp_i.y, color ='blue',linestyle='dotted')#,color = exp_LH.bands[0][2])
+                pp.close()
+        
+                
+                
+
+
+def write_sh(name):
+    myfile = open(name+'.sh','w')
+    myfile.write(
+        """#!/bin/bash
+##This is a simple example of a SGE batch script
+##Use home server with scientific linux 6 
+#$ -l os=sld6 
+#$ -l site=hh 
+#$ -cwd
+##You need to set up sframe
+#$ -V 
+##email Notification
+#$ -m as
+#$ -M daniel.gonzalez@desy.de
+##running in local mode with 8-12 cpu slots
+##$ -pe local 8-12
+##CPU memory
+#$ -l h_vmem=2G
+##DISK memory
+#$ -l h_fsize=2G   
+""")    
+    return myfile
 
 
 
