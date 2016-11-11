@@ -19,25 +19,41 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #for p in model.processes:
     #    model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
 
-
-    #model.add_lognormal_uncertainty('Background_rate', math.log(3), 'Background') 
+    """
     if channel =="Mu" or "":
+        model.add_lognormal_uncertainty('Mu_Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagMu')    
+        model.add_lognormal_uncertainty('Mu_1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagMu')    
+        model.add_lognormal_uncertainty('Mu_2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagMu')    
+        model.add_lognormal_uncertainty('Mu_top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagMu')    
+    if channel =="Ele" or "":
+        model.add_lognormal_uncertainty('Ele_Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagEle')    
+        model.add_lognormal_uncertainty('Ele_1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagEle')    
+        model.add_lognormal_uncertainty('Ele_2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagEle')    
+        model.add_lognormal_uncertainty('Ele_top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagEle')    
+    """
+    if channel =="Mu" or not channel:
         model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagMu')    
         model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagMu')    
         model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagMu')    
         model.add_lognormal_uncertainty('top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagMu')    
-    if channel =="Ele" or "":
+    if channel =="Ele" or not channel:
         model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagEle')    
         model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagEle')    
         model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagEle')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagEle')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagEle')         
+
+
 
     #model_summary(model)
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
-    #exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)
-    exp, obs = bayesian_limits(model, 'all', n_toy = 1000, n_data = 1000,options=options)
+    #exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)    
+    exp = None
+    obs = None
+
+    if not injected_signal: exp, obs  = bayesian_limits(model, 'all', n_toy = 1000, n_data = 100,options=options)
+    else: exp,obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
 
     #evaluate_prediction(model)
     if write_report:
@@ -49,7 +65,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
             
 
         if injected_signal: 
-            output_directory = './Injected/'+injected_signal+output_directory[1:-1]
+            output_directory = './Injected/'+injected_signal+output_directory[1:-1]+"/"
             if not os.path.exists(output_directory):
                 os.makedirs(output_directory)
 
@@ -64,23 +80,29 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         try:
         #options.set('minimizer', 'always_mcmc', 'True')
         #options.set('global','debug','True')
-            options.set('minimizer','minuit_tolerance_factor','1000')
-            mle_output = mle(model, input='data',n=1, options=options)
+            #options.set('minimizer','minuit_tolerance_factor','1000')
+            mle_output = mle(model, input='data',n=1000, options=options)
+            #mle_output = mle(model, input='data',n=1000, options=options,signal_process_groups ={"background_only":[]} )
             try:
-                options.set('minimizer','minuit_tolerance_factor','0.1')
-                mle_background = mle(model, input='data',n=1,signal_process_groups ={"background_only":[]} )
+                #options.set('minimizer','minuit_tolerance_factor','0.001')
+                mle_background = mle(model, input='data',n=1000,signal_process_groups ={"background_only":[]} )
                 mle_output.update(mle_background)
                 for pf_vals in mle_background.itervalues():
                     del pf_vals['__nll']
                     for key in pf_vals:
                         #print key
                         vals = list(a for a, _ in pf_vals[key])
+                        #print 'vals',vals
                         errs = list(b for _, b in pf_vals[key])
+                        #print 'errs',errs
                         weis = list(1/b for b in errs)
-                        wei_mean = numpy.average(vals, weights=weis)
+                        #print 'weis',weis
+                        #wei_mean = numpy.average(vals, weights=weis)
+                        wei_mean = numpy.average(vals)
                         mean_err = numpy.average(errs)
-                        pf_vals[key] = ((wei_mean, mean_err),)
-                        print key,'Mean',math.exp(wei_mean),"Error",math.exp(mean_err)
+                        pf_vals[key] = ((3**wei_mean, 3**mean_err),)
+                        #print wei_mean, mean_err
+                        print key,'Mean',3**wei_mean,"Error",3**mean_err-1
                         fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
                     #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
             except:

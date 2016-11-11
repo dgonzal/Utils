@@ -44,7 +44,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   ** draw_option is in this case for the TTreeDraw command
   ** hist_draw_options governs how the histograms are drawn!!
   **
-  */
+  */  
 
   vector<vector<TH1F*>> empty_swapvec;
   error_histos.swap(empty_swapvec);
@@ -190,7 +190,11 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   get_can()->Divide(2);
   pad1->Draw();
   pad2->Draw();
-
+  if(logy)
+    pad1->SetLogy(1);
+  else
+    pad1->SetLogy(0);
+    
   //calculate total error before plotting anything
   TH1F* total_error = (TH1F*)(hs->GetStack()->Last())->Clone("total_error");
   for(unsigned int i=0; i<error_weights.size();i++)

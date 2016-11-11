@@ -339,19 +339,27 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   ** Data driven background
   */
 
+
   string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
   string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
+
+  std::vector<double>  background_weights = {0.37, 0.43, 0.43, 0.45 };
+  
+  /*
+  if(boost::algorithm::contains(channel,"Ele")){
+    background_weights = {0.38, 0.423, 0.39, 0.54};
+  }*/
 
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"30,500,3000");	    
  		    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","30,500,3000",0.388519); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"30,500,3000",0.471137); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"30,500,3000",0.467834); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","30,500,3000",background_weights[0]);//0.388519); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"30,500,3000",background_weights[1]);//0.471137); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"30,500,3000",background_weights[2]);//0.467834); 
 
   mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","30,500,3000");		
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","30,500,3000",0.445472);                        
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","30,500,3000",background_weights[3]);//0.445472);                        
   
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
@@ -367,18 +375,21 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   //mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
   //mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
   mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
-  /*
+  
+  
   vector<string> channel_dirs;
   if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
   if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");
   
+  string cmssw_version = "7_6_3";
+
   for(auto chan : channel_dirs){
-    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_up_Sel_"+chan+"/","jec__plus");
-    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_down_Sel_"+chan+"/","jec__minus");
-    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_up_Sel_"+chan+"/","jer__plus");
-    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_down_Sel_"+chan+"/","jer__minus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_up_Sel_"+chan+"/","jec__plus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jecsmear_direction_down_Sel_"+chan+"/","jec__minus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_up_Sel_"+chan+"/","jer__plus");
+    mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_down_Sel_"+chan+"/","jer__minus");
   }
-  */
+  
   mainClass.create_file(resultfile);
 
   gApplication->Terminate();

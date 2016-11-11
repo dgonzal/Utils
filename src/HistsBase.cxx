@@ -39,7 +39,9 @@ HistsBase::HistsBase(string saveName){
     gStyle->SetFrameLineColor(1);
     gStyle->SetFrameLineStyle(1);
     gStyle->SetFrameLineWidth(1);
+    gStyle->SetTitleStyle(0); 
     gStyle->SetTitleFont(42, "XYZ");
+    gStyle->SetTitleBorderSize(0);
     gStyle->SetLabelFont(42, "XYZ");
     gStyle->SetAxisColor(1, "XYZ");
     gStyle->SetStripDecimals(kTRUE);

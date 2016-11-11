@@ -54,7 +54,7 @@ std::string deltaRstring(std::string var1, std::string var2){
 int main(){
 
   string cms_string = "CMSSW_7_6_3";
-  string sel_version = "47";
+  string sel_version = "49";
 
   TFile* data = new TFile(("/nfs/dust/cms/user/gonvaq/CMSSW/"+cms_string+"/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root").c_str());
   TH1F * hist1 = (TH1F*) data->Get("TTbarHists/mass_topLep");

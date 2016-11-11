@@ -27,6 +27,7 @@ class TreeHists: public HistsBase{
   void SetLegend(double x1=0.6, double y1=0.7, double x2= 0.8, double y2=0.8){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
   void AddErrorWeight(std::string error_string, error_method method=envelop, std::string replace="");
   void AddErrorFolder(std::vector<std::string> folder_name);
+  void switch_logy(bool logy_=false){logy =logy_;}
 
   bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
   std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
@@ -52,6 +53,7 @@ class TreeHists: public HistsBase{
   std::vector<std::vector<std::string>> error_folders;
   std::vector<std::vector<TH1F*>> error_folder_histos;
 
+  bool logy=false;
   bool debug = false;
   //Tpads for pretty print
   TPad *pad1, *pad2;

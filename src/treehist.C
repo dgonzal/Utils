@@ -5,14 +5,16 @@
 
 
 int main(){
-  string version = "v47";
+  string version = "v49";
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  
+  bool electron = false;
+  if (electron)folder = "EleSelection_v8";
 
 
   TreeHists treehists("plots/"+folder+".ps");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root","PE",1,20,false,"Data");
+  if(!electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root","PE",1,20,false,"Data");
+  if(electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleEleDATA.root","PE",1,20,false,"Data");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_800_RH_25ns.root","hist",4,-1,false,"B+b M(800)");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_800_RH_25ns.root","hist",7,-1,false,"B+t M(800)");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1000_RH_25ns.root","hist",4,-1,false,"B+b M(1000)");
@@ -64,7 +66,7 @@ int main(){
   string eta = "2.";
   string energy = "250.0";
   string jetiso = "10000";
-  string binning = "30,500,3000";
+  string binning = "25,500,3000";
 
 
   string no_forward_chi2 = "";//"&& Chi2Dis.forwardJet.pt()>0";
@@ -142,8 +144,12 @@ int main(){
     for(unsigned int i=1;i<7;i++){
       cout<<central_hists.at(m).at(i)->GetTitle()<<endl;
       central_hists.at(m).at(i)->SetTitle(("Central "+category[m]).c_str());
-      central_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5);
+      central_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
       central_hists.at(m).at(i)->Divide(sum_central[m]);
+      central_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
+      central_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
+      central_hists.at(m).at(i)->GetXaxis()->SetTitleOffset(1.2);
+      central_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
       string hist_option = "hist same";
       if(i==1) hist_option ="hist";
       signal_contamination.loadHists((TH1F*)central_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);
@@ -154,8 +160,12 @@ int main(){
   for(unsigned int m=0; m<forward_hists.size();m++){
     for(unsigned int i=1;i<7;i++){
       forward_hists.at(m).at(i)->SetTitle(("Forward "+category[m]).c_str());
-      forward_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5);
+      forward_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
       forward_hists.at(m).at(i)->Divide(sum_forward[m]);
+      forward_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
+      forward_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
+      forward_hists.at(m).at(i)->GetXaxis()->SetTitleOffset(1.2);
+      forward_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
       string hist_option = "hist same";
       if(i==1) hist_option ="hist";
       signal_contamination.loadHists((TH1F*)forward_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);
