@@ -29,14 +29,14 @@ class TreeHists: public HistsBase{
   void AddErrorFolder(std::vector<std::string> folder_name);
   void switch_logy(bool logy_=false){logy =logy_;}
 
-  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
+  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true);
   std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
 
  private:
   TTree* load_tree(std::string fileDir);
   TH1F* make_hist(TTree* mytree, std::string variable, std::string binning, std::string draw_option);
   TH1F* calc_MCstat(THStack* stack);
-  TH1F* calc_ratio(THStack* stack, TH1F* hist);
+  TH1F* calc_ratio(TH1F* stack_hist, TH1F* hist);
   void calc_weightErr(unsigned int i_error,error_method method, TH1F* result);
   void calc_fixedErr(const std::vector<double> & uncertainties, const std::vector<bool> & stacked, TH1F* result, THStack* stack);
   void calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1F* nominal);
@@ -55,6 +55,7 @@ class TreeHists: public HistsBase{
 
   bool logy=false;
   bool debug = false;
+  bool draw_ratio =true;
   //Tpads for pretty print
   TPad *pad1, *pad2;
 };

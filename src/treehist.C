@@ -8,7 +8,7 @@ int main(){
   string version = "v49";
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  bool electron = false;
+  bool electron = true;
   if (electron)folder = "EleSelection_v8";
 
 
@@ -96,11 +96,16 @@ int main(){
 
 
   simplePlots comparison("plots/comparision_forward_central.ps");
-  comparison.normToArea(true,0.25);
+  comparison.set_ratioYTitle("Cen./For.");
+  comparison.set_histYTitle("NA");
+  comparison.set_XTitle("B mass [GeV]");
+  comparison.normToArea(true,0.28);
   for(unsigned int i =0; i<central_hists.size();i++){
     string recotype = " X^2";
     if(i==3) recotype = "";
     for(unsigned int m=0;m<central_hists.at(i).size();m++){
+      if(central_hists.at(i).at(m)->GetSumw2N()==0)central_hists.at(i).at(m)->Sumw2();
+      if(forward_hists.at(i).at(m)->GetSumw2N()==0)forward_hists.at(i).at(m)->Sumw2();
       if(m==7){
 	sum_forward.push_back((TH1F*)forward_hists.at(i).at(m)->Clone(("Sum Forward"+category[i]).c_str()));
 	sum_central.push_back((TH1F*)central_hists.at(i).at(m)->Clone(("Sum Central"+category[i]).c_str()));
@@ -109,8 +114,6 @@ int main(){
 	sum_central[sum_central.size()-1]->Add(central_hists.at(i).at(m));
 	sum_forward[sum_forward.size()-1]->Add(forward_hists.at(i).at(m));
       }
-      central_hists.at(i).at(m)->Sumw2();
-      forward_hists.at(i).at(m)->Sumw2();
       string histTitel = sample_nick[m]+" "+category[i]+recotype;
       cout<<histTitel<<" ratio "<<forward_hists.at(i).at(m)->GetEntries()<< " / "<<central_hists.at(i).at(m)->GetEntries()<<" = " <<forward_hists.at(i).at(m)->GetEntries()/central_hists.at(i).at(m)->GetEntries()<<endl;
       //central_hists.at(i).at(m)->Chi2Test(forward_hists.at(i).at(m),fitoption.c_str());
@@ -118,10 +121,9 @@ int main(){
       central_hists.at(i).at(m)->SetMarkerStyle(20);
       //central_hists.at(i).at(m)->Scale(forward_hists.at(i).at(m)->GetEntries()/central_hists.at(i).at(m)->GetEntries());
       comparison.loadHists((TH1F*)central_hists.at(i).at(m)->Clone(),"Central","PE");
-      comparison.loadHists((TH1F*)forward_hists.at(i).at(m)->Clone(),"Forward","hist");
+      comparison.loadHists((TH1F*)forward_hists.at(i).at(m)->Clone(),"Forward","PE");
       comparison.plotHists(2,false);
       comparison.clearAll();
-
     }
   }
   for(unsigned int i =0; i<sum_central.size();i++){
@@ -129,7 +131,7 @@ int main(){
     sum_forward[i]->SetTitle(category[i].c_str());
     cout<<"Forward/Central "<<sum_central[i]->GetTitle()<<" ratio "<<sum_forward[i]->GetEntries() <<" / "<<sum_central[i]->GetEntries()<<" "<<sum_forward[i]->GetEntries()/sum_central[i]->GetEntries()<<endl;
     comparison.loadHists((TH1F*)sum_central[i]->Clone(),"Central","PE");
-    comparison.loadHists((TH1F*)sum_forward[i]->Clone(),"Forward","hist same");
+    comparison.loadHists((TH1F*)sum_forward[i]->Clone(),"Forward","PE");
     comparison.plotHists(2,false);
     comparison.clearAll();
   }

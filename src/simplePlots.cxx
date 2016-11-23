@@ -105,12 +105,11 @@ void simplePlots::plotHists(int options, bool logy){
   Float_t y1, y2, y3, x1, x2;
   x1=0;y1=0.05;y2=0.25;x2=1;y3=0.75;
 
-
   TPad* pad1 = new TPad("histograms","histograms",x1, y2, x2, y3);
   TPad* pad2 = new TPad("ratio_errors","ratio and error", x1, y1, x2, y2);
   
   get_can()->SetCanvasSize(800,800);
-  if(!draw_ratio) get_can()->SetCanvasSize(800,600);
+  if(!draw_ratio  || !histos.size()>1 ) get_can()->SetCanvasSize(800,600);
   //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
   pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
   //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
@@ -149,6 +148,10 @@ void simplePlots::plotHists(int options, bool logy){
       //leg->AddEntry((TObject*)0,("Entries: "+to_string( int(histos[m]->GetEntries()))).c_str(),"");
     }
     if(m==0){
+      histos[m]->GetYaxis()->SetTitle(hist_ytitle.c_str());
+      //histos[m]->GetYaxis()->SetLabelSize(0.04/bottomSize); 
+      histos[m]->GetYaxis()->SetTitleSize(0.08);
+      histos[m]->GetYaxis()->SetTitleOffset(0.6);
       if(normArea){
 	if(changecolors)histos[m]->SetMarkerStyle(20);
 	if(plotting_styles[m].empty())
@@ -166,7 +169,12 @@ void simplePlots::plotHists(int options, bool logy){
       }
     }
     else{
-      if(normArea)histos[m]->DrawNormalized("same hist"); 
+      if(normArea){
+	if(!plotting_styles[m].empty())
+	  histos[m]->DrawNormalized(("same"+plotting_styles[m]).c_str());
+	else
+	  histos[m]->DrawNormalized("same hist");
+      } 
       else if(!plotting_styles[m].empty())
 	histos[m]->Draw(plotting_styles[m].c_str());
       else histos[m]->Draw("same hist"); 
@@ -176,17 +184,31 @@ void simplePlots::plotHists(int options, bool logy){
     pad2->cd();
     for(unsigned int m = 0; m < histos.size(); ++m ){  
       if(!plotInratio[m])continue;
-      TH1F* h_ratio = ratio(histos[m],histos[0],normArea);
+      TH1F* h_ratio = ratio(histos[m],(TH1F*)histos[0]->Clone(),normArea);
+      //control over size for label size and offset ...
+      double bottomSize = 0.273;
       h_ratio->SetTitle("");
+      h_ratio->GetXaxis()->SetTitle(xtitle.c_str());
+      h_ratio->GetYaxis()->SetTitle(ratio_ytitle.c_str());
+      h_ratio->GetXaxis()->SetLabelSize(0.03/bottomSize); //h_ratio->GetXaxis()->SetNdivisions(100);
+      h_ratio->GetXaxis()->SetTitleOffset(0.2/bottomSize);
+      h_ratio->GetYaxis()->SetLabelSize(0.03/bottomSize); 
+      h_ratio->GetYaxis()->SetNdivisions(505);
+      h_ratio->GetXaxis()->SetTitleSize( 0.04/bottomSize);
+      h_ratio->GetYaxis()->SetTitleSize( 0.13);
+      h_ratio->GetYaxis()->SetTitleOffset(0.4);
+      h_ratio->GetYaxis()->CenterTitle();
+      h_ratio->SetTickLength( 0.03 / bottomSize );
+      
       if(changecolors)h_ratio->SetLineColor(1+m);
-      h_ratio->SetMaximum(3);
-      h_ratio->SetMinimum(0);
+      h_ratio->SetMaximum(ratio_max);
+      h_ratio->SetMinimum(ratio_min);
       if(m==0) {
 	h_ratio->SetFillColor(TColor::GetColor( "#aaaaaa" ));
 	h_ratio->Draw("e2");
       }
       else
-	h_ratio->Draw("same E");
+	h_ratio->Draw("same E0");
     }
   }
     //if(histos.size()) pad2->Update();
@@ -203,9 +225,15 @@ void simplePlots::plotHists(int options, bool logy){
   if(draw_ratio)pad1->cd();
   if(using_stack || histos.size()>0){
     if(plotting_styles[0].empty())
-      histos[0]->Draw("same p");
+      if(normArea)
+	histos[0]->DrawNormalized("same p");
+      else
+	histos[0]->Draw("same p");
     else
-      histos[0]->Draw(("same "+plotting_styles[0]).c_str());
+      if(normArea)
+	histos[0]->DrawNormalized(("same "+plotting_styles[0]).c_str());
+      else
+	histos[0]->Draw(("same "+plotting_styles[0]).c_str());
   }  
   leg->Draw();
   get_can()->Print(get_resultFile());
@@ -229,7 +257,7 @@ void simplePlots::plotTH2(int options){
     //twoDhists[m]->GetXaxis()->SetRangeUser(20,450);
     twoDhists[m]->Rebin2D(20,10);
     if(options==0){
-      twoDhists[m]->Scale(1/twoDhists[m]->Integral()); 
+      twoDhists[m]->Scale(1/twoDhists[m]->GetSumOfWeights()); 
       twoDhists[m]->Draw("colz"); 
     }
     get_can()->Print(get_resultFile());
@@ -238,26 +266,17 @@ void simplePlots::plotTH2(int options){
 
 TH1F* simplePlots::ratio(TH1F* num, TH1F* denom, bool norm){
   TH1F* ratio = (TH1F*)num->Clone();
+  TH1F* denom_zero_error = (TH1F*)denom->Clone();
+   for(int m=0;m<denom_zero_error->GetNcells();m++)
+    denom_zero_error->SetBinError(m,0);
   //cout<<ratio->GetSumw2N()<<endl;
   if(ratio->GetSumw2N()==0)ratio->Sumw2();
-  if(denom->GetSumw2N() ==0)denom->Sumw2();
+  if(denom_zero_error->GetSumw2N()==0)denom_zero_error->Sumw2();
   if(norm){
-    ratio->Scale(1/num->Integral());
-    denom->Scale(1/denom->Integral());
+    ratio->Scale(1/num->GetSumOfWeights());
+    denom_zero_error->Scale(1/denom->GetSumOfWeights());
   }
-  ratio->Divide(denom);
-  //double err =0;
-  /*
-  for(int i=0; i<num->GetNbinsX();i++){
-    //if(num->GetBin(i) <0.1 || denom->GetBin(i)<0.1) continue;
-    //Double_t ex_low = (num->GetXaxis()->GetBinCenter(i)) - (num->GetXaxis()->GetBinLowEdge(i));
-    //Double_t ex_up =  (num->GetXaxis()->GetBinUpEdge(i)) - (num->GetXaxis()->GetBinCenter(i));
-    //err = sqrt(num->GetBinError(i)*num->GetBinError(i)+denom->GetBinError(i)*denom->GetBinError(i));
-    if(ratio->GetBinContent(i)!=0)cout<<"GetBinError "<<ratio->GetBinError(i)<<" GetBinContent "<< ratio->GetBinContent(i)<<endl;//,num->GetBinError(i));
-    //eAsym -> SetPoint(i, num->GetXaxis()->GetBinCenter(i), num->GetBinContent(i)/denom->GetBinContent(i)); 
-    //eAsym -> SetPointError(i, ex_low, ex_up, err, err); 
-  }
-  */
+  ratio->Divide(denom_zero_error);
   ratio->SetMarkerStyle(0);
   ratio->SetMarkerSize(0);
   //ratio->SetLineColor(TColor::GetColor( "#aaaaaa" ));

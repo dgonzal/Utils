@@ -48,7 +48,7 @@ bool create_overlayhists(std::string plotname, std::string distibution, std::str
 }
 */
 std::string deltaRstring(std::string var1, std::string var2){
-  return "(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi()))";
+  return "(double(int(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())*100)%314)/100+("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi()))";
 }
 
 int main(){
@@ -71,6 +71,7 @@ int main(){
 
 
   simplePlots matchingPlots("plots/matching.ps");
+  matchingPlots.switch_ratio(false);
   matchingPlots.loadHists(hist4);
   matchingPlots.loadHists(hist2);
   matchingPlots.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cms_string+"/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.TTJets.root");
@@ -170,11 +171,14 @@ int main(){
   unmatched[1]->SetFillColor(3);
   unmatched[1]->SetLineColor(3);
 
-  vector<TH1F*> unmatched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && "+deltaRstring("Chi2Dis.topLep","BprimeGen.topLep")+">"+matching_radius+" && "+deltaRstring("Chi2Dis.wHad","BprimeGen.wHad")+" >"+matching_radius+")","70,30,500","leptonic Top Mass[GeV]");
-  vector<TH1F*> top_matched_w_unmatched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))<"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))>"+matching_radius+"))","70,30,500","leptonic Top Mass[GeV]");
-  vector<TH1F*> top_unmatched_w_matched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))>"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))<"+matching_radius+"))","70,30,500","leptonic Top Mass[GeV]");
-  vector<TH1F*> matched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))<"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))<"+matching_radius+"))","70,30,500","leptonic Top Mass[GeV]");
-  vector<TH1F*> all_lep =  treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11)","70,30,500","leptonic Top Mass[GeV]");
+
+  string topmass_binning = "30,80,350";
+
+  vector<TH1F*> unmatched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && "+deltaRstring("Chi2Dis.topLep","BprimeGen.topLep")+">"+matching_radius+" && "+deltaRstring("Chi2Dis.wHad","BprimeGen.wHad")+" >"+matching_radius+")",topmass_binning,"leptonic Top Mass[GeV]");
+  vector<TH1F*> top_matched_w_unmatched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))<"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))>"+matching_radius+"))",topmass_binning,"leptonic Top Mass[GeV]");
+  vector<TH1F*> top_unmatched_w_matched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))>"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))<"+matching_radius+"))",topmass_binning,"leptonic Top Mass[GeV]");
+  vector<TH1F*> matched_lep = treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11 && (((Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())*(Chi2Dis.topLep.Eta()-BprimeGen.topLep.Eta())+(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi())*(Chi2Dis.topLep.Phi()-BprimeGen.topLep.Phi()))<"+matching_radius+"  && ((Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())*(Chi2Dis.wHad.Eta()-BprimeGen.wHad.Eta())+(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi())*(Chi2Dis.wHad.Phi()-BprimeGen.wHad.Phi()))<"+matching_radius+"))",topmass_binning,"leptonic Top Mass[GeV]");
+  vector<TH1F*> all_lep =  treehists.return_hists("Chi2Dis.topLep.M()","weight*(Chi2Dis.recoTyp == 11)",topmass_binning,"leptonic Top Mass[GeV]");
 
   TH1F* matched_hist_lep  = matched_lep[3];
   TH1F* unmatched_hist_lep  = unmatched_lep[3];
@@ -203,33 +207,38 @@ int main(){
   unmatched_lep[1]->SetLineColor(5);
 
   simplePlots test("plots/test.ps");
+  test.switch_ratio(false);
   all[1]->SetTitle("hadronic Top");
   all[1]->SetMarkerStyle(1);
-  test.loadHists(all[1],"B+b M(1500)","HIST");
-  test.loadStackHists(top_unmatched_w_matched[1]," top_{unmatch} W_{match}");
-  test.loadStackHists(unmatched[1],"unmatched");
-  test.loadStackHists(top_matched_w_unmatched[1]," top_{match} W_{unmatch}");
-  test.loadStackHists(matched[1],"matched");
+  all[1]->GetXaxis()->SetTitle("top mass [GeV]");
+  all[1]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadStackHists((TH1F*)top_unmatched_w_matched[1]," top_{unmatch} W_{match}");
+  test.loadStackHists((TH1F*)unmatched[1]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)top_matched_w_unmatched[1]->Clone()," top_{match} W_{unmatch}");
+  test.loadStackHists((TH1F*)matched[1]->Clone(),"matched");
   test.plotHists(2,false);
   test.clearAll();
 
   all_lep[1]->SetTitle("leptonic Top");
   all_lep[1]->SetMarkerStyle(1);
-  test.loadHists(all_lep[1],"B+b M(1500)","hist");
-  test.loadStackHists(unmatched_lep[1],"unmatched");
-  test.loadStackHists(top_unmatched_w_matched_lep[1]," top_{unmatch} W_{match}");
-  test.loadStackHists(top_matched_w_unmatched_lep[1]," top_{match} W_{unmatch}");
-  test.loadStackHists(matched_lep[1],"matched");
+  all_lep[1]->GetXaxis()->SetTitle("top mass [GeV]");
+  all_lep[1]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)all_lep[1]->Clone(),"B+b M(1500)","hist");
+  test.loadStackHists((TH1F*)unmatched_lep[1]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)top_unmatched_w_matched_lep[1]->Clone()," top_{unmatch} W_{match}");
+  test.loadStackHists((TH1F*)top_matched_w_unmatched_lep[1]->Clone()," top_{match} W_{unmatch}");
+  test.loadStackHists((TH1F*)matched_lep[1]->Clone(),"matched");
   test.plotHists(2,false);
   test.clearAll();
 
 
 
-  vector<TH1F*> toptag_all  = treehists.return_hists("TopTagDis.topHad.M()","weight","70,30,500","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptag_unmatched  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","70,30,500","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptag_matched  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","70,30,500","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptag_wmatch_topunmatch  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","70,30,500","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptag_wunmatch_topmatch  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","70,30,500","hadronic Top Mass[GeV]");
+  vector<TH1F*> toptag_all  = treehists.return_hists("TopTagDis.topHad.M()","weight",topmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptag_unmatched  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",topmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptag_matched  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",topmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptag_wmatch_topunmatch  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",topmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptag_wunmatch_topmatch  = treehists.return_hists("TopTagDis.topHad.M()","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",topmass_binning,"hadronic Top Mass[GeV]");
 
 
   
@@ -244,20 +253,25 @@ int main(){
 
   toptag_all[1]->SetTitle("TopTag");
   toptag_all[1]->SetMarkerStyle(1);
-  test.loadHists(toptag_all[1],"B+b M(1500)","HIST");
-  test.loadStackHists(toptag_wmatch_topunmatch[1]," top_{unmatched} W_{matched}");
-  test.loadStackHists(toptag_unmatched[1],"unmatched");
-  test.loadStackHists(toptag_wunmatch_topmatch[1]," top_{matched} W_{unmatched}");
-  test.loadStackHists(toptag_matched[1],"matched");
+  toptag_all[1]->GetXaxis()->SetTitle("top mass [GeV]");
+  toptag_all[1]->GetYaxis()->SetTitle("Events");
+
+  test.loadHists((TH1F*)toptag_all[1],"B+b M(1500)","HIST");
+  test.loadStackHists((TH1F*)toptag_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
+  test.loadStackHists((TH1F*)toptag_unmatched[1]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)toptag_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
+  test.loadStackHists((TH1F*)toptag_matched[1]->Clone(),"matched");
   test.plotHists(2,false);
   test.clearAll();
 
 
-  vector<TH1F*> toptagbprime_all  = treehists.return_hists("TopTagDis.mass","weight","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptagbprime_unmatched  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptagbprime_matched  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptagbprime_wmatch_topunmatch  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> toptagbprime_wunmatch_topmatch  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
+  string Bmass_binning = "30,500,3000";
+
+  vector<TH1F*> toptagbprime_all  = treehists.return_hists("TopTagDis.mass","weight",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptagbprime_unmatched  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptagbprime_matched  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptagbprime_wmatch_topunmatch  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> toptagbprime_wunmatch_topmatch  = treehists.return_hists("TopTagDis.mass","weight*((((TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())*(TopTagDis.topHad.Eta()-BprimeGen.topHad.Eta())+(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi())*(TopTagDis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())*(TopTagDis.wLep.Eta()-BprimeGen.wLep.Eta())+(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi())*(TopTagDis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
 
   toptagbprime_wmatch_topunmatch[1]->SetFillColor(4);
   toptagbprime_unmatched[1]->SetFillColor(5);
@@ -268,22 +282,49 @@ int main(){
   toptagbprime_wunmatch_topmatch[1]->SetLineColor(6);
   toptagbprime_matched[1]->SetLineColor(632);
 
-  toptagbprime_all[1]->SetTitle("TopTag B");
+  toptagbprime_all[1]->SetTitle("TopTag");
   toptagbprime_all[1]->SetMarkerStyle(1);
-  test.loadHists(toptagbprime_all[1],"B+b M(1500)","HIST");
-  test.loadStackHists(toptagbprime_wmatch_topunmatch[1]," top_{unmatched} W_{matched}");
-  test.loadStackHists(toptagbprime_unmatched[1],"unmatched");
-  test.loadStackHists(toptagbprime_wunmatch_topmatch[1]," top_{matched} W_{unmatched}");
-  test.loadStackHists(toptagbprime_matched[1],"matched");
+  toptagbprime_all[1]->GetXaxis()->SetTitle("B mass [GeV]");
+  toptagbprime_all[1]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)toptagbprime_all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadStackHists((TH1F*)toptagbprime_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
+  test.loadStackHists((TH1F*)toptagbprime_unmatched[1]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)toptagbprime_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
+  test.loadStackHists((TH1F*)toptagbprime_matched[1]->Clone(),"matched");
+  test.plotHists(2,false);
+  test.clearAll();
+
+  toptagbprime_wmatch_topunmatch[2]->SetFillColor(4);
+  toptagbprime_unmatched[2]->SetFillColor(5);
+  toptagbprime_wunmatch_topmatch[2]->SetFillColor(6);
+  toptagbprime_matched[2]->SetFillColor(632);
+  toptagbprime_wmatch_topunmatch[2]->SetLineColor(4);
+  toptagbprime_unmatched[2]->SetLineColor(5);
+  toptagbprime_wunmatch_topmatch[2]->SetLineColor(6);
+  toptagbprime_matched[2]->SetLineColor(632);
+
+  toptagbprime_all[2]->SetTitle("TopTag");
+  toptagbprime_all[2]->SetMarkerStyle(1);
+  toptagbprime_all[2]->GetXaxis()->SetTitle("B mass [GeV]");
+  toptagbprime_all[2]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)toptagbprime_all[2]->Clone(),"B+t M(1500)","HIST");
+  test.loadStackHists((TH1F*)toptagbprime_wmatch_topunmatch[2]->Clone()," top_{unmatched} W_{matched}");
+  test.loadStackHists((TH1F*)toptagbprime_unmatched[2]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)toptagbprime_wunmatch_topmatch[2]->Clone()," top_{matched} W_{unmatched}");
+  test.loadStackHists((TH1F*)toptagbprime_matched[2]->Clone(),"matched");
   test.plotHists(2,false);
   test.clearAll();
 
 
-  vector<TH1F*> chi2bprime_all  = treehists.return_hists("Chi2Dis.mass","weight * Chi2Dis.recoTyp == 12 ","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_unmatched  = treehists.return_hists("Chi2Dis.mass","weight*(Chi2Dis.recoTyp == 12 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_matched  = treehists.return_hists("Chi2Dis.mass","weight*(Chi2Dis.recoTyp == 12 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_wmatch_topunmatch  = treehists.return_hists("Chi2Dis.mass","weight*(Chi2Dis.recoTyp == 12 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_wunmatch_topmatch  = treehists.return_hists("Chi2Dis.mass","weight*(Chi2Dis.recoTyp == 12 &&(((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))","100,75,3000","hadronic Top Mass[GeV]");
+
+
+  //Chi2Dis.recoTyp==12&&
+
+  vector<TH1F*> chi2bprime_all  = treehists.return_hists("Chi2Dis.mass","weight * (TopTagDis.mass<0)",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_unmatched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_matched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_wmatch_topunmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_wunmatch_topmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
 
   chi2bprime_wmatch_topunmatch[1]->SetFillColor(4);
   chi2bprime_unmatched[1]->SetFillColor(5);
@@ -294,17 +335,38 @@ int main(){
   chi2bprime_wunmatch_topmatch[1]->SetLineColor(6);
   chi2bprime_matched[1]->SetLineColor(632);
 
-  chi2bprime_all[1]->SetTitle("Chi2 B");
+  chi2bprime_all[1]->SetTitle("X^2");
   chi2bprime_all[1]->SetMarkerStyle(1);
-  test.loadHists(chi2bprime_all[1],"B+b M(1500)","HIST");
-  test.loadStackHists(chi2bprime_wmatch_topunmatch[1]," top_{unmatched} W_{matched}");
-  test.loadStackHists(chi2bprime_unmatched[1],"unmatched");
-  test.loadStackHists(chi2bprime_wunmatch_topmatch[1]," top_{matched} W_{unmatched}");
-  test.loadStackHists(chi2bprime_matched[1],"matched");
+  chi2bprime_all[1]->GetXaxis()->SetTitle("B mass [GeV]");
+  chi2bprime_all[1]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)chi2bprime_all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadStackHists((TH1F*)chi2bprime_unmatched[1]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)chi2bprime_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
+  test.loadStackHists((TH1F*)chi2bprime_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
+  test.loadStackHists((TH1F*)chi2bprime_matched[1]->Clone(),"matched");
   test.plotHists(2,false);
   test.clearAll();
 
+  chi2bprime_wmatch_topunmatch[2]->SetFillColor(4);
+  chi2bprime_unmatched[2]->SetFillColor(5);
+  chi2bprime_wunmatch_topmatch[2]->SetFillColor(6);
+  chi2bprime_matched[2]->SetFillColor(632);
+  chi2bprime_wmatch_topunmatch[2]->SetLineColor(4);
+  chi2bprime_unmatched[2]->SetLineColor(5);
+  chi2bprime_wunmatch_topmatch[2]->SetLineColor(6);
+  chi2bprime_matched[2]->SetLineColor(632);
 
+  chi2bprime_all[2]->SetTitle("X^2");
+  chi2bprime_all[2]->SetMarkerStyle(1);
+  chi2bprime_all[2]->GetXaxis()->SetTitle("B mass [GeV]");
+  chi2bprime_all[2]->GetYaxis()->SetTitle("Events");
+  test.loadHists((TH1F*)chi2bprime_all[2]->Clone(),"B+t M(1500)","HIST");
+   test.loadStackHists((TH1F*)chi2bprime_unmatched[2]->Clone(),"unmatched");
+  test.loadStackHists((TH1F*)chi2bprime_wmatch_topunmatch[2]->Clone()," top_{unmatched} W_{matched}");
+  test.loadStackHists((TH1F*)chi2bprime_wunmatch_topmatch[2]->Clone()," top_{matched} W_{unmatched}");
+  test.loadStackHists((TH1F*)chi2bprime_matched[2]->Clone(),"matched");
+  test.plotHists(2,false);
+  test.clearAll();
 
 
   return 0;

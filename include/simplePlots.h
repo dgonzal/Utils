@@ -54,6 +54,10 @@ class simplePlots: public HistsBase{
   void setErrorBand(double min_, double max_){errorband_max = max_; errorband_min =min_;}//used for the ratio plot
   void change_colors(bool col){changecolors = col;}
   void switch_ratio(bool rat_){draw_ratio=rat_;}
+  void set_ratioYTitle(string ratio_ytitle_){ratio_ytitle = ratio_ytitle_;}
+  void set_histYTitle(string hist_ytitle_){hist_ytitle= hist_ytitle_;}
+  void set_ratioLimtis(double ratio_min_, double ratio_max_){ratio_min = ratio_min_; ratio_max=ratio_max_;}
+  void set_XTitle(string xtitle_){xtitle= xtitle_;}
 
   void clearHists(){histos.clear();}
   void clearLegend(){legend.clear();stack_legend.clear();}
@@ -69,6 +73,8 @@ class simplePlots: public HistsBase{
   vector<string> legend, stack_legend;
   std::vector<std::string> plotting_styles;
   vector<bool> plotInratio;
+  string ratio_ytitle = "Data/MC", hist_ytitle = "Events", xtitle="";
+  double ratio_min = 0.1, ratio_max = 2.9;
   double errorband_max = 2, errorband_min = 0;
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
