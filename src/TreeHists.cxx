@@ -107,8 +107,13 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	if(boost::algorithm::contains(error,"REPLACE"))
 	  boost::replace_all(error,"REPLACE",number);
 	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
-	if(myTmpHist->GetSumOfWeights()<=0){
-	  myTmpHist = make_hist(mytree, variable, binning, draw_option);
+	//cout<<variable<<" "<< binning<<" "<< error+"*"+draw_option<<" "<<myTmpHist->GetSumOfWeights()<<endl;
+	if(myTmpHist->GetSumOfWeights()<=0 || myTmpHist->GetSumOfWeights()!=myTmpHist->GetSumOfWeights()){
+	  if(methods_forerrors[i]==rms) 
+	    myTmpHist = make_hist(mytree, variable, binning, draw_option+"* 0");
+	  else
+	    myTmpHist = make_hist(mytree, variable, binning, draw_option);
+
 	}
 	error_histos[i].push_back(myTmpHist);
       }
@@ -354,6 +359,7 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
   for(unsigned int m =0; m < number_of_weights; m++){
     TH1F* error_histo_sum = (TH1F*)error_histos[i_error][m]->Clone();
     for(unsigned int p = number_of_weights; p < error_histos[i_error].size(); p+= number_of_weights){ 
+      //cout<<error_histos[i_error][p+m]->GetBinContent(5)<<endl;
       error_histo_sum->Add(error_histos[i_error][p+m]);
       if(debug)cout<<"number of hist "<<p<<" content i==10 "<<error_histos[i_error][p+m]->GetBinContent(10)<<endl;
     }
@@ -388,13 +394,16 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
     for(int i = 0; i<numberOfBins; i++){
       double mean_square = 0;
       double nomBin = nominal->GetBinContent(i);
+      //cout<<"nombin "<<nomBin<<" number of sum histos "<<histo_sum.size()<<endl;
       //double histo_number = error_histos[i_error].size();
       for(auto & hist : histo_sum){
 	double content = hist->GetBinContent(i);
-	mean_square+= (content-nomBin)*(content-nomBin);
+	mean_square+= content*content;
       }
+      //mean_square/=histo_sum.size();
       //set
       if(nomBin>0){
+	//cout<<"PDF RMS Bin "<<i <<" error "<<sqrt(mean_square)<<endl;
 	double sum_error_w2 = mean_square + nominal->GetBinError(i)* nominal->GetBinError(i); 
 	result->SetBinError(i,sqrt(sum_error_w2));
       }
@@ -465,8 +474,7 @@ void TreeHists::calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1
   if(debug) 
     for(auto i : is)
       cout<<i<<" size "<<error_folder_histos.at(i).size()<<endl;
-  
-  
+
   for(int m=0;m<nominal->GetNcells();m++)
     nominal->SetBinError(m,0);
   for(auto i : is){
