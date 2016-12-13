@@ -21,11 +21,11 @@ class cutFlow : public HistsBase{
   void setTitle(std::string title_){title=title_;}
   void normToCut(unsigned int cuti){normcut=cuti;}
   void setPrecision(unsigned int decimals){decimals_places =decimals;}
-  void set_separator(string sep = ";"){separator = sep;}
+  void set_separator(string sep = ";",string endl_sep_=""){separator = sep;endl_sep = endl_sep_;}
  private:
   std::string title;
   unsigned int normcut, decimals_places;
   std::ofstream outFile;
-  string separator;
+  string separator,endl_sep;
   string filename;
 };

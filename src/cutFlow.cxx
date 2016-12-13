@@ -8,6 +8,7 @@ cutFlow::cutFlow(string TxtName,string saveName): HistsBase(saveName){
   normcut =0;
   decimals_places=2;
   separator = "";
+  endl_sep = "";
   filename = TxtName;
 }
 cutFlow::~cutFlow(){
@@ -78,7 +79,8 @@ void cutFlow::printToFile(string histname){
     outFile<<cuts[p]<<separator;
     for(unsigned int ip=0; ip<longest_cutname-strlen(cuts[p].c_str()); ++ip) outFile<<" ";
   }
-  outFile<<endl;
+ 
+  outFile<<endl_sep<<endl;
   unsigned int i=0;
   for(const auto & fileDir : get_filedirs()){
     if(fileDir.find(".MC.") != std::string::npos){
@@ -97,7 +99,7 @@ void cutFlow::printToFile(string histname){
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
 	outFile<<" ";
     }    
-    outFile<<endl;
+    outFile<<endl_sep<<endl;
     outFile<<error_name<<separator;
     for(unsigned int itt =strlen(error_name.c_str()); itt<longest_filename; ++itt)
       outFile<<" ";
@@ -107,7 +109,7 @@ void cutFlow::printToFile(string histname){
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")).c_str())-1 ;++mp)
 	outFile<<" ";
     }
-    outFile<<endl;
+    outFile<<endl_sep<<endl;
     outFile<<percent<<separator;
     for(unsigned int itt =strlen(percent.c_str()); itt<longest_filename; ++itt)
 	outFile<<" ";
@@ -117,9 +119,9 @@ void cutFlow::printToFile(string histname){
       for(unsigned int mp=0 ;mp<longest_cutname-strlen(what_is_printed.substr(0,what_is_printed.find(".")+decimals_places).c_str())-1;++mp)
 	outFile<<" ";
     }
-    outFile<<endl;
+    outFile<<endl_sep<<endl;
     ++i;
   }
-  outFile<<endl;
+  outFile<<endl_sep<<endl;
 }
 
