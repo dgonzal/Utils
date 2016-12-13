@@ -8,7 +8,7 @@ int main(){
   string version = "v49";
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  bool electron = true;
+  bool electron = false;
   if (electron)folder = "EleSelection_v8";
 
 

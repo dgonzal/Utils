@@ -12,6 +12,7 @@
 #include "TSystem.h"
 #include "TPad.h"
 #include "TApplication.h"
+#include "TROOT.h"
 
 
 using namespace std;
@@ -77,7 +78,7 @@ TTree* TreeDrawMain::load_tree(std::string fileDir){
     cerr<<"File "<<fileDir.c_str()<<" does not exist"<<endl;
     exit(EXIT_FAILURE);
   }
-  TFile* file = new TFile(fileDir.c_str());
+  TFile* file = new TFile(fileDir.c_str(),"READ");
   if(file->IsZombie()){
     cerr<<"File "<<fileDir<<" is a Zombie"<<endl;
     exit(EXIT_FAILURE);
@@ -108,7 +109,7 @@ bool TreeDrawMain::create_file(std::string fileName){
     find_samples_nicks(dir);
     set_channel(dir);
     int nick_number = 0;
-    TTree* signal_tree;
+    TTree* signal_tree =0;
     if(!signal_name.empty() && !signal_weight.empty()){
       for(auto & process : working_samples){
 	if(signal_name.compare(nicks[nick_number])==0){
@@ -132,13 +133,14 @@ bool TreeDrawMain::create_file(std::string fileName){
       std::string nick =  nicks[nick_number];
       string test_string = nick;
       boost::algorithm::to_lower(test_string);
-      //if(debug)cout<<"loading tree for "<< process<<endl;
+      if (debug)cout<<"loading tree for "<< process<<endl;
       TTree* mytree = load_tree(dir+"/"+process);
       for(auto & hist : infoVec){
-	if(debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
+	if (debug)cout<<"making histogram "<<hist.draw_command<<" selection "<<hist.selection<<endl;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
 	if(hist.scale >0) tmp_hist->Scale(hist.scale);
-	if(!signal_name.empty() && !signal_weight.empty() && (!boost::algorithm::contains(hist.hist_name,"Bp") || !boost::algorithm::contains(hist.hist_name,"X"))){
+	if(!signal_name.empty() && !signal_weight.empty() && !boost::algorithm::contains(nick,"Bp") && !boost::algorithm::contains(nick,"X") && boost::algorithm::contains(hist.hist_name,"background") && signal_tree){
+	  if (debug)std::cout<<"getting histogram for "<<hist.hist_name<<" "<<hist.draw_command<<" "<<hist.selection<<std::endl;
 	  TH1F* signal_injected = make_hist(signal_tree,hist.draw_command,hist.selection,hist.binning);
 	  signal_injected->Scale(stod(signal_weight));
 	  tmp_hist->Add(signal_injected);
@@ -174,7 +176,8 @@ bool TreeDrawMain::create_file(std::string fileName){
 	  else if(method == rms){
 	    double hist_integral = tmp_hist->Integral();
 	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"*("+error+">-1)",hist.binning);
-	    tmp_errorHist->Scale(1/hist_integral);
+	    double histerror_integral = tmp_errorHist->Integral();
+	    //tmp_errorHist->Scale(hist_integral/histerror_integral);
 	    tmp_errorHist->Add(tmp_hist);
 	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__plus").c_str());
 	    if(tmp_errorHist->GetEntries() ==0 ){
@@ -184,8 +187,9 @@ bool TreeDrawMain::create_file(std::string fileName){
 	    result_file->cd();
 	    tmp_errorHist->Write();
 	    tmp_errorHist = make_hist(mytree,hist.draw_command,error+"*"+hist.selection+"*("+error+">-1)",hist.binning);
-	    tmp_errorHist->Scale(1/hist_integral);
+	    histerror_integral = tmp_errorHist->Integral();
 	    tmp_errorHist->Add(tmp_errorHist,tmp_hist,-1);
+	    //tmp_errorHist->Scale(hist_integral/histerror_integral);
 	    tmp_errorHist->SetName((hist.hist_name+channel+"__"+nick+"__"+error_names.at(error_counter)+"__minus").c_str());
 	    result_file->cd();
 	    tmp_errorHist->Write();
@@ -195,6 +199,7 @@ bool TreeDrawMain::create_file(std::string fileName){
       }
       nick_number++;
       delete mytree;
+      //delete signal_tree;
     }
   }
   if(debug)cout<<"****************************************************"<<endl;
@@ -227,12 +232,15 @@ bool TreeDrawMain::create_file(std::string fileName){
 	result_file->cd();
 	tmp_hist->Write();
       } 
-       nick_number++;
+      nick_number++;
+      delete mytree;
     }
     error_nick++;
   }
+
   result_file->Close();
   delete result_file;
+  gROOT->GetListOfFiles()->Delete();
   return true;
 }
 
@@ -349,7 +357,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   if(boost::algorithm::contains(channel,"Ele")){
     background_weights = {0.38, 0.423, 0.39, 0.54};
   }*/
-
+  
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"30,500,3000");	    
@@ -357,6 +365,13 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","30,500,3000",background_weights[0]);//0.388519); 
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"30,500,3000",background_weights[1]);//0.471137); 
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"30,500,3000",background_weights[2]);//0.467834); 
+  
+
+  /*
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+")","Chi2","30,500,3000");	     
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+")","Chi2:background","30,500,3000",background_weights[0]);//0.388519); 
+  */
+
 
   mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","30,500,3000");		
   mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","30,500,3000",background_weights[3]);//0.445472);                        
@@ -392,24 +407,28 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   
   mainClass.create_file(resultfile);
 
-  gApplication->Terminate();
+  //gApplication->Terminate();
   return 0;
 }
 
 int main(int argc, char **argv){
   if(argc == 1)
-    RootFileCreator();
+    return RootFileCreator();
   else if(argc == 2)
-    RootFileCreator(argv[1]);
+    return RootFileCreator(argv[1]);
   else if(argc == 3)
-    RootFileCreator(argv[1],argv[2]);
+    return RootFileCreator(argv[1],argv[2]);
   else if(argc == 4)
-    RootFileCreator(argv[1],argv[2],argv[3]);
+    return RootFileCreator(argv[1],argv[2],argv[3]);
   else if(argc == 5)
-    RootFileCreator(argv[1],argv[2],argv[3],argv[4]);
+    return RootFileCreator(argv[1],argv[2],argv[3],argv[4]);
   else if(argc == 6)
-    RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5]);
+    return RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5]);
   else if(argc == 7)
-    RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
+    return RootFileCreator(argv[1],argv[2],argv[3],argv[4],argv[5],argv[6]);
+  else{
+    std::cerr<<"Wrong number of arguments"<<std::endl;
+    return 1;
+  }
 }
 

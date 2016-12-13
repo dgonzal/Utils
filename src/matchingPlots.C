@@ -48,7 +48,7 @@ bool create_overlayhists(std::string plotname, std::string distibution, std::str
 }
 */
 std::string deltaRstring(std::string var1, std::string var2){
-  return "(double(int(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())*100)%314)/100+("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi()))";
+  return "(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi()))";
 }
 
 int main(){
@@ -119,8 +119,8 @@ int main(){
   TreeHists treehists("plots/matchingReco.ps");  
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.DATA.SingleMuDATA.root","PE",1,20,false,"Data");
 
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1500_RH_25ns.root","hist",4,-1,false,"B+b M(1500)");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_1500_RH_25ns.root","hist",7,-1,false,"B+t M(1500)");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.Bpb_TW_1000_RH_25ns.root","hist",4,-1,false,"B+b M(1000)");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.Bpt_TW_1000_RH_25ns.root","hist",7,-1,false,"B+t M(1000)");
 
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.QCD.root","",4,-1,true,"QCD",0.5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v"+sel_version+"/uhh2.AnalysisModuleRunner.MC.SingleT.root","",41,-1,true,"Single Top",0.1);
@@ -212,7 +212,7 @@ int main(){
   all[1]->SetMarkerStyle(1);
   all[1]->GetXaxis()->SetTitle("top mass [GeV]");
   all[1]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadHists((TH1F*)all[1]->Clone(),"B+b M(1000)","HIST");
   test.loadStackHists((TH1F*)top_unmatched_w_matched[1]," top_{unmatch} W_{match}");
   test.loadStackHists((TH1F*)unmatched[1]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)top_matched_w_unmatched[1]->Clone()," top_{match} W_{unmatch}");
@@ -224,7 +224,7 @@ int main(){
   all_lep[1]->SetMarkerStyle(1);
   all_lep[1]->GetXaxis()->SetTitle("top mass [GeV]");
   all_lep[1]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)all_lep[1]->Clone(),"B+b M(1500)","hist");
+  test.loadHists((TH1F*)all_lep[1]->Clone(),"B+b M(1000)","hist");
   test.loadStackHists((TH1F*)unmatched_lep[1]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)top_unmatched_w_matched_lep[1]->Clone()," top_{unmatch} W_{match}");
   test.loadStackHists((TH1F*)top_matched_w_unmatched_lep[1]->Clone()," top_{match} W_{unmatch}");
@@ -256,7 +256,7 @@ int main(){
   toptag_all[1]->GetXaxis()->SetTitle("top mass [GeV]");
   toptag_all[1]->GetYaxis()->SetTitle("Events");
 
-  test.loadHists((TH1F*)toptag_all[1],"B+b M(1500)","HIST");
+  test.loadHists((TH1F*)toptag_all[1],"B+b M(1000)","HIST");
   test.loadStackHists((TH1F*)toptag_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
   test.loadStackHists((TH1F*)toptag_unmatched[1]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)toptag_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
@@ -286,7 +286,7 @@ int main(){
   toptagbprime_all[1]->SetMarkerStyle(1);
   toptagbprime_all[1]->GetXaxis()->SetTitle("B mass [GeV]");
   toptagbprime_all[1]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)toptagbprime_all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadHists((TH1F*)toptagbprime_all[1]->Clone(),"B+b M(1000)","HIST");
   test.loadStackHists((TH1F*)toptagbprime_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
   test.loadStackHists((TH1F*)toptagbprime_unmatched[1]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)toptagbprime_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
@@ -307,7 +307,7 @@ int main(){
   toptagbprime_all[2]->SetMarkerStyle(1);
   toptagbprime_all[2]->GetXaxis()->SetTitle("B mass [GeV]");
   toptagbprime_all[2]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)toptagbprime_all[2]->Clone(),"B+t M(1500)","HIST");
+  test.loadHists((TH1F*)toptagbprime_all[2]->Clone(),"B+t M(1000)","HIST");
   test.loadStackHists((TH1F*)toptagbprime_wmatch_topunmatch[2]->Clone()," top_{unmatched} W_{matched}");
   test.loadStackHists((TH1F*)toptagbprime_unmatched[2]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)toptagbprime_wunmatch_topmatch[2]->Clone()," top_{matched} W_{unmatched}");
@@ -320,11 +320,14 @@ int main(){
 
   //Chi2Dis.recoTyp==12&&
 
-  vector<TH1F*> chi2bprime_all  = treehists.return_hists("Chi2Dis.mass","weight * (TopTagDis.mass<0)",Bmass_binning,"hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_unmatched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_matched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_wmatch_topunmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
-  vector<TH1F*> chi2bprime_wunmatch_topmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  
+
+
+  vector<TH1F*> chi2bprime_all  = treehists.return_hists("Chi2Dis.mass","weight * (TopTagDis.mass<0 && Chi2Dis.btagEventNumber >= 1)",Bmass_binning,"");
+  vector<TH1F*> chi2bprime_unmatched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0&& Chi2Dis.btagEventNumber >= 1 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_matched  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0&& Chi2Dis.btagEventNumber >= 1 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_wmatch_topunmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0&& Chi2Dis.btagEventNumber >= 1 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))>"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))<"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
+  vector<TH1F*> chi2bprime_wunmatch_topmatch  = treehists.return_hists("Chi2Dis.mass","weight*(TopTagDis.mass<0&& Chi2Dis.btagEventNumber >= 1 && (((Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())*(Chi2Dis.topHad.Eta()-BprimeGen.topHad.Eta())+(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi())*(Chi2Dis.topHad.Phi()-BprimeGen.topHad.Phi()))<"+matching_radius+"  && ((Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())*(Chi2Dis.wLep.Eta()-BprimeGen.wLep.Eta())+(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi())*(Chi2Dis.wLep.Phi()-BprimeGen.wLep.Phi()))>"+matching_radius+"))",Bmass_binning,"hadronic Top Mass[GeV]");
 
   chi2bprime_wmatch_topunmatch[1]->SetFillColor(4);
   chi2bprime_unmatched[1]->SetFillColor(5);
@@ -335,11 +338,12 @@ int main(){
   chi2bprime_wunmatch_topmatch[1]->SetLineColor(6);
   chi2bprime_matched[1]->SetLineColor(632);
 
-  chi2bprime_all[1]->SetTitle("X^2");
+  chi2bprime_all[1]->SetTitle("X^{2}");
   chi2bprime_all[1]->SetMarkerStyle(1);
   chi2bprime_all[1]->GetXaxis()->SetTitle("B mass [GeV]");
+  chi2bprime_all[1]->GetYaxis()->SetTitleSize(0.001);
   chi2bprime_all[1]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)chi2bprime_all[1]->Clone(),"B+b M(1500)","HIST");
+  test.loadHists((TH1F*)chi2bprime_all[1]->Clone(),"B+b M(1000)","HIST");
   test.loadStackHists((TH1F*)chi2bprime_unmatched[1]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)chi2bprime_wmatch_topunmatch[1]->Clone()," top_{unmatched} W_{matched}");
   test.loadStackHists((TH1F*)chi2bprime_wunmatch_topmatch[1]->Clone()," top_{matched} W_{unmatched}");
@@ -356,11 +360,12 @@ int main(){
   chi2bprime_wunmatch_topmatch[2]->SetLineColor(6);
   chi2bprime_matched[2]->SetLineColor(632);
 
-  chi2bprime_all[2]->SetTitle("X^2");
+  chi2bprime_all[2]->SetTitle("X^{2}");
   chi2bprime_all[2]->SetMarkerStyle(1);
   chi2bprime_all[2]->GetXaxis()->SetTitle("B mass [GeV]");
+  chi2bprime_all[2]->GetYaxis()->SetTitleSize(0.001);
   chi2bprime_all[2]->GetYaxis()->SetTitle("Events");
-  test.loadHists((TH1F*)chi2bprime_all[2]->Clone(),"B+t M(1500)","HIST");
+  test.loadHists((TH1F*)chi2bprime_all[2]->Clone(),"B+t M(1000)","HIST");
    test.loadStackHists((TH1F*)chi2bprime_unmatched[2]->Clone(),"unmatched");
   test.loadStackHists((TH1F*)chi2bprime_wmatch_topunmatch[2]->Clone()," top_{unmatched} W_{matched}");
   test.loadStackHists((TH1F*)chi2bprime_wunmatch_topmatch[2]->Clone()," top_{matched} W_{unmatched}");
