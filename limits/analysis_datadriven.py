@@ -2,15 +2,15 @@ from subprocess import call
 import os
 
 channels = [""]#['Mu',"Ele",""]
-production_channels = ["b","t"]
+production_channels = ["b","t"]#"b",
 chiralitys = ["RH","LH"]
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
-Mudirs = ['config/Selection_v49/']
-Eledirs = ['config/EleSelection_v8/']
+Mudirs = ['config/Selection_v50/']
+Eledirs = ['config/EleSelection_v9/']
 rootDir = "ROOTFiles/"
 createfiles = True
-rebin = True
+rebin = True 
 signal_injection = False
 
 if not rebin:
@@ -39,7 +39,7 @@ for chirality in chiralitys:
                 for inf in Eledirs:
                     dirstring = dirstring+release+inf+','
             if dirstring[-1]==',': dirstring = dirstring[:-1]
-            if createfiles or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"):
+            if createfiles or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"): 
                 call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*'+chirality+'_25ns', str(rootDir+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel])
             execfile("histogram_rebinning.py")
             if rebin or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"):   
@@ -75,13 +75,21 @@ for chirality in chiralitys:
                 theory13TeV_y =[0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540]
 
                 #For B+b
-                if channel is 'b':
+                if production is 'b':
+                    print 'inject b'
                     theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
                     theory13TeV_y =numpy.array([3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
                     theory13TeV_y =theory13TeV_y*0.5
+                #For B+t since I did not process all files:
+                if production is 't':
+                    print 'inject t'
+                    theory13TeV_x =[800,1000,1100,1500]
+                    theory13TeV_y =numpy.array([0.365,0.203,0.152,0.0540])
+
 
                 for i in xrange(len(theory13TeV_x)):
-                    if not os.path.exists(rootDir+'InjectedSignal_M'+str(int(theory13TeV_x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"):
+                    print "injecting signal for",production,"Mass",int(theory13TeV_x[i]),"with cross section",theory13TeV_y[i]
+                    if not os.path.exists(rootDir+'InjectedSignal_M'+str(int(theory13TeV_x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root") or createfiles:
                         call(['./../bin/rootfilecreator', str('Bp'+production+'_TW_*'+chirality+'_25ns'), str(rootDir+"InjectedSignal_M"+str(int(theory13TeV_x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel,str('Bp'+production+'_TW_'+str(int(theory13TeV_x[i]))+'_'+chirality+'_25ns'),str(theory13TeV_y[i])], shell=False)
                         binFile(0.3, rootDir+'InjectedSignal_M'+str(int(theory13TeV_x[i]))+'_'+channel+'Bp'+production+'Reco_'+chirality+'.root', 'M_{B} [GeV/c^{2}]', ['Background'])
                     exp_i, obs_i = run_cutopt(rootDir+'InjectedSignal_M'+str(int(theory13TeV_x[i]))+'_'+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True,str('Bp'+production+'_TW_'+str(int(theory13TeV_x[i]))))

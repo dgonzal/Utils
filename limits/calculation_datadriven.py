@@ -16,34 +16,29 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model.fill_histogram_zerobins()
     model.set_signal_processes('Bp'+particle+'_TW_*_'+Chirality+'*')
 
-    #for p in model.processes:
-    #    model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
+    for p in model.processes:
+        model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
 
-    """
-    if channel =="Mu" or "":
-        model.add_lognormal_uncertainty('Mu_Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagMu')    
-        model.add_lognormal_uncertainty('Mu_1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagMu')    
-        model.add_lognormal_uncertainty('Mu_2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagMu')    
-        model.add_lognormal_uncertainty('Mu_top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagMu')    
-    if channel =="Ele" or "":
-        model.add_lognormal_uncertainty('Ele_Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagEle')    
-        model.add_lognormal_uncertainty('Ele_1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagEle')    
-        model.add_lognormal_uncertainty('Ele_2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagEle')    
-        model.add_lognormal_uncertainty('Ele_top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagEle')    
     """
     if channel =="Mu" or not channel:
-        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagMu')    
-        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagMu')    
-        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagMu')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagMu')    
+        model.add_lognormal_uncertainty('chi2_rate'   , math.log(3), procname='Background',obsname='Chi2Mu')    
+        model.add_lognormal_uncertainty('top-tag_rate', math.log(3), procname='Background',obsname='TopTagMu')    
     if channel =="Ele" or not channel:
-        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(3), procname='Background',obsname='Chi2_AntiBTagEle')    
-        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_1_BTagEle')    
-        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(3), procname='Background',obsname='Chi2_2_BTagEle')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(3), procname='Background',obsname='TopTagEle')         
-
-
-
+        model.add_lognormal_uncertainty('chi2_rate'   , math.log(3), procname='Background',obsname='Chi2Ele')    
+        model.add_lognormal_uncertainty('top-tag_rate', math.log(3), procname='Background',obsname='TopTagEle')    
+    """
+    if channel =="Mu" or not channel:
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(2), procname='Background',obsname='Chi2_AntiBTagMu')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_1_BTagMu')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_2_BTagMu')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(2), procname='Background',obsname='TopTagMu')    
+    if channel =="Ele" or not channel:
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(2), procname='Background',obsname='Chi2_AntiBTagEle')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_1_BTagEle')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_2_BTagEle')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(2), procname='Background',obsname='TopTagEle')         
+    
+        
     #model_summary(model)
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
@@ -105,12 +100,14 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                         print key,'Mean',3**wei_mean,"Error",3**mean_err-1
                         fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
                     #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
-            except:
-                print 'Postfit MLE was not possible for background. Channel Bp'+particle+'_TW_'+Chirality
+            except Exception as e:
+                print 'Postfit MLE was not possible for background. Channel Bp'+particle+'_TW_'+Chirality+":"
+                print e
             postfit = ThetaPostFitPlot(mle_output)
             postfit.make_plots(output_directory)
-        except:
-            print 'Postfit MLE was not possible Bp'+particle+'_TW_'+Chirality
+        except Exception as ex:
+            print 'Postfit MLE was not possible Bp'+particle+'_TW_'+Chirality+":"
+            print ex
         limit_file = open(output_directory+"limit.txt",'w+')
         limit_file.write("expected limit "+Chirality+":\n")
         print >> limit_file, exp
@@ -120,7 +117,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         for item in fit_result:
             print >> limit_file, item
         limit_file.close()
-
+        
 
     print "expected limit "+Chirality+' '+channel +":"
     print exp
@@ -177,7 +174,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #matplotlib.rcParams['text.latex.unicode']=True
     #f,ax = plt.subplots()
     plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
-    plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
+    if "LH" in Chirality :plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
     plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
                      alpha=0.6, facecolor=sigma2_color, edgecolor=sigma2_color,
