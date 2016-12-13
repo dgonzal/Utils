@@ -6,6 +6,21 @@ class ThetaPostFitPlot():
 
     @staticmethod
     def prepare_post_fit_items(post_fit_dict):
+	#print post_fit_dict
+	#print " "
+	result = []
+	for entry in post_fit_dict:
+	  if entry in "__nll": continue
+	  #print entry, post_fit_dict[entry][0]
+	  result.append((entry,post_fit_dict[entry][0]))
+	return result
+
+        mylist =list((name, val_err)
+                     for name, (val_err,) in sorted(post_fit_dict.iteritems())
+                     if name not in ('__nll'))
+        print mylist
+        #for k, v in sorted(post_fit_dict.iteritems()):
+            
         return list(
             (name, val_err)
             for name, (val_err,) in sorted(post_fit_dict.iteritems())
@@ -78,6 +93,7 @@ class ThetaPostFitPlot():
 
     def mk_canvas(self, sig_name, post_fit_dict,saveDir):
         n = len(post_fit_dict)-1
+        #print post_fit_dict
         items = self.prepare_post_fit_items(post_fit_dict)
 
         g = self.prepare_pull_graph(n, items)
@@ -102,6 +118,7 @@ class ThetaPostFitPlot():
         return cnv
 
     def make_plots(self,saveDir):
+        #print self.input_dicts
         for k,v in self.input_dicts.iteritems():
             canvas = self.mk_canvas(k,self.input_dicts[k],saveDir)
             
