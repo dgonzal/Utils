@@ -17,7 +17,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model.set_signal_processes('Bp'+particle+'_TW_*_'+Chirality+'*')
 
     for p in model.processes:
-        model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
+        if "Background" not in p: 
+            model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
 
     """
     if channel =="Mu" or not channel:

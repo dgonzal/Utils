@@ -2,7 +2,7 @@ from subprocess import call
 import os
 
 channels = [""]#['Mu',"Ele",""]
-production_channels = ["b","t"]#"b",
+production_channels = ["b"]#,"t"]#"b",
 chiralitys = ["RH","LH"]
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
@@ -11,7 +11,8 @@ Eledirs = ['config/EleSelection_v9/']
 rootDir = "ROOTFiles/"
 createfiles = True
 rebin = True 
-signal_injection = False
+limits = False
+signal_injection = True
 
 if not rebin:
     createfiles = False
@@ -39,23 +40,26 @@ for chirality in chiralitys:
                 for inf in Eledirs:
                     dirstring = dirstring+release+inf+','
             if dirstring[-1]==',': dirstring = dirstring[:-1]
-            if createfiles or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"): 
+            if (createfiles or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root")) and limits: 
                 call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*'+chirality+'_25ns', str(rootDir+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel])
             execfile("histogram_rebinning.py")
-            if rebin or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root"):   
+            if (rebin or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root")) and limits:   
                 print 'working on  the rebinning for', channel
                 binFile(0.3, rootDir+channel+'Bp'+production+'Reco_'+chirality+'.root', 'M_{B} [GeV/c^{2}]', ['Background'])
             
     
             execfile("calculation_datadriven.py")
-            print 'calculating limits for channel',channel,'ass. production',production,'chirality',chirality
-            exp,obs = run_cutopt(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True)
-            print 'calculated limits for: channel',channel,'ass. production',production,'chirality',chirality
+            if limits:
+                print 'calculating limits for channel',channel,'ass. production',production,'chirality',chirality
+                exp,obs = run_cutopt(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True)
+                print 'calculated limits for: channel',channel,'ass. production',production,'chirality',chirality
 
             if signal_injection:
                 sigma2_color = 'yellow' #"yellow"
                 sigma1_color = 'darkgreen' #"green"
+                
                 pp = PdfPages("InjectedSignals_Bprime"+production+"_"+chirality+'_'+channel+".pdf")
+                """
                 plt.clf()
                 plt.semilogy()
                 plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')   
@@ -65,7 +69,9 @@ for chirality in chiralitys:
                                  linewidth=0, label="$\pm$ 2 std. deviation")
                 plt.fill_between(exp.x, exp.bands[1][0] ,  exp.bands[1][1],
                                  alpha=0.8, facecolor=sigma1_color, edgecolor=sigma1_color, # exp_LH.bands[1][2],
-                                 linewidth=0, label="$\pm$ 1 std. deviation")
+                                 linewidth=0, label="$\pm$ 1 std. deviation"
+                                 )
+                """
                 ##
                 ## signal injection with theory cross section
                 ##
