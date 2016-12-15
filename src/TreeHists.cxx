@@ -193,7 +193,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
   pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
   //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
-  pad2->SetTopMargin(0.0); pad2->SetBottomMargin(0.25);  pad2->SetLeftMargin(0.19); pad2->SetRightMargin(0.1);
+  pad2->SetTopMargin(0.0); pad2->SetBottomMargin(0.35);  pad2->SetLeftMargin(0.19); pad2->SetRightMargin(0.1);
   
   pad1->SetFillColor(0);
   pad2->SetFillColor(0);

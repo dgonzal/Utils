@@ -74,15 +74,15 @@ int main(){
   cms_text->SetY(.95);
   treehists.addText(cms_text);
 
-  TLatex *zero = new TLatex(3.5, 24,"0");
-  zero->SetNDC();
-  zero->SetTextAlign(33);
-  zero->SetX(0.05);
-  zero->SetTextFont(42);
-  zero->SetTextSize(0.04);
-  zero->SetY(0.);  
-  treehists.addText(zero);
+  string eta = "2.0";
+  string energy = "250";
+  string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
+  string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
+  string toptag_central_string = "TopTagDis.mass>-1 &&((abs(TopTagDis.forwardJet.eta()) <" +eta+") || TopTagDis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
+  string toptag_forward_string = "TopTagDis.mass>-1 && (abs(TopTagDis.forwardJet.eta()) >="+eta+") && TopTagDis.forwardJet.E()>="+energy;
 
+
+  treehists.Draw("Length$(slimmedJets.slimmedJets.m_eta)","weight","16,-0.5,15.5","Number of ak4","Events",false);
   treehists.Draw("slimmedJets.slimmedJets.m_eta","weight","50,-5,5","ak4 #eta","Events",false);
   treehists.Draw("slimmedJets.slimmedJets.m_pt","weight","50,30,400","ak4 p_{T} [GeV]","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_phi","weight","50,-3.14,3.14","ak4 #phi","Events",false);
@@ -102,10 +102,16 @@ int main(){
   treehists.Draw("slimmedMETs.m_pt","weight","50,50,800","MET [GeV]","Events");
   treehists.Draw("HT","weight","50,100,2000","S_{T} [GeV]","Events");
 
+
   treehists.Draw("Chi2Dis.forwardJet.eta()","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0)","50,-5,5","forward #eta","Events",false);
+  treehists.Draw("Chi2Dis.forwardJet.energy()","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0)","50,100,1200","forward E","Events",false);
+  treehists.Draw("Chi2Dis.forwardJet.energy()","weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.eta() >"+eta+" )","50,100,1200","forward E","Events",false);
   treehists.Draw("Chi2Dis.forwardJet.eta()","weight*(TopTagDis.mass==-1&& Chi2Dis.forwardJet.pt() == 0)","6,-.5,5.5","No forward ak4");
   treehists.Draw("TopTagDis.forwardJet.eta()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","20,-5,5","forward #eta","Events",false);
+  treehists.Draw("TopTagDis.forwardJet.energy()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,100,1200","forward E","Events",false);
+  treehists.Draw("TopTagDis.forwardJet.energy()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.eta() > "+eta+")","50,100,1200","forward E","Events",false);
   treehists.Draw("TopTagDis.forwardJet.eta()","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() == 0)","6,-.5,5.5","No forward ak4");
+
   
   treehists.Draw("Chi2Dis.mass","weight*(TopTagDis.mass==-1)","30,500,3000","B mass [GeV]");
   treehists.Draw("TopTagDis.mass","weight*(TopTagDis.mass>-1)","30,500,3000","B mass [GeV]");
@@ -116,7 +122,19 @@ int main(){
   treehists.Draw("Chi2Dis.wLep.M()","weight*(TopTagDis.mass==-1)","50,60,120","W_{lep} mass [GeV]");
 
   treehists.Draw("TopTagDis.topHad.M()","weight*(TopTagDis.mass>-1)","30,100,300","top_{had} mass [GeV]");
+
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","forward X^{2} 0 b-tags B mass [GeV]");	    
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","forward X^{2} 1 b-tag B mass [GeV]" );	    
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","forward X^{2} 2 b-tag B mass [GeV]" );	    
+  treehists.Draw("TopTagDis.mass","weight*("+toptag_forward_string+")","30,500,3000","forward toptag B mass [GeV]");
+
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","central X^{2} 0 b-tags B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","central X^{2} 1 b-tag B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","central X^{2} 2 b-tag B mass [GeV]" );
+  treehists.Draw("TopTagDis.mass","weight*("+toptag_central_string+")","30,500,3000","central toptag B mass [GeV]");
   
+
+
   
   return 0;
 }

@@ -95,7 +95,10 @@ int main(){
   vector<TH1F*> sum_forward;
 
 
-  simplePlots comparison("plots/comparision_forward_central.ps");
+  string lepton_name = "Mu_";
+  if(electron) lepton_name = "Ele_";
+	
+  simplePlots comparison("plots/"+lepton_name+"comparision_forward_central.ps");
   comparison.set_ratioYTitle("Cen./For.");
   comparison.set_histYTitle("NA");
   comparison.set_XTitle("B mass [GeV]");
@@ -137,10 +140,11 @@ int main(){
   }
 
   //[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
-  // B+b: 3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195
+  // B+b: 3.016,2.219,1.653,1.192,0.896,0.679, 0.529, 0.415, 0.319,0.249,0.195
   // B+t: 0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540
   vector<double> signal_crosssection =  {3.016,0.365,1.653,0.203,0.415,0.0540};
-  simplePlots signal_contamination("plots/signal_contamination.ps");
+  simplePlots signal_contamination("plots/"+lepton_name+"signal_contamination.ps");
+  signal_contamination.set_histYTitle("Signal/Background [%]");
   signal_contamination.switch_ratio(false);
   for(unsigned int m=0; m<central_hists.size();m++){
     for(unsigned int i=1;i<7;i++){
@@ -148,10 +152,10 @@ int main(){
       central_hists.at(m).at(i)->SetTitle(("Central "+category[m]).c_str());
       central_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
       central_hists.at(m).at(i)->Divide(sum_central[m]);
-      central_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
       central_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
       central_hists.at(m).at(i)->GetXaxis()->SetTitleOffset(1.2);
-      central_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
+      //central_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
+      //central_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
       string hist_option = "hist same";
       if(i==1) hist_option ="hist";
       signal_contamination.loadHists((TH1F*)central_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);
@@ -164,10 +168,10 @@ int main(){
       forward_hists.at(m).at(i)->SetTitle(("Forward "+category[m]).c_str());
       forward_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
       forward_hists.at(m).at(i)->Divide(sum_forward[m]);
-      forward_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
+      //forward_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
       forward_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
       forward_hists.at(m).at(i)->GetXaxis()->SetTitleOffset(1.2);
-      forward_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
+      //forward_hists.at(m).at(i)->GetYaxis()->SetTitleOffset(1.2);
       string hist_option = "hist same";
       if(i==1) hist_option ="hist";
       signal_contamination.loadHists((TH1F*)forward_hists.at(m).at(i)->Clone(),sample_nick[i],hist_option);

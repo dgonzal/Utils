@@ -152,6 +152,11 @@ void simplePlots::plotHists(int options, bool logy){
       //histos[m]->GetYaxis()->SetLabelSize(0.04/bottomSize); 
       histos[m]->GetYaxis()->SetTitleSize(0.08);
       histos[m]->GetYaxis()->SetTitleOffset(0.6);
+      if(!draw_ratio||histos.size()==1){
+	histos[m]->GetYaxis()->SetTitleSize(0.05);
+	histos[m]->GetYaxis()->SetTitleOffset(1.);
+      }
+      
       if(normArea){
 	if(changecolors)histos[m]->SetMarkerStyle(20);
 	if(plotting_styles[m].empty())
