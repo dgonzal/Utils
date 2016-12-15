@@ -12,6 +12,8 @@
 #include "TEfficiency.h"
 #include "TGaxis.h"
 
+
+
 using namespace std;
 
 
@@ -30,30 +32,33 @@ struct effiContainer{
 class effiPlots: public HistsBase{
  public:
   effiPlots(string saveName);
-  void loadHists(string denominator, string numerator="");
+  void loadHists(std::string denominator, std::string numerator="", std::string leg_entry_graph="");
   /*Two possible options implemented
    * option 0: Denominator is integral bin i -> NBins eg trigger efficiency
    * option 1: Denominator is integral bin 1 -> NBins eg cut efficiency
    *
    */
+  void set_axisTitle(std::string x_, std::string y_="Efficiency"){x_axis=x_;y_axis=y_;}
   void plotEffi(int options=0); 
-  void setTitle(string my_title){title.push_back(my_title);}   
+  void setTitle(std::string my_title){title.push_back(my_title);}   
   void imposeHist(bool impose_switch =true);
   void setRange(double min, double max){rangeMin =min; rangeMax = max;}
-  void loadTHHists(string denominator, string numerator="");
+  void loadTHHists(std::string denominator, std::string numerator="");
   void plotTH(); 
   void switch_legend(bool myswitch =false){legend_bool=myswitch;}
   void set_debug(bool debug_ =true){debug=debug_;}
-  void clear_histos(){vector<effiContainer>().swap(histos); vector<TH1EffiCont>().swap(histsTH);}
+  void clear_histos(){std::vector<effiContainer>().swap(histos); std::vector<TH1EffiCont>().swap(histsTH); std::vector<std::string>().swap(legend_entries);}
   void set_Rebin(int reb){rebin_int = reb;}
 
  private:
   void drawDistri(TH1F* hist,double max);
   TLegend* leg;
   bool legend_bool;
-  vector<string> title;
-  vector<effiContainer> histos;
-  vector<TH1EffiCont> histsTH;
+  std::vector<std::string> legend_entries;
+  std::vector<std::string> title;
+  std::vector<effiContainer> histos;
+  std::vector<TH1EffiCont> histsTH;
+  std::string x_axis ="",y_axis="Efficiency"; 
   bool imposeDistri;
   double rangeMax, rangeMin;
   bool debug = false;

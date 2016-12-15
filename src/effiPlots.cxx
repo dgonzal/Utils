@@ -1,6 +1,8 @@
 #include "effiPlots.h"
 
 
+using namespace std;
+
 effiPlots::effiPlots(string saveName): HistsBase(saveName){
   rangeMax = 0;
   rangeMin = 0;
@@ -30,8 +32,14 @@ void effiPlots::plotTH(){
 }
 
 
-void effiPlots::loadHists(string s_denominator, string s_numerator){
+void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_entry_graph){
+  std::vector<std::string> sample_nicks = get_nicknames();
+  int count  =-1;
   for(const auto & fileDir : get_filedirs()){
+    count ++;
+    if(debug)std::cout<< "leg entry " << leg_entry_graph<<" nick sample "<<sample_nicks[count]<<std::endl;
+    if(!leg_entry_graph.empty() || !sample_nicks[count].empty())legend_entries.push_back(leg_entry_graph+" "+sample_nicks[count]); 
+    else legend_entries.push_back("");
     if(debug)cout<<"Denom "<<s_denominator<<" Num "<<s_numerator<<endl;
     TFile* file = new TFile(fileDir.c_str());
     if(debug)cout<<"loaded file"<<endl;
@@ -40,6 +48,7 @@ void effiPlots::loadHists(string s_denominator, string s_numerator){
     if(file->GetListOfKeys()->Contains(s_denominator.c_str()))cout<< s_denominator<<" does not exist"<<endl;
     if(!s_numerator.empty())
       numerator = (TH1F*) file->Get(s_numerator.c_str());
+      if(debug) cout<<numerator->GetTitle()<<endl;
     else{
       cout<<"numerator string empty taking denominator string "<<s_denominator<<endl;
       numerator = (TH1F*) file->Get(s_denominator.c_str());
@@ -77,6 +86,8 @@ void effiPlots::plotEffi(int options){
   double maximum = 0;
   TMultiGraph * resultGraphs = new TMultiGraph();
   //get_can()->SetLogy();
+  TLegend* multigraphLeg = new TLegend(0.3,0.2,0.5,0.4); 
+  multigraphLeg->SetBorderSize(0);
   for(unsigned int i = 0; i < histos.size(); ++i ){
     leg = new TLegend(0.65,0.65,0.85,0.85);
     histos[i].numerator->GetMaximum() <= histos[i].denominator->GetMaximum() ? maximum = histos[i].denominator->GetMaximum() : maximum = histos[i].numerator->GetMaximum();  
@@ -85,12 +96,17 @@ void effiPlots::plotEffi(int options){
     histos[i].denominator->SetLineColor(kBlack);
     if(rangeMax!=rangeMin)histos[i].numerator->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
     if(rangeMax!=rangeMin)histos[i].denominator->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
+    //if(!x_axis.empty()){
+    //	histos[i].numerator->GetXaxis()->SetTitle(x_axis.c_str());
+    //	histos[i].denominator->GetXaxis()->SetTitle(x_axis.c_str());
+    //}
     histos[i].numerator->Draw();
     histos[i].denominator->Draw("same");
     Double_t error_num = -1;
     Double_t error_denom = -1;
     double integral_num = histos[i].numerator->IntegralAndError(1,-1,error_num);
     double integram_denom = histos[i].denominator->IntegralAndError(1,-1,error_denom);
+    //if(!legend_entries[i].empty())leg->AddEntry((TObject*)0,(legend_entries[i]).c_str(),"");
     leg->AddEntry(histos[i].numerator, ("Numerator Events: "+to_string(int (integral_num))+"+-"+to_string(int(ceil(error_num)))).c_str(), "l");
     leg->AddEntry(histos[i].denominator,("Denominator Events: "+to_string(int (integram_denom))+"+-"+to_string(int(ceil(error_denom)))).c_str(), "l");
     leg->AddEntry((TObject*)0,("Total Efficiency: "+to_string(int (integral_num/integram_denom *100))).c_str(),"");
@@ -119,9 +135,13 @@ void effiPlots::plotEffi(int options){
     }
     TGraphAsymmErrors* graph = new TGraphAsymmErrors(histos[i].numerator,histos[i].denominator,"cl=0.683 b(1,1) mode");
     if(rangeMax!=rangeMin)graph->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
-    graph->SetTitle((string(histos[i].numerator->GetTitle())+" Efficiency").c_str());//+"/"+string(histos[i].denominator->GetTitle())).c_str());
-    graph->GetXaxis()->SetTitle((string(histos[i].numerator->GetXaxis()->GetTitle())).c_str());
+    //graph->SetTitle((string(histos[i].numerator->GetTitle())+" Efficiency").c_str());//+"/"+string(histos[i].denominator->GetTitle())).c_str());
+    if(debug) std::cout<<"legend size "<<legend_entries.size()<<" entry "<< legend_entries[i]<<std::endl;
+    if(!legend_entries[i].empty())multigraphLeg->AddEntry(graph,(legend_entries[i]).c_str(),"lp");
+    //multigraphLeg->AddEntry(graph,"test","ap");
     graph->Draw("sameap");
+    graph->GetYaxis()->SetTitle(y_axis.c_str());
+    graph->GetXaxis()->SetTitle((string(histos[i].numerator->GetXaxis()->GetTitle())).c_str());
     if(imposeDistri)drawDistri(hist_denom,graph->GetMaximum());
     get_can()->Print(get_resultFile());
     //graph->SetMarkerStyle(21+i);
@@ -129,12 +149,18 @@ void effiPlots::plotEffi(int options){
     resultGraphs->Add(graph);
     //leg->AddEntry(graph,histos.at(i).numerator->GetTitle,"l");
   }    
-  resultGraphs->SetTitle("Efficiency");
   resultGraphs->Draw("ap");//should be ap have to change marker style
+  resultGraphs->GetYaxis()->SetTitle("Efficiency");
+  resultGraphs->GetXaxis()->SetTitle(x_axis.c_str());
   if(rangeMax!=rangeMin){
     get_can()->Modified();  
     resultGraphs->GetXaxis()->SetLimits(rangeMin,rangeMax);
   }
+  histos[0].denominator->DrawNormalized("histsame"); 
+
+  multigraphLeg->Draw();
+  //resultGraphs->Draw("ap");//should be ap have to change marker style
+  //get_can()->BuildLegend();
   //resultGraphs->SetMinimum(0.9);
 
   //if(imposeDistri)drawDistri(0);
