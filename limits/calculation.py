@@ -64,7 +64,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         #options.set('minimizer', 'always_mcmc', 'True')
         #options.set('global','debug','True')
             options.set('minimizer','minuit_tolerance_factor','10000')
-            mle_output = mle(model, input='data',n=1, options=options)
+            mle_output = mle(model, input='data',n=100, options=options)
             try:
                 mle_background = mle(model, input='data',n=1,signal_process_groups ={"background_only":[]} )
                 mle_output.update(mle_background)

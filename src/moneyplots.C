@@ -9,7 +9,7 @@ int main(){
   string CMSSW = "7_6_3";
   string folder = "Selection_"+version;
   bool electron = true;
-  bool errors = true;
+  bool errors = false;
   string resultfile = "moneyplots.ps";
   if (electron){
     folder = "EleSelection_v9";
@@ -81,6 +81,11 @@ int main(){
   string toptag_central_string = "TopTagDis.mass>-1 &&((abs(TopTagDis.forwardJet.eta()) <" +eta+") || TopTagDis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
   string toptag_forward_string = "TopTagDis.mass>-1 && (abs(TopTagDis.forwardJet.eta()) >="+eta+") && TopTagDis.forwardJet.E()>="+energy;
 
+ treehists.Draw("0","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() == 0)","6,-.5,5.5","No forward ak4");
+ treehists.Draw("1","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() > 0)","6,-.5,5.5","No forward ak4");
+ treehists.Draw("0","weight*(TopTagDis.mass==-1&& Chi2Dis.forwardJet.pt() == 0)","6,-.5,5.5","no forward jet");
+ treehists.Draw("1","weight*(TopTagDis.mass==-1&& Chi2Dis.forwardJet.pt() > 0)","6,-.5,5.5","forward jet");
+
 
   treehists.Draw("Length$(slimmedJets.slimmedJets.m_eta)","weight","16,-0.5,15.5","Number of ak4","Events",false);
   treehists.Draw("slimmedJets.slimmedJets.m_eta","weight","50,-5,5","ak4 #eta","Events",false);
@@ -110,8 +115,8 @@ int main(){
   treehists.Draw("TopTagDis.forwardJet.eta()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","20,-5,5","forward #eta","Events",false);
   treehists.Draw("TopTagDis.forwardJet.energy()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,100,1200","forward E","Events",false);
   treehists.Draw("TopTagDis.forwardJet.energy()","weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.eta() > "+eta+")","50,100,1200","forward E","Events",false);
-  treehists.Draw("TopTagDis.forwardJet.eta()","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() == 0)","6,-.5,5.5","No forward ak4");
-
+  //treehists.Draw("TopTagDis.forwardJet.eta()","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() == 0)","6,-.5,5.5","No forward ak4");
+  //treehists.Draw("1","weight*(TopTagDis.mass>-1&& TopTagDis.forwardJet.pt() > 0)","6,-.5,5.5","No forward ak4");
   
   treehists.Draw("Chi2Dis.mass","weight*(TopTagDis.mass==-1)","30,500,3000","B mass [GeV]");
   treehists.Draw("TopTagDis.mass","weight*(TopTagDis.mass>-1)","30,500,3000","B mass [GeV]");
