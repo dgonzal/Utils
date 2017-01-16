@@ -9,10 +9,11 @@ release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepto
 Mudirs = ['config/Selection_v50/']
 Eledirs = ['config/EleSelection_v9/']
 rootDir = "ROOTFiles/"
+prefix = "MC_"
 createfiles = True
 rebin = True 
-limits = False
-signal_injection = True
+limits = True
+signal_injection = False
 
 if not rebin:
     createfiles = False
@@ -51,7 +52,7 @@ for chirality in chiralitys:
             execfile("calculation_datadriven.py")
             if limits:
                 print 'calculating limits for channel',channel,'ass. production',production,'chirality',chirality
-                exp,obs = run_cutopt(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True)
+                exp,obs = run_cutopt(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root",chirality,channel,production,True,"",0.0,prefix)
                 print 'calculated limits for: channel',channel,'ass. production',production,'chirality',chirality
 
             if signal_injection:

@@ -8,7 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import os
 
 # -*- coding: utf-8 -*-
-def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = True, injected_signal = "", beta_sig=0.0, run_data=False):
+def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
     if write_report:report.reopen_file()
 
     model = build_model_from_rootfile(fname)
@@ -55,9 +55,9 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     if write_report:
         output_directory =""
         if channel:
-            output_directory = './output_Bprime'+particle+'_'+Chirality+'_'+channel+'/'
+            output_directory = './'+glob_prefix+'output_Bprime'+particle+'_'+Chirality+'_'+channel+'/'
         else:
-             output_directory = './output_Bprime'+particle+'_'+Chirality+'/'
+             output_directory = './'+glob_prefix+'output_Bprime'+particle+'_'+Chirality+'/'
             
 
         if injected_signal: 

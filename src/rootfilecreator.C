@@ -262,7 +262,7 @@ void TreeDrawMain::find_samples_nicks(std::string dir){
       string lower_nick = splitted_match[splitted_match.size()-2];
       boost::algorithm::to_lower(lower_nick);
       //cout<<"nick lowered "<<lower_nick<<endl;
-      if(boost::algorithm::contains(lower_nick,"data"))
+      if(boost::algorithm::contains(lower_nick,"data") || boost::algorithm::contains(lower_nick,"mc"))
 	nicks.push_back("DATA");
       else
 	nicks.push_back(splitted_match[splitted_match.size()-2]);
@@ -306,7 +306,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   boost::split(directories,dirnames,boost::is_any_of(","));
 
   //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
-  std::vector<std::string> samples = {"DATA.root",signal};  
+  std::vector<std::string> samples = {"MC.root",signal};  //DATA.root
   cout<<"Starting histogram production"<<endl;
   
   std::cout<<"Directories"<<std::endl;
@@ -357,7 +357,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   if(boost::algorithm::contains(channel,"Ele")){
     background_weights = {0.38, 0.423, 0.39, 0.54};
   }*/
-  
+ 
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"30,500,3000");	    
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"30,500,3000");	    
@@ -368,8 +368,8 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   
 
   /*
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+")","Chi2","30,500,3000");	     
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+")","Chi2:background","30,500,3000",background_weights[0]);//0.388519); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+")","Chi2","200,500,3000");	     
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+")","Chi2:background","200,500,3000",0.388519); 
   */
 
 
