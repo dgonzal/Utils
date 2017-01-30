@@ -109,7 +109,9 @@ void simplePlots::plotHists(int options, bool logy){
   TPad* pad2 = new TPad("ratio_errors","ratio and error", x1, y1, x2, y2);
   
   get_can()->SetCanvasSize(800,800);
-  if(!draw_ratio  || !histos.size()>1 ) get_can()->SetCanvasSize(800,600);
+  if(!draw_ratio  || !(histos.size()>1) ){
+    get_can()->SetCanvasSize(800,600);
+  }
   //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
   pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
   //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
@@ -139,6 +141,7 @@ void simplePlots::plotHists(int options, bool logy){
   if(max!=-1)maximum=max;
   //cout<<maximum<<" "<<max<<" "<<normArea<<" "<<histos.size()<<endl;
   for(unsigned int m = 0; m < histos.size(); ++m ){  
+    if(!hist_title.empty()) histos[m]->SetTitle(hist_title.c_str());
     if(changecolors)histos[m]->SetLineColor(1+m);
     if(histos.size()>1 && draw_ratio)pad1->cd();
     if(options==1 && legend.size()>m) 
@@ -155,6 +158,7 @@ void simplePlots::plotHists(int options, bool logy){
       if(!draw_ratio||histos.size()==1){
 	histos[m]->GetYaxis()->SetTitleSize(0.05);
 	histos[m]->GetYaxis()->SetTitleOffset(1.);
+	histos[m]->GetXaxis()->SetTitle(xtitle.c_str());
       }
       
       if(normArea){

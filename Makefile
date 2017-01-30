@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGETS = run uncer fastsim cutflow trigger treehist rootfilecreator  matchingPlots regionsratio moneyplots scan_forwardJet
+TARGETS = cutflow trigger treehist rootfilecreator moneyplots recofit #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 SRCDIR  = src
 INCDIR  = include
@@ -32,9 +32,9 @@ PYTHONLIBS := $(shell python2.7-config --ldflags)
 PYTHON_INC := -I$(shell python2.7-config --includes)
 PYTHON_LIBPATH := -L$(shell python2.7-config --prefix)/lib
 
-BOOST_INC := -I$(call scramtag,boost,INCLUDE)
+BOOST_INC := -I$(call scramtag,boost,INCLUDE) 
 BOOST_LIB := $(call scramtag,boost,LIB) $(call scramtag,boost_filesystem,LIB) $(call scramtag,boost_regex,LIB) $(call scramtag,boost_python,LIB) boost_iostreams boost_program_options boost_timer 
-BOOST_LIB := $(patsubst %,-l%,$(BOOST_LIB)) -L$(call scramtag,boost,LIBDIR)
+BOOST_LIB := $(patsubst %,-l%,$(BOOST_LIB)) -L$(call scramtag,boost,LIBDIR) -Lboost_system
 
 USERLDFLAGS += $(BOOST_LIB) $(PYTHON_LIBPATH) $(PYTHONLIBS) $(ROOTLIBS) $(ROOFITLIBS)  
 USERCXXFLAGS += -g -Wall -O2  -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=1

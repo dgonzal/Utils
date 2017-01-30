@@ -306,7 +306,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   boost::split(directories,dirnames,boost::is_any_of(","));
 
   //std::vector<std::string> samples = {"SingleTsChannel.root","SingleTtChannel.root","SingleTWAntitop.root","SingleTWTop.root","ZJets.root","TTJets.root","WJets.root","QCD.root","DATA.root",signal};
-  std::vector<std::string> samples = {"MC.root",signal};  //DATA.root
+  std::vector<std::string> samples = {"Data.root",signal};  //Options DATA.root MC.root; For 2016: Data.root  
   cout<<"Starting histogram production"<<endl;
   
   std::cout<<"Directories"<<std::endl;
@@ -378,10 +378,12 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
-  mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
-  mainClass.AddWeightError("weight_btag_down/weight_btag","btag__minus");
-  mainClass.AddWeightError("weight_pu_up/weight_pu","pu__plus");
-  mainClass.AddWeightError("weight_pu_down/weight_pu","pu__minus");
+  mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
+  //mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
+  //mainClass.AddWeightError("weight_btag_down/weight_btag","btag__minus");
+  //mainClass.AddWeightError("weight_pu_up/weight_pu","pu__plus");
+  //mainClass.AddWeightError("weight_pu_down/weight_pu","pu__minus");
+  /*
   if(!boost::algorithm::contains(channel,"Ele")){
     mainClass.AddWeightError("weight_sfmu_mediumID_up/weight_sfmu_mediumID","SFmu__plus");
     mainClass.AddWeightError("weight_sfmu_mediumID_down/weight_sfmu_mediumID","SFmu__minus");
@@ -389,13 +391,12 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   
   //mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
   //mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
-  mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
   
-  
+  */
   vector<string> channel_dirs;
   if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
   if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");
-  
+  /*
   string cmssw_version = "7_6_3";
 
   for(auto chan : channel_dirs){
@@ -404,7 +405,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
     mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_up_Sel_"+chan+"/","jer__plus");
     mainClass.AddDirError("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/jersmear_direction_down_Sel_"+chan+"/","jer__minus");
   }
-  
+  */
   mainClass.create_file(resultfile);
 
   //gApplication->Terminate();
