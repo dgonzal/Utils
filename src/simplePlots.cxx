@@ -243,7 +243,11 @@ void simplePlots::plotHists(int options, bool logy){
 	histos[0]->DrawNormalized(("same "+plotting_styles[0]).c_str());
       else
 	histos[0]->Draw(("same "+plotting_styles[0]).c_str());
-  }  
+  }
+
+  for(unsigned int i=histos.size();i<legend.size();++i)
+    leg->AddEntry((TObject*)0, legend[i].c_str(), "");
+
   leg->Draw();
   get_can()->Print(get_resultFile());
   if(logy) get_can()->SetLogy(0);  

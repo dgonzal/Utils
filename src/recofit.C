@@ -16,8 +16,8 @@ int main(){
   string CMSSW = "8_0_20";
   string folder ="MuSelection_v13";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
-  vector<string> filenames ={"BprimeB-800_LH","BprimeB-900_LH","BprimeB-1000_LH","BprimeB-1100_LH","BprimeB-1200_LH","BprimeB-1300_LH","BprimeB-1400_LH","BprimeB-1500_LH","BprimeB-1600_LH","BprimeB-1700_LH","BprimeB-1800_LH","BprimeB-800_RH","BprimeB-900_RH","BprimeB-1000_RH","BprimeB-1100_RH","BprimeB-1200_RH","BprimeB-1300_RH","BprimeB-1400_RH","BprimeB-1500_RH","BprimeB-1600_RH","BprimeB-1700_RH","BprimeB-1800_RH"};
-  //vector<string> filenames ={"BprimeT-800_LH","BprimeT-900_LH","BprimeT-1000_LH","BprimeT-1100_LH","BprimeT-1200_LH","BprimeT-1300_LH","BprimeT-1400_LH","BprimeT-1500_LH","BprimeT-1600_LH","BprimeT-1700_LH","BprimeT-1800_LH","BprimeT-800_RH","BprimeT-900_RH","BprimeT-1000_RH","BprimeT-1100_RH","BprimeT-1200_RH","BprimeT-1300_RH","BprimeT-1400_RH","BprimeT-1500_RH","BprimeT-1600_RH","BprimeT-1700_RH","BprimeT-1800_RH"};
+  //vector<string> filenames ={"BprimeB-800_LH","BprimeB-900_LH","BprimeB-1000_LH","BprimeB-1100_LH","BprimeB-1200_LH","BprimeB-1300_LH","BprimeB-1400_LH","BprimeB-1500_LH","BprimeB-1600_LH","BprimeB-1700_LH","BprimeB-1800_LH","BprimeB-800_RH","BprimeB-900_RH","BprimeB-1000_RH","BprimeB-1100_RH","BprimeB-1200_RH","BprimeB-1300_RH","BprimeB-1400_RH","BprimeB-1500_RH","BprimeB-1600_RH","BprimeB-1700_RH","BprimeB-1800_RH"};
+  vector<string> filenames ={"BprimeT-800_LH","BprimeT-900_LH","BprimeT-1000_LH","BprimeT-1100_LH","BprimeT-1200_LH","BprimeT-1300_LH","BprimeT-1400_LH","BprimeT-1500_LH","BprimeT-1600_LH","BprimeT-1700_LH","BprimeT-1800_LH","BprimeT-800_RH","BprimeT-900_RH","BprimeT-1000_RH","BprimeT-1100_RH","BprimeT-1200_RH","BprimeT-1300_RH","BprimeT-1400_RH","BprimeT-1500_RH","BprimeT-1600_RH","BprimeT-1700_RH","BprimeT-1800_RH"};
 
   
   vector<string> nicks;
@@ -35,12 +35,13 @@ int main(){
   for(auto name : filenames)
     treehists.addFile(dir+name+".root");
  
-  std::vector<TH1F*> mass_toplep = treehists.return_hists("BestFit.mass"      ,"weight*(BestFit.chi<100 && BestFit.recoTyp ==21)","150,500,3000","mass [GeV]");
-  std::vector<TH1F*> top_toplep  = treehists.return_hists("BestFit.topLep.M()","weight*(BestFit.chi<100 && BestFit.recoTyp ==21)","50,100,300"  ,"mass [GeV]");
-  std::vector<TH1F*> w_toplep    = treehists.return_hists("BestFit.wHad.M()"  ,"weight*(BestFit.chi<100 && BestFit.recoTyp ==21)","50,50,180"   ,"mass [GeV]");
-  std::vector<TH1F*> mass_tophad = treehists.return_hists("BestFit.mass"      ,"weight*(BestFit.chi<100 && BestFit.recoTyp ==22)","150,500,3000","mass [GeV]");
-  std::vector<TH1F*> top_tophad  = treehists.return_hists("BestFit.topHad.M()","weight*(BestFit.chi<100 && BestFit.recoTyp ==22)","50,100,300"  ,"mass [GeV]");
-  std::vector<TH1F*> w_tophad    = treehists.return_hists("BestFit.wLep.M()"  ,"weight*(BestFit.chi<100 && BestFit.recoTyp ==22)","50,50,180"   ,"mass [GeV]");
+  string helper_chooser = "BestFit.chi<1000 && BestFit.chi>-1 &&";
+  std::vector<TH1F*> mass_toplep = treehists.return_hists("BestFit.mass"      ,"weight*("+helper_chooser+" BestFit.recoTyp ==21)","150,500,3000","mass [GeV]");
+  std::vector<TH1F*> top_toplep  = treehists.return_hists("BestFit.topLep.M()","weight*("+helper_chooser+" BestFit.recoTyp ==21)","50,100,300"  ,"mass [GeV]");
+  std::vector<TH1F*> w_toplep    = treehists.return_hists("BestFit.wHad.M()"  ,"weight*("+helper_chooser+" BestFit.recoTyp ==21)","50,50,180"   ,"mass [GeV]");
+  std::vector<TH1F*> mass_tophad = treehists.return_hists("BestFit.mass"      ,"weight*("+helper_chooser+" BestFit.recoTyp ==22)","150,500,3000","mass [GeV]");
+  std::vector<TH1F*> top_tophad  = treehists.return_hists("BestFit.topHad.M()","weight*("+helper_chooser+" BestFit.recoTyp ==22)","50,100,300"  ,"mass [GeV]");
+  std::vector<TH1F*> w_tophad    = treehists.return_hists("BestFit.wLep.M()"  ,"weight*("+helper_chooser+" BestFit.recoTyp ==22)","50,50,180"   ,"mass [GeV]");
 
 
   vector<double> fitmean_toplep;
@@ -76,6 +77,8 @@ int main(){
     fitmean_toplep.push_back(gaus->GetParameter(1));
     fitrms_toplep.push_back(gaus->GetParameter(2));
     recofit.loadHists(top_toplep[i],nicks[i]+" top_{lep}","PE");
+    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
 
@@ -83,6 +86,8 @@ int main(){
     fitmean_tophad.push_back(gaus->GetParameter(1));
     fitrms_tophad.push_back(gaus->GetParameter(2));
     recofit.loadHists(top_tophad[i],nicks[i]+" top_{had}","PE");
+    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
 
@@ -95,6 +100,8 @@ int main(){
     fitmean_whad.push_back(gaus->GetParameter(1));
     fitrms_whad.push_back(gaus->GetParameter(2));
     recofit.loadHists(w_toplep[i],nicks[i]+" top_{lep}","PE");
+    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
   }
