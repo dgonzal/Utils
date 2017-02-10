@@ -14,7 +14,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model = build_model_from_rootfile(fname)
     #model.scale_predictions(5.0 / 1.1)
     model.fill_histogram_zerobins()
-    model.set_signal_processes('Bp'+particle+'_TW_*_'+Chirality+'*')
+    model.set_signal_processes('Bp*'+particle+'*'+Chirality+'*')
 
     for p in model.processes:
         if "Background" not in p: 
@@ -143,8 +143,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         pp = PdfPages(output_directory+injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
 
 
-    theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500]
-    theory13TeV_y =[0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540]
+    theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
+    theory13TeV_y =[0.745,0.532,0.388,0.285,0.212,0.159,0.12,0.0917,0.0706,0.0541,0.042,0.0324 ]
 
 
     legend_string =""
@@ -154,8 +154,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         legend_string = "Bt, $\mathbf{c_R=1.0}$, BR(tW)=100$\%$"
 
     if particle is 'b':
-        theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
-        theory13TeV_y =numpy.array([3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
+        theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
+        theory13TeV_y =numpy.array([4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
         theory13TeV_y =theory13TeV_y*0.5
         if "LH" in Chirality:
             legend_string = "Bb, c$_L$=1.0, BR(tW)=50$\%$"
@@ -174,7 +174,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #matplotlib.rcParams['text.usetex']=True
     #matplotlib.rcParams['text.latex.unicode']=True
     #f,ax = plt.subplots()
-    plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
+    plt.title("37 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
     if "LH" in Chirality :plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
     plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],

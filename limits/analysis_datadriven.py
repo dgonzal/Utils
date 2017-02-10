@@ -2,18 +2,20 @@ from subprocess import call
 import os
 
 channels = [""]#['Mu',"Ele",""]
-production_channels = ["b"]#,"t"]#"b",
+production_channels = ["B","T"]#,"t"]#"b",
 chiralitys = ["RH","LH"]
 
-release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/'
-Mudirs = ['config/Selection_v50/']
-Eledirs = ['config/EleSelection_v9/']
+release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_20/src/UHH2/VLQToTopAndLepton/'
+Mudirs = ['config/MuSelection_v13/']
+Eledirs = ['config/EleSel_v3/']
 rootDir = "ROOTFiles/"
-prefix = "MC_"
+prefix = ""
 createfiles = True
 rebin = True 
 limits = True
 signal_injection = False
+signal_pre = 'Bprime'
+
 
 if not rebin:
     createfiles = False
@@ -42,7 +44,7 @@ for chirality in chiralitys:
                     dirstring = dirstring+release+inf+','
             if dirstring[-1]==',': dirstring = dirstring[:-1]
             if (createfiles or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root")) and limits: 
-                call(['./../bin/rootfilecreator', 'Bp'+production+'_TW_*'+chirality+'_25ns', str(rootDir+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel])
+                call(['./../bin/rootfilecreator', signal_pre+production+'*'+chirality, str(rootDir+channel+'Bp'+production+'Reco_'+chirality),dirstring,channel])
             execfile("histogram_rebinning.py")
             if (rebin or not os.path.exists(rootDir+channel+"Bp"+production+"Reco_"+chirality+"_rebinned.root")) and limits:   
                 print 'working on  the rebinning for', channel
