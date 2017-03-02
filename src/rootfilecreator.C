@@ -226,6 +226,7 @@ bool TreeDrawMain::create_file(std::string fileName){
 	if(debug)cout<<hist.draw_command<<" "<<hist.selection<<endl;
 	if(boost::algorithm::contains(hist.hist_name,"background")) continue;
 	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
+	if(tmp_hist->GetEntries()==0)continue;
 	if(debug)cout<<dir_errors_nick[error_nick]<<endl;
 	if(debug)cout<<(hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str()<<endl;
 	tmp_hist->SetName((hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick]).c_str());
@@ -325,6 +326,8 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   string eta = "2.0";
   string energy = "250";
   string jetiso = "200000";
+
+
   //if(boost::algorithm::contains(channel,"Ele"))
   //  eta = 2.1;
   /*
@@ -351,48 +354,47 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
   string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
 
-  std::vector<double>  background_weights = {0.37, 0.43, 0.43, 0.45 };
+  std::vector<double>  background_weights = {0.2633,0.3117,0.338,0.3179};//{0.229,0.277,0.2999,0.282};//{0.37, 0.43, 0.43, 0.45 };
   
   /*
   if(boost::algorithm::contains(channel,"Ele")){
     background_weights = {0.38, 0.423, 0.39, 0.54};
   }*/
  
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","30,500,3000");	    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"30,500,3000");	    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"30,500,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag","50,500,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag"  ,"50,500,3000");	    
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag"  ,"50,500,3000");	    
  		    
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","30,500,3000",background_weights[0]);//0.388519); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"30,500,3000",background_weights[1]);//0.471137); 
-  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"30,500,3000",background_weights[2]);//0.467834); 
-  
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","Chi2_AntiBTag:background","50,500,3000",background_weights[0]);//0.388519); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","Chi2_1_BTag:background"  ,"50,500,3000",background_weights[1]);//0.471137); 
+  mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","Chi2_2_BTag:background"  ,"50,500,3000",background_weights[2]);//0.467834); 
 
   /*
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_forward_string+")","Chi2","200,500,3000");	     
   mainClass.AddHistCategory("Chi2Dis.mass","weight*("+chi2_central_string+")","Chi2:background","200,500,3000",0.388519); 
   */
-
-
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","30,500,3000");		
-  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","30,500,3000",background_weights[3]);//0.445472);                        
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")","TopTag","50,500,3000");		
+  mainClass.AddHistCategory("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))","TopTag:background","50,500,3000",background_weights[3]);//0.445472);                        
   
   mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
   mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
   mainClass.AddWeightError("pdfWeight","PDF",TreeDrawMain::error_method::rms);
-  //mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
-  //mainClass.AddWeightError("weight_btag_down/weight_btag","btag__minus");
-  //mainClass.AddWeightError("weight_pu_up/weight_pu","pu__plus");
-  //mainClass.AddWeightError("weight_pu_down/weight_pu","pu__minus");
+  mainClass.AddWeightError("weight_btag_up/weight_btag","btag__plus");
+  mainClass.AddWeightError("weight_btag_down/weight_btag","btag__minus");
+  mainClass.AddWeightError("weight_pu_up/weight_pu","pu__plus");
+  mainClass.AddWeightError("weight_pu_down/weight_pu","pu__minus");
+
+
   /*
   if(!boost::algorithm::contains(channel,"Ele")){
     mainClass.AddWeightError("weight_sfmu_mediumID_up/weight_sfmu_mediumID","SFmu__plus");
     mainClass.AddWeightError("weight_sfmu_mediumID_down/weight_sfmu_mediumID","SFmu__minus");
-  }
+    }*/
   
   //mainClass.AddWeightError("weight_toptag_up","TopTag__plus");
   //mainClass.AddWeightError("weight_toptag_down","TopTag__minus");
   
-  */
+  
   vector<string> channel_dirs;
   if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
   if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");

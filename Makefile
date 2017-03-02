@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11
 LINKER   = g++ -o
-TARGETS = cutflow trigger treehist rootfilecreator moneyplots recofit #scan_forwardJet fastsim uncer matchingPlots regionsratio run
+TARGETS = cutflow trigger treehist rootfilecreator moneyplots recofit wjets width_comp #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 SRCDIR  = src
 INCDIR  = include

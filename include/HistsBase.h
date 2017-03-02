@@ -25,10 +25,13 @@ class HistsBase{
   HistsBase(string saveName);
   ~HistsBase();
 
-  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "", double uncer = 0, double scalefactor=1);
+  void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "", double uncer = 0, double scalefactor=1.);
+  void removeFile(unsigned int position);
+  void clearFiles();
   void addFolder(string dir, string contains ="", string ends="");
   void addText(TLatex * text){texts_to_print.push_back(text);}
   void printText(){for(auto text : texts_to_print)text->Draw();}
+  
 
 
   TCanvas* get_can(){return can;}

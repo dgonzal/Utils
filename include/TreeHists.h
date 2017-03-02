@@ -28,6 +28,9 @@ class TreeHists: public HistsBase{
   void AddErrorWeight(std::string error_string, error_method method=envelop, std::string replace="");
   void AddErrorFolder(std::vector<std::string> folder_name);
   void switch_logy(bool logy_=false){logy =logy_;}
+  //no data points are plotted into the ratio
+  void mcratio_only(bool mcratio_=true){mcratio=mcratio_;}
+  void switch_ratio(bool rat=false){draw_ratio=rat;}
 
   bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true);
   std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
@@ -53,9 +56,7 @@ class TreeHists: public HistsBase{
   std::vector<std::vector<std::string>> error_folders;
   std::vector<std::vector<TH1F*>> error_folder_histos;
 
-  bool logy=false;
-  bool debug = false;
-  bool draw_ratio =true;
+  bool logy=false, debug = false, draw_ratio =true, mcratio=false;
   //Tpads for pretty print
   TPad *pad1, *pad2;
 };

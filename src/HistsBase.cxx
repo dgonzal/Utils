@@ -80,3 +80,28 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
     scale.push_back(scalefactor);
   }
 }
+
+void HistsBase::removeFile(unsigned int position){
+  cout<<"Removing "<<nicknames[position]<<" from the plotting list"<<endl;
+  filedirs.erase(filedirs.begin() + position);
+  hist_draw_options.erase(hist_draw_options.begin() + position);
+  hist_colors.erase(hist_colors.begin() + position);
+  hist_stack.erase(hist_stack.begin() + position);
+  hist_marker.erase(hist_marker.begin() + position);
+  nicknames.erase(nicknames.begin() + position);
+  uncertainties.erase(uncertainties.begin() + position);
+  scale.erase(scale.begin() + position);
+}
+
+void HistsBase::clearFiles(){
+  cout<<"Removing all files that where plotted!"<<endl;
+  filedirs.clear();
+  hist_draw_options.clear();
+  hist_colors.clear();
+  hist_stack.clear();
+  hist_marker.clear();
+  nicknames.clear();
+  uncertainties.clear();
+  scale.clear();
+
+}

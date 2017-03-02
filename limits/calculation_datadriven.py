@@ -14,7 +14,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model = build_model_from_rootfile(fname)
     #model.scale_predictions(5.0 / 1.1)
     model.fill_histogram_zerobins()
-    model.set_signal_processes('Bp*'+particle+'*'+Chirality+'*')
+    model.set_signal_processes('Bprime*'+particle+'*'+Chirality+'*')
 
     for p in model.processes:
         if "Background" not in p: 
@@ -48,8 +48,10 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     exp = None
     obs = None
 
-    if not injected_signal: exp, obs  = bayesian_limits(model, 'all', n_toy = 1000, n_data = 100,options=options)
-    else: exp,obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
+    if not injected_signal: 
+        exp, obs  = bayesian_limits(model, 'all', n_toy = 1000, n_data = 100,options=options)
+    else: 
+        exp,obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
 
     #evaluate_prediction(model)
     if write_report:
@@ -72,43 +74,48 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         savelimits.close()
    
         fit_result = []
+        mle_output = None
 
         try:
-        #options.set('minimizer', 'always_mcmc', 'True')
-        #options.set('global','debug','True')
+            #options.set('minimizer', 'always_mcmc', 'True')
+            #options.set('global','debug','True')
             #options.set('minimizer','minuit_tolerance_factor','1000')
-            mle_output = mle(model, input='data',n=1000, options=options)
+            mle_output = mle(model, input='data',n=5, options=options)
             #mle_output = mle(model, input='data',n=1000, options=options,signal_process_groups ={"background_only":[]} )
-            try:
-                #options.set('minimizer','minuit_tolerance_factor','0.001')
-                mle_background = mle(model, input='data',n=1000,signal_process_groups ={"background_only":[]} )
-                mle_output.update(mle_background)
-                for pf_vals in mle_background.itervalues():
-                    del pf_vals['__nll']
-                    for key in pf_vals:
-                        #print key
-                        vals = list(a for a, _ in pf_vals[key])
-                        #print 'vals',vals
-                        errs = list(b for _, b in pf_vals[key])
-                        #print 'errs',errs
-                        weis = list(1/b for b in errs)
-                        #print 'weis',weis
-                        #wei_mean = numpy.average(vals, weights=weis)
-                        wei_mean = numpy.average(vals)
-                        mean_err = numpy.average(errs)
-                        pf_vals[key] = ((3**wei_mean, 3**mean_err),)
-                        #print wei_mean, mean_err
-                        print key,'Mean',3**wei_mean,"Error",3**mean_err-1
-                        fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
-                    #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
-            except Exception as e:
-                print 'Postfit MLE was not possible for background. Channel Bp'+particle+'_TW_'+Chirality+":"
-                print e
             postfit = ThetaPostFitPlot(mle_output)
             postfit.make_plots(output_directory)
-        except Exception as ex:
+
+        except Exception as e:
             print 'Postfit MLE was not possible Bp'+particle+'_TW_'+Chirality+":"
-            print ex
+            print e
+
+        try:
+            #options.set('minimizer','minuit_tolerance_factor','0.001')
+            mle_background = mle(model, input='data',n=5,signal_process_groups ={"background_only":[]} )
+            for pf_vals in mle_background.itervalues():
+                del pf_vals['__nll']
+                for key in pf_vals:
+                    #print key
+                    vals = list(a for a, _ in pf_vals[key])
+                    #print 'vals',vals
+                    errs = list(b for _, b in pf_vals[key])
+                    #print 'errs',errs
+                    weis = list(1/b for b in errs)
+                    #print 'weis',weis
+                    #wei_mean = numpy.average(vals, weights=weis)
+                    wei_mean = numpy.average(vals)
+                    mean_err = numpy.average(errs)
+                    pf_vals[key] = ((3**wei_mean, 3**mean_err),)
+                    #print wei_mean, mean_err
+                    print key,'Mean',3**wei_mean,"Error",3**mean_err-1
+                    fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
+                    #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
+            postfit = ThetaPostFitPlot(mle_background)
+            postfit.make_plots(output_directory)
+        except Exception as e:
+            print 'Postfit MLE was not possible for background. Channel Bprime'+particle+'_'+Chirality+":"
+            print e
+           
         limit_file = open(output_directory+"limit.txt",'w+')
         limit_file.write("expected limit "+Chirality+":\n")
         print >> limit_file, exp
@@ -174,7 +181,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #matplotlib.rcParams['text.usetex']=True
     #matplotlib.rcParams['text.latex.unicode']=True
     #f,ax = plt.subplots()
-    plt.title("37 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
+    plt.title("36 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
     if "LH" in Chirality :plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
     plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],

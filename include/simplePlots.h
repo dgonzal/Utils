@@ -7,6 +7,8 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH1D.h"
+#include "TGraph.h"
+#include "TF1.h"
 #include "TCanvas.h"
 #include "TMultiGraph.h"
 #include "TGraphErrors.h"
@@ -47,6 +49,8 @@ class simplePlots: public HistsBase{
   void loadStackHists(string histname,int color);
   void loadStackHists(TH1F * hist, string legend_entry="");
   void loadTH2(string histname);
+  void loadTF1(TF1* func, string legend_entry="", string plotting_style="");
+  void loadTGraph(TGraph* graph, string legend_entry="", string plotting_style="");
 
   void plotHists(int options=0, bool logy=false); 
   void plotTH2(int options=0); 
@@ -61,18 +65,22 @@ class simplePlots: public HistsBase{
   void set_title(string hist_title_){hist_title=hist_title_;}
 
   void clearHists(){histos.clear();}
-  void clearLegend(){legend.clear();stack_legend.clear();}
+  void clearLegend(){legend.clear();stack_legend.clear();func_leg.clear();graph_leg.clear();}
   void clearFiles(){clear_filedirs();}
   void clearStack(){stack =  new THStack("hs","stacked histograms");}
+  void clearGraphs(){graphs.clear();}
+  void clearFunc(){functions.clear();}	
 
-  void clearAll(){clearHists();clearLegend();clearFiles();clearStack();}
+  void clearAll(){clearHists();clearLegend();clearFiles();clearStack();clearGraphs();clearFunc();}
 
  private:
   TH1F* ratio(TH1F* num, TH1F* denom, bool norm);
+  vector<TGraph*> graphs;
+  vector<TF1*> functions;
   vector<TH2F*> twoDhists;
   vector<TH1F*> histos;
-  vector<string> legend, stack_legend;
-  std::vector<std::string> plotting_styles;
+  vector<string> legend, stack_legend, func_leg, graph_leg;
+  std::vector<std::string> plotting_styles, func_plotting,graph_plotting;
   vector<bool> plotInratio;
   string ratio_ytitle = "Data/MC", hist_ytitle = "Events", xtitle="", hist_title="";
   double ratio_min = 0.1, ratio_max = 2.9;

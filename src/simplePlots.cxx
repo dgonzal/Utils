@@ -11,9 +11,20 @@ simplePlots::simplePlots(string saveName): HistsBase(saveName){
 }
 void simplePlots::loadHists(TH1F * hist, string legend_entry,string plotting_style,bool ratio){
   histos.push_back(hist);
-  if(!legend_entry.empty()) legend.push_back(legend_entry);
+  if(!legend_entry.empty())legend.push_back(legend_entry);
   plotting_styles.push_back(plotting_style);
   plotInratio.push_back(ratio);
+}
+void simplePlots::loadTF1(TF1* func, string legend_entry, string plotting_style){
+  func_leg.push_back(legend_entry);
+  func_plotting.push_back(plotting_style);
+  functions.push_back(func);
+}
+
+void simplePlots::loadTGraph(TGraph* graph, string legend_entry, string plotting_style){
+  graph_leg.push_back(legend_entry);
+  graph_plotting.push_back(plotting_style);
+  graphs.push_back(graph);
 }
 
 void simplePlots::loadHists(string histname, string title,string plotting_style,bool ratio){
@@ -246,14 +257,25 @@ void simplePlots::plotHists(int options, bool logy){
   }
 
   for(unsigned int i=histos.size();i<legend.size();++i)
-    leg->AddEntry((TObject*)0, legend[i].c_str(), "");
+     if(!legend[i].empty())leg->AddEntry((TObject*)0, legend[i].c_str(), "");
 
+  for(unsigned int i=0; i<graphs.size();++i){
+    graphs[i]->Draw(graph_plotting[i].c_str());
+    if(!graph_leg[i].empty()) leg->AddEntry(graphs[i],graph_leg[i].c_str(),"");
+  }
+
+  for(unsigned int i=0; i<functions.size();++i){
+    functions[i]->Draw(func_plotting[i].c_str());
+    if(!func_leg[i].empty()) leg->AddEntry(functions[i],func_leg[i].c_str(),"");
+  }
+  
+  get_can()->Update();
   leg->Draw();
   get_can()->Print(get_resultFile());
   if(logy) get_can()->SetLogy(0);  
   pad1->Close();
   pad2->Close();
-
+  get_can()->Clear();
 }
 
 void simplePlots::loadTH2(string histname){

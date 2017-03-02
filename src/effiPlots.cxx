@@ -22,7 +22,6 @@ void effiPlots::loadTHHists(string s_denominator, string s_numerator){
 }
 
 void effiPlots::plotTH(){
-
   for(unsigned int i=0; i<histsTH.size(); ++i){
     TEfficiency effi(*histsTH.at(i).num, *histsTH.at(i).denom);
     //if(title.size()>=i) effi.SetTitle(title.at(i).c_str());
@@ -46,11 +45,12 @@ void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_e
     TH1F * numerator;
     if(file->GetListOfKeys()->Contains(s_numerator.c_str()))cout<< s_numerator<<" does not exist"<<endl;
     if(file->GetListOfKeys()->Contains(s_denominator.c_str()))cout<< s_denominator<<" does not exist"<<endl;
-    if(!s_numerator.empty())
+    if(!s_numerator.empty()){
       numerator = (TH1F*) file->Get(s_numerator.c_str());
       if(debug) cout<<numerator->GetTitle()<<endl;
+    }
     else{
-      cout<<"numerator string empty taking denominator string "<<s_denominator<<endl;
+      cout<<"numerator string "<<s_numerator<<" empty taking denominator string "<<s_denominator<<endl;
       numerator = (TH1F*) file->Get(s_denominator.c_str());
     }		     
     if(debug)cout<<"loaded numerator"<<endl;
@@ -89,6 +89,13 @@ void effiPlots::plotEffi(int options){
   TLegend* multigraphLeg = new TLegend(0.3,0.2,0.5,0.4); 
   multigraphLeg->SetBorderSize(0);
   for(unsigned int i = 0; i < histos.size(); ++i ){
+    /*
+    gStyle->SetPadTickY(1);
+    get_can()->UseCurrentStyle();
+    get_can()->Update();
+    */
+    resultGraphs->SetMinimum(0.);
+
     leg = new TLegend(0.65,0.65,0.85,0.85);
     histos[i].numerator->GetMaximum() <= histos[i].denominator->GetMaximum() ? maximum = histos[i].denominator->GetMaximum() : maximum = histos[i].numerator->GetMaximum();  
     histos[i].numerator->SetMaximum(maximum*1.2);
@@ -116,7 +123,6 @@ void effiPlots::plotEffi(int options){
     double current_den = 0;
     double num_error =0;
     double den_error=0;
-    TH1F* hist_denom = (TH1F*)histos[i].denominator->Clone();
     int NBins = histos[i].numerator->GetXaxis()->GetNbins();
     //cout<<"Number of bins "<<NBins<<endl;
     if(options==1||options==0){
@@ -133,22 +139,30 @@ void effiPlots::plotEffi(int options){
 	histos[i].denominator->SetBinContent(m,current_den); histos[i].denominator->SetBinError(m,den_error);
       }
     }
-    TGraphAsymmErrors* graph = new TGraphAsymmErrors(histos[i].numerator,histos[i].denominator,"cl=0.683 b(1,1) mode");
+    TGraphAsymmErrors* graph = new TGraphAsymmErrors((TH1F*)histos[i].numerator->Clone(),(TH1F*)histos[i].denominator->Clone(),"cl=0.683 b(1,1) mode");
     if(rangeMax!=rangeMin)graph->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
     //graph->SetTitle((string(histos[i].numerator->GetTitle())+" Efficiency").c_str());//+"/"+string(histos[i].denominator->GetTitle())).c_str());
     if(debug) std::cout<<"legend size "<<legend_entries.size()<<" entry "<< legend_entries[i]<<std::endl;
-    if(!legend_entries[i].empty())multigraphLeg->AddEntry(graph,(legend_entries[i]).c_str(),"lp");
-    //multigraphLeg->AddEntry(graph,"test","ap");
+    if(!legend_entries[i].empty()){
+      multigraphLeg->AddEntry(graph,legend_entries[i].c_str(),"lp");
+      graph->SetTitle(legend_entries[i].c_str());
+    }
+    graph->SetMinimum(0.);
     graph->Draw("sameap");
     graph->GetYaxis()->SetTitle(y_axis.c_str());
     graph->GetXaxis()->SetTitle((string(histos[i].numerator->GetXaxis()->GetTitle())).c_str());
-    if(imposeDistri)drawDistri(hist_denom,graph->GetMaximum());
+    if(!x_axis.empty())graph->GetXaxis()->SetTitle(x_axis.c_str());
+    if(imposeDistri)drawDistri((TH1F*)histos[i].denominator->Clone(),graph->GetMaximum());
     get_can()->Print(get_resultFile());
-    //graph->SetMarkerStyle(21+i);
     graph->SetLineColor(1+i);
     resultGraphs->Add(graph);
-    //leg->AddEntry(graph,histos.at(i).numerator->GetTitle,"l");
-  }    
+  }   
+  /*
+  gStyle->SetPadTickY(2);
+  //get_can()->UseCurrentStyle();
+  get_can()->Update();
+  */
+  resultGraphs->SetMinimum(0.);
   resultGraphs->Draw("ap");//should be ap have to change marker style
   resultGraphs->GetYaxis()->SetTitle("Efficiency");
   resultGraphs->GetXaxis()->SetTitle(x_axis.c_str());
@@ -156,34 +170,45 @@ void effiPlots::plotEffi(int options){
     get_can()->Modified();  
     resultGraphs->GetXaxis()->SetLimits(rangeMin,rangeMax);
   }
-  histos[0].denominator->DrawNormalized("histsame"); 
-
+  
+  //if(imposeDistri)histos[0].denominator->DrawNormalized("hist same"); 
   multigraphLeg->Draw();
+ 
+ 
   //resultGraphs->Draw("ap");//should be ap have to change marker style
   //get_can()->BuildLegend();
   //resultGraphs->SetMinimum(0.9);
-
   //if(imposeDistri)drawDistri(0);
   if(legend_bool)get_can()->BuildLegend(0.15, 0.1, 0.9, 0.4);
   get_can()->Print(get_resultFile());
 }
 
 void effiPlots::drawDistri(TH1F* hist, double max){
+  /*
   gStyle->SetPadTickY(0);
   get_can()->UseCurrentStyle();
   get_can()->Update();
-  cout<<hist->GetMaximum()<<endl;;
-  Float_t rightmax = hist->GetMaximum();
+  */
+  if(debug)cout<<hist->GetMaximum()<<endl;;
+  Float_t rightmax = hist->GetMaximum();rightmax*=1.3;
   //Float_t scale = 1.1/rightmax;
   //hist->SetFillColor(kBlack);
-  hist->Scale(max);
-  hist->Draw("same");
+  hist->Scale(1/rightmax);
+  hist->SetLineColor(kBlack);
+  //hist->DrawNormalized("histsame");
+  hist->Draw("sameY+");
   //draw an axis on the right side
+
+  /*  
   TGaxis *axis = new TGaxis(gPad->GetUxmax(),gPad->GetUymin(),
 			    gPad->GetUxmax(), gPad->GetUymax(),0,rightmax,50510,"+L");
+  //axis->Set
+
   axis->SetLineColor(kBlack);
+  axis->SetTitle("Events");
   axis->SetLabelColor(kBlack);
   axis->Draw();
+  */
 }
 
 

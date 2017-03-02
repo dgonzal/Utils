@@ -65,6 +65,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   std::vector<int> histMarker = get_histMarker();
   std::vector<std::string> nicknames = get_nicknames();
   std::vector<double> uncertainties = get_uncertainties();
+  std::vector<double> uncertainties_stack;
   std::vector<double> scale = get_scalefactors();
 
   for(unsigned int i=0; i< error_weights.size();i++){
@@ -97,6 +98,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     }
     
     string modified_draw_option = draw_option+"*"+to_string(scale[counter]);
+    if(draw_option.empty()) modified_draw_option = to_string(scale[counter]);
     histos.push_back(make_hist(mytree, variable, binning, modified_draw_option));
     if(!stackInfo.at(counter)) continue;
     //int count_per_error =0;
@@ -117,9 +119,13 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	}
 	error_histos[i].push_back(myTmpHist);
       }
+      //myTmpHist->Delete();
     }
+    //mytree->Delete();
   }
-  
+  //cleanup the ttree->draw stuff
+  get_can()->Clear();
+
   for(unsigned int i=0; i<error_trees.size();i++){
     error_folder_histos.push_back(std::vector<TH1F*>());
     for(auto tree : error_trees[i])
@@ -146,6 +152,13 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   //TH1F* flat_uncertainties = histos[0]
   for(unsigned int i =0; i<histos.size(); i++){
     TH1F* hist = histos[i];
+    /*
+    if(draw_ratio){ 
+      hist->GetXaxis()->SetLabelOffset(999);
+      hist->GetXaxis()->SetLabelSize(0);
+    }
+    */
+
     //if(uncertainties[i]>0)
     if(histo_max < hist->GetMaximum()+hist->GetBinError(hist->GetMaximumBin())) histo_max = hist->GetMaximum()+hist->GetBinError(hist->GetMaximumBin()); 
     if(histColors.at(i)!= -1){
@@ -161,6 +174,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
       if(!nicknames.at(i).empty())
 	leg->AddEntry( hist, nicknames.at(i).c_str(), "f");
       hs->Add(hist);
+      uncertainties_stack.push_back(uncertainties[i]);
       stack_exists = true;
     }
     else
@@ -170,6 +184,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	else
 	  leg->AddEntry( hist, nicknames.at(i).c_str(), "l");
       }
+    //hist->Delete();
   }
 
   //  coordinates:
@@ -190,35 +205,54 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   
   get_can()->SetCanvasSize(800,800);
   if(!draw_ratio)get_can()->SetCanvasSize(800,600);
-  //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
-  pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
-  //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
-  pad2->SetTopMargin(0.0); pad2->SetBottomMargin(0.35);  pad2->SetLeftMargin(0.19); pad2->SetRightMargin(0.1);
-  
+  get_can()->Update();
+ 
   pad1->SetFillColor(0);
   pad2->SetFillColor(0);
 
-  get_can()->Divide(2);
-  pad1->Draw();
-  pad2->Draw();
+  if(draw_ratio){
+    pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.01);pad1->SetLeftMargin(0.15);pad1->SetRightMargin(0.1);
+    pad2->SetTopMargin(0.01); pad2->SetBottomMargin(0.35); pad2->SetLeftMargin(0.15); pad2->SetRightMargin(0.1);
+    get_can()->Divide(2);
+    pad1->Draw();
+    pad2->Draw();
+  }
+  else{
+    pad1 = new TPad("histograms","histograms",0, 0, 1, 1);
+    pad1->Draw();
+  }
+
   if(logy)
     pad1->SetLogy(1);
   else
     pad1->SetLogy(0);
     
+
   //calculate total error before plotting anything
-  TH1F* total_error = (TH1F*)(hs->GetStack()->Last())->Clone("total_error");
-  TH1F* zero_error = (TH1F*)(hs->GetStack()->Last())->Clone("total_error");
+  TH1F* total_error;  
+  if(hs->GetNhists()>0){
+    total_error= (TH1F*)(hs->GetStack()->Last())->Clone("total_error");
+  }
+  else{
+    total_error =  (TH1F*)histos[0]->Clone("total_error");
+    for(int i=0;i<total_error->GetNbinsX()+2;++i){
+      total_error->SetBinError(i,0);
+      total_error->SetBinContent(i,0);
+    } 
+  }
+  TH1F* zero_error = (TH1F*)total_error->Clone("zero_error");
+
   for(int m=0;m< zero_error->GetNcells();m++)
     zero_error->SetBinError(m,0);
 
   for(unsigned int i=0; i<error_weights.size();i++)
     calc_weightErr(i,methods_forerrors[i],total_error);  
-  calc_fixedErr(uncertainties,stackInfo, total_error,hs);
+  calc_fixedErr(uncertainties_stack,stackInfo, total_error,hs);
   for(unsigned int i=0; i<error_folders.size();i+=2)
     calc_errorfolder({i,i+1},total_error,(TH1F*)(hs->GetStack()->Last())->Clone("tmp_nominal"));
-  
+
   TH1F* error_stack_hist = (TH1F*)total_error->Clone("my_grey_errors");
+  
 
   //start plotting
   pad1->cd();
@@ -231,7 +265,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     else{
       hs->SetMaximum(max_bin_value_with_error*1.2);
     }   
-    hs->SetMinimum(0.0001);
+    hs->SetMinimum(0.0001);    
     hs->Draw("hist");
     //plot grey error bands 
     static Int_t LightGray     = TColor::GetColor( "#aaaaaa" );
@@ -244,37 +278,62 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
       hs->GetYaxis()->SetTitle(y_axis.c_str());
       get_can()->Modified();
     }
+    if(draw_ratio){ 
+      hs->GetXaxis()->SetLabelOffset(999);
+      hs->GetXaxis()->SetLabelSize(0);
+      get_can()->Modified();
+    }
     first_draw = true;
+    gPad->Update();
+    get_can()->Update();
   }
   //plot data and signal
   for(unsigned int i =0; i<histos.size(); i++){
     TH1F* hist = histos[i];
     string h_draw_option = hist_draw_options[i];
+    if(draw_ratio && !first_draw){ 
+      hist->GetXaxis()->SetLabelOffset(999);
+      hist->GetXaxis()->SetLabelSize(0);
+    }
     if(!stackInfo.at(i)){
       if(!first_draw){
+	hist->SetTitle("");
+	if(!y_axis.empty())
+	  hist->GetYaxis()->SetTitle(y_axis.c_str());
+	if(!x_axis.empty())
+	  hist->GetXaxis()->SetTitle(x_axis.c_str());
 	if(histo_max > hist->GetMaximum())
-	  hist->SetMaximum(histo_max); 
+	  hist->SetMaximum(histo_max*1.2); 
 	first_draw =true;
 	hist->Draw(h_draw_option.c_str());
       }
       else
 	hist->Draw(("same "+h_draw_option).c_str());
     }
+    //hist->Delete();
   }
+  
   if(legend)leg->Draw();
 
   if(draw_ratio){ 
     pad2->cd();
-    //calculate ratios and its error, use previous calculation
+    //calculate ratios data/mc and its error, use previous calculation
     TH1F* ratio = calc_ratio(zero_error,histos[0]);
     if(!x_axis.empty()){
       //ratio->GetXaxis()->SetLabelSize(15);
       ratio->GetXaxis()->SetTitle(x_axis.c_str());
     }
     ratio->SetMinimum(0.0001);
-    //the two times draw of ratio is just bevause it sets the default values for the drawing! could be changed
-    ratio->Draw("");
+    
+    if(mcratio){
+      for(int i=0; i<ratio->GetNbinsX()+2;++i){
+	ratio->SetBinError(i,0);
+	ratio->SetBinContent(i,-2);
+      }
+    }
 
+    //drawing two times the ratio is just because it sets the default values! could be changed
+    ratio->Draw("");
     TH1F* mc_stat = calc_MCstat(hs);
     if(error_weights.size()>0){
       total_error->Divide(zero_error);//total_error);
@@ -284,22 +343,36 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     }
     mc_stat->Draw("same e2");
     ratio->Draw("same e0");
-    gPad->RedrawAxis();  
+    pad2->RedrawAxis();  
+    get_can()->Update();
+    //ratio->Delete();
+    //mc_stat->Delete();
   }
 
   pad1->cd();
-  histos[0]->Draw(("same "+hist_draw_options[0]).c_str());
+  //histos[0]->Draw(("same "+hist_draw_options[0]).c_str());
   printText();
 
-  gPad->RedrawAxis();  
+  pad1->Update();
+  pad1->RedrawAxis();  
   get_can()->Update();
   get_can()->Print(get_resultFile());
 
-  pad1->Delete();
-  pad2->Delete();
+  //Delete histos and stacks that I don't need anymore
+  total_error->Delete();
+  zero_error->Delete();
+  error_stack_hist->Delete();
   hs->Delete();
   leg->Delete();
+  //Clear and delete pads and canvas
+  pad1->Clear();
+  pad2->Clear();
+  pad1->Delete();
+  pad2->Delete();
+  gPad->Clear();
+  gROOT->GetListOfFiles()->Clear();
   gROOT->GetListOfFiles()->Delete();
+  get_can()->Clear();
 
   return true;
 }
@@ -324,8 +397,12 @@ TH1F* TreeHists::calc_ratio(TH1F* stack_hist, TH1F* hist){
   ratio->GetXaxis()->SetLabelSize(0.03/bottomSize); //ratio->GetXaxis()->SetNdivisions(100);
   ratio->GetXaxis()->SetTitleOffset(1.);
   ratio->GetXaxis()->SetTitleSize(0.12);
+  //ratio->GetXaxis()->SetTitleOffset();
+  //ratio->GetXaxis()->SetLabelSize();
+
   ratio->GetYaxis()->SetTitle("Data/MC");
-  ratio->GetYaxis()->SetLabelSize(0.03/bottomSize); ratio->GetYaxis()->SetNdivisions(505);
+  ratio->GetYaxis()->SetLabelSize(0.03/bottomSize); 
+  ratio->GetYaxis()->SetNdivisions(505);
   ratio->GetYaxis()->SetTitleSize( 0.13);
   ratio->GetYaxis()->SetTitleOffset(0.4);
   ratio->GetYaxis()->CenterTitle();

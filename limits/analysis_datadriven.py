@@ -1,12 +1,12 @@
 from subprocess import call
 import os
 
-channels = [""]#['Mu',"Ele",""]
+channels = ["Mu"]#['Mu',"Ele",""]
 production_channels = ["B","T"]#,"t"]#"b",
 chiralitys = ["RH","LH"]
 
-release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_20/src/UHH2/VLQToTopAndLepton/'
-Mudirs = ['config/MuSelection_v13/']
+release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/'
+Mudirs = ['config/MuSel_v5/']
 Eledirs = ['config/EleSel_v3/']
 rootDir = "ROOTFiles/"
 prefix = ""
