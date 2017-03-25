@@ -18,7 +18,8 @@ HistsBase::HistsBase(string saveName){
       can = new TCanvas("can", "can", 800, 700); 
     */
     can->cd();
-    can->Print(resultFile+"[");
+    if(!singleplots)
+      can->Print(resultFile+"[");
 
     // general appearance and style
     gROOT->SetStyle("Plain");
@@ -54,7 +55,7 @@ HistsBase::HistsBase(string saveName){
 }
 
 HistsBase::~HistsBase(){
-  if(!resultFile.EqualTo("")){
+  if(!resultFile.EqualTo("")&& !singleplots){
     can->Print(resultFile+"]");
     delete can;
   }

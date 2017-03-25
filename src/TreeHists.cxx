@@ -67,6 +67,23 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   std::vector<double> uncertainties = get_uncertainties();
   std::vector<double> uncertainties_stack;
   std::vector<double> scale = get_scalefactors();
+  bool single_plots = get_single();
+
+  TString singlefile_result;
+  if(single_plots){
+
+    //too complicated instead use page_1,page_2....
+    string filestring =variable+"_"+draw_option+"_"+binning+".ps";
+    boost::replace_all(filestring," ","");
+    boost::replace_all(filestring,",","_");
+    boost::replace_all(filestring,"+","");
+    boost::replace_all(filestring,"-","minus");
+    boost::replace_all(filestring,"&&","AND");
+    boost::replace_all(filestring,"||","OR");
+    boost::replace_all(filestring,"$","");
+    singlefile_result = get_resultFile()+"/"+filestring;
+    get_can()->Print(singlefile_result+"[");
+  }
 
   for(unsigned int i=0; i< error_weights.size();i++){
     vector<TH1F*> tmp_vec;
@@ -75,10 +92,16 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   Long_t id, size, flag, modtime;
 
   int counter= -1;
-  std::vector<std::vector<TTree*>> error_trees;
+  //std::vector<std::vector<TTree*>> error_trees;
+
+  std::vector<tree_folderinfo> error_trees_info;
+  for(unsigned int i=0;i<error_folders.size();i++)
+    error_trees_info.push_back(tree_folderinfo());
+  /*
   for(unsigned int i=0;i<error_folders.size();i++)
     for(unsigned int m=0;m<error_folders[i].size();m++)
       error_trees.push_back(std::vector<TTree*>());
+  */
 
   for(const auto & fileDir : get_filedirs()){
     counter++;
@@ -90,8 +113,24 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
       file_name = splitted_string.at(splitted_string.size()-1);
       for(unsigned int i =0; i<error_folders.size();i++){
 	for(unsigned int m=0;m<error_folders[i].size();m++){
-	  if(debug)std::cout<<"storing tree "<<error_folders[i][m]+file_name<<" into tree "<<i+m <<std::endl;
-	  error_trees[i+m].push_back(load_tree(error_folders[i][m]+file_name));
+	  if(debug)std::cout<<"storing tree "<<error_folders[i][m]+file_name<<std::endl;
+	  //error_trees[i+m].push_back(load_tree(error_folders[i][m]+file_name));
+	  //std::cout<<"storing tree "<<error_folders[i][m]+file_name<<" into tree "<<i+m <<std::endl;
+	  //std::cout<<"i "<<i<<" m "<<m<<std::endl;
+	  if(m==0){
+	    if(debug)cout<<error_folders[i][m]+file_name<<endl;
+	    error_trees_info[i].dir_up=error_folders[i][m];
+	    error_trees_info[i].error_trees_up.push_back(load_tree(error_folders[i][m]+file_name));
+	  }
+	  else if(m==1){
+	    if(debug)cout<<error_folders[i][m]+file_name<<endl;
+	    error_trees_info[i].dir_down=error_folders[i][m];
+	    error_trees_info[i].error_trees_down.push_back(load_tree(error_folders[i][m]+file_name));
+	  }
+	  else{
+	    cout<<"more then up and down is not implemented for folder uncertainties!"<<endl;
+	    assert(1==0);
+	  }
 	  continue;
 	}
       }
@@ -109,7 +148,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	if(boost::algorithm::contains(error,"REPLACE"))
 	  boost::replace_all(error,"REPLACE",number);
 	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
-	//cout<<variable<<" "<< binning<<" "<< error+"*"+draw_option<<" "<<myTmpHist->GetSumOfWeights()<<endl;
+	if(debug)cout<<variable<<" "<< binning<<" "<< error+"*"+draw_option<<" "<<myTmpHist->GetSumOfWeights()<<endl;
 	if(myTmpHist->GetSumOfWeights()<=0 || myTmpHist->GetSumOfWeights()!=myTmpHist->GetSumOfWeights()){
 	  if(methods_forerrors[i]==rms) 
 	    myTmpHist = make_hist(mytree, variable, binning, draw_option+"* 0");
@@ -123,17 +162,51 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     }
     //mytree->Delete();
   }
+  int tmp_count = -2;
+  //cout<<"error_trees_info.size() "<<error_trees_info.size()<<endl;
+  // for(unsigned int i=0; i<error_trees.size();i++){
+  for(unsigned int i=0; i<error_trees_info.size();++i){
+    tmp_count+=2;
+    tree_folderinfo tree_infos = error_trees_info[i];
+    error_folder_histos.push_back(std::vector<TH1F*>());//up
+    for(auto up_tree : tree_infos.error_trees_up){
+      std::string errorfolder_variable = variable;
+      for(unsigned int m=0; m<alias.size();++m){
+	if(conditions[m].empty())
+	  boost::replace_all(errorfolder_variable,oldnames[m],alias[m]);
+	else{
+	  if(boost::algorithm::contains(tree_infos.dir_up,conditions[m])){
+	    boost::replace_all(errorfolder_variable,oldnames[m],alias[m]);
+	  }
+	}
+      }
+      error_folder_histos[tmp_count].push_back(make_hist(up_tree, errorfolder_variable, binning, draw_option));
+    }
+    error_folder_histos.push_back(std::vector<TH1F*>());//down
+    for(auto down_tree : tree_infos.error_trees_down){
+      std::string errorfolder_variable = variable;
+      for(unsigned int m=0; m<alias.size();++m){
+	if(conditions[m].empty())
+	  boost::replace_all(errorfolder_variable,oldnames[m],alias[m]);
+	else{
+	  if(boost::algorithm::contains(tree_infos.dir_down,conditions[m])){
+	    boost::replace_all(errorfolder_variable,oldnames[m],alias[m]);
+	  }
+	}
+      }
+      //cout<<errorfolder_variable<<" "<<binning<<" "<<draw_option <<endl;
+      error_folder_histos[tmp_count+1].push_back(make_hist(down_tree, errorfolder_variable, binning, draw_option)); 
+    }
+  }
+  //cout<<"============"<<endl;
+  
+
   //cleanup the ttree->draw stuff
   get_can()->Clear();
-
-  for(unsigned int i=0; i<error_trees.size();i++){
-    error_folder_histos.push_back(std::vector<TH1F*>());
-    for(auto tree : error_trees[i])
-      error_folder_histos[i].push_back(make_hist(tree, variable, binning, draw_option));  
-  }
-
   //free error trees
-  error_trees = std::vector<std::vector<TTree*>> ();
+
+
+  //error_trees = std::vector<std::vector<TTree*>> ();
 
 
   bool first_draw =false;
@@ -290,6 +363,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   //plot data and signal
   for(unsigned int i =0; i<histos.size(); i++){
     TH1F* hist = histos[i];
+    hist->SetLineWidth(3);
     string h_draw_option = hist_draw_options[i];
     if(draw_ratio && !first_draw){ 
       hist->GetXaxis()->SetLabelOffset(999);
@@ -357,6 +431,10 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   pad1->RedrawAxis();  
   get_can()->Update();
   get_can()->Print(get_resultFile());
+  if(single_plots){
+    get_can()->Print(singlefile_result+"]");
+  }
+
 
   //Delete histos and stacks that I don't need anymore
   total_error->Delete();
@@ -373,7 +451,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   gROOT->GetListOfFiles()->Clear();
   gROOT->GetListOfFiles()->Delete();
   get_can()->Clear();
-
+ 
   return true;
 }
 
@@ -547,11 +625,18 @@ TH1F* TreeHists::make_hist(TTree* mytree, std::string variable, std::string binn
 
 
 void TreeHists::calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1F* nominal){
-  //debug = true;
+  debug = true;
   if(debug) 
-    for(auto i : is)
-      cout<<i<<" size "<<error_folder_histos.at(i).size()<<endl;
-
+    for(auto i : is){
+      cout<<i<<" size "<<error_folder_histos.at(i).size()<<endl;/*
+      cout<<"bin contents "<<endl;
+      for(unsigned int p=0;p<error_folder_histos.at(i).size();++p){
+	cout<<" histo p: "<<p<<endl; 
+	for(unsigned int m=0; m<result->GetNcells() ;m++){
+	  cout<<"Bin m: "<<error_folder_histos.at(i).at(p)->GetBinContent(m)<<endl;
+	}
+	}*/
+    }
   for(int m=0;m<nominal->GetNcells();m++)
     nominal->SetBinError(m,0);
   for(auto i : is){
@@ -564,9 +649,9 @@ void TreeHists::calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1
       error_folder_histos.at(i).at(0)->Add(tmphist);
     }
     for(int m=0;m<error_folder_histos.at(i).at(0)->GetNcells();m++){
-      error_folder_histos.at(i).at(0)->SetBinError(m,error_folder_histos.at(i).at(0)->GetBinContent(m));
+      error_folder_histos.at(i).at(0)->SetBinError(m,fabs(error_folder_histos.at(i).at(0)->GetBinContent(m)-nominal->GetBinContent(m)));
       error_folder_histos.at(i).at(0)->SetBinContent(m,nominal->GetBinContent(m));
-      if(debug)std::cout<<"Bin Content nom "<<nominal->GetBinContent(m)<<" error trees sum "<< error_folder_histos.at(is[0]).at(0)->GetBinContent(m)<<std::endl;
+      if(debug)std::cout<<"Bin Content nom "<<nominal->GetBinContent(m)<<" error trees sum "<< error_folder_histos.at(i).at(0)->GetBinContent(m)<<std::endl;
     }
     //error_folder_histos.at(i).at(0)->Add(nominal,-1);
     error_folder_histos.at(i).at(0)->Divide(nominal);
@@ -575,11 +660,24 @@ void TreeHists::calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1
   if(debug)std::cout<<"got number of cells "<<numberOfBins<<std::endl;
   for(unsigned int i=0; i< numberOfBins;i++){
     double err = 0;
-    for(auto m : is)
+    for(auto m : is){
+      //if(debug) cout<<"error folder histo bin i: "<<i<<" bin content "<<error_folder_histos.at(m).at(0)->GetBinContent(i)<<endl;
       err += fabs(error_folder_histos.at(m).at(0)->GetBinError(i))/is.size();
-    if(debug)std::cout<<"error for bin "<<i<<": "<<err<<" total error in bin "<<result->GetBinContent(i) <<std::endl;
+    }
+    if(debug)std::cout<<"error for bin "<<i<<": "<<err<<" total in bin "<<result->GetBinContent(i) <<std::endl;
     result->SetBinError(i,sqrt(result->GetBinError(i)*result->GetBinError(i)+err*err));
   }
   if(debug)std::cout<<"done with error tree"<<std::endl;
   debug = false;
+}
+
+
+void TreeHists::AddErrorFolderAlias(std::string var, std::string new_name, std::string condition){
+  if(var.empty() || new_name.empty()){
+    cout<<"ErrorFolderAlias variable is empty. something went wrong. Aborting";
+    assert(1==0);
+  }
+  alias.push_back(new_name);
+  oldnames.push_back(var);
+  conditions.push_back(condition);
 }

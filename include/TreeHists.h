@@ -17,6 +17,13 @@
 #include <iostream>
 #include <stdlib.h> 
 
+struct tree_folderinfo{
+  std::vector<TTree*> error_trees_up;
+  std::vector<TTree*> error_trees_down;
+  std::string dir_up;
+  std::string dir_down;
+};
+
 
 class TreeHists: public HistsBase{
  public: 
@@ -27,6 +34,7 @@ class TreeHists: public HistsBase{
   void SetLegend(double x1=0.6, double y1=0.7, double x2= 0.8, double y2=0.8){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
   void AddErrorWeight(std::string error_string, error_method method=envelop, std::string replace="");
   void AddErrorFolder(std::vector<std::string> folder_name);
+  void AddErrorFolderAlias(std::string var , std::string new_name, std::string condition="");
   void switch_logy(bool logy_=false){logy =logy_;}
   //no data points are plotted into the ratio
   void mcratio_only(bool mcratio_=true){mcratio=mcratio_;}
@@ -55,8 +63,12 @@ class TreeHists: public HistsBase{
   std::vector<std::vector<std::string>> replace_strings;
   std::vector<std::vector<std::string>> error_folders;
   std::vector<std::vector<TH1F*>> error_folder_histos;
+  //if something changed for the folders
+  std::vector<std::string> alias;
+  std::vector<std::string> oldnames;
+  std::vector<std::string> conditions;
 
-  bool logy=false, debug = false, draw_ratio =true, mcratio=false;
+  bool logy=false, debug=false, draw_ratio=true, mcratio=false;
   //Tpads for pretty print
   TPad *pad1, *pad2;
 };

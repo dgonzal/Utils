@@ -31,7 +31,7 @@ class HistsBase{
   void addFolder(string dir, string contains ="", string ends="");
   void addText(TLatex * text){texts_to_print.push_back(text);}
   void printText(){for(auto text : texts_to_print)text->Draw();}
-  
+  void switch_singleplots(bool single= true){ singleplots =single;}
 
 
   TCanvas* get_can(){return can;}
@@ -46,7 +46,8 @@ class HistsBase{
   std::vector<double> get_uncertainties(){return uncertainties;}
   std::vector<double> get_scalefactors(){return scale;}
   TString get_resultFile(){return resultFile;}
-  
+  bool get_single(){return singleplots;}
+
   void clear_filedirs(){filedirs.clear();}
 
  private:
@@ -59,6 +60,7 @@ class HistsBase{
   std::vector<std::string> nicknames;
   std::vector<double> uncertainties, scale;
   std::vector<TLatex*> texts_to_print;
+  bool singleplots=false;
   TCanvas* can;
   //TLegend* leg;
 

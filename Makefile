@@ -1,7 +1,7 @@
 # Short Makefile to compile "root macros"
 
-CXX      = g++ -std=c++11
-LINKER   = g++ -o
+CXX      = g++ -std=c++11 -O3
+LINKER   = g++ -O3 -o
 TARGETS = cutflow trigger treehist rootfilecreator moneyplots recofit wjets width_comp #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 SRCDIR  = src

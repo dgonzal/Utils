@@ -156,9 +156,9 @@ void simplePlots::plotHists(int options, bool logy){
     if(changecolors)histos[m]->SetLineColor(1+m);
     if(histos.size()>1 && draw_ratio)pad1->cd();
     if(options==1 && legend.size()>m) 
-      leg->AddEntry( histos[m], legend[m].c_str(), "l");
+      leg->AddEntry( histos[m], legend[m].c_str(), "lpe");
     else if(options==2 && legend.size()>m){ 
-      leg->AddEntry( histos[m], legend[m].c_str(), "l");
+      leg->AddEntry( histos[m], legend[m].c_str(), "lpe");
       //leg->AddEntry((TObject*)0,("Entries: "+to_string( int(histos[m]->GetEntries()))).c_str(),"");
     }
     if(m==0){

@@ -9,7 +9,7 @@ int main(){
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
   bool electron = false;
-  if (electron)folder = "EleSelection_v8";
+  if (electron)folder = "EleSel_v1";
 
 
   TreeHists treehists("plots/"+folder+".ps");
@@ -26,7 +26,7 @@ int main(){
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.SingleT.root","",41,-1,true,"Single Top",0.1);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets.root","",5,-1,true,"Z+Jets",0.1);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Tune.root","",2,-1,true,"t#bar{t}",0.1);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_HT.root","",3,-1,true,"W+Jets",0.1);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt.root","",3,-1,true,"W+Jets",0.1);
  
   treehists.SetTree("AnalysisTree");
   /*
@@ -66,7 +66,7 @@ int main(){
   string eta = "2.";
   string energy = "250.0";
   string jetiso = "10000";
-  string binning = "25,500,3000";
+  string binning = "50,500,3000";
 
 
   string no_forward_chi2 = "";//"&& Chi2Dis.forwardJet.pt()>0";
@@ -81,8 +81,6 @@ int main(){
 
   std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0&&(abs(TopTagDis.forwardJet.eta())>="+eta+")&&TopTagDis.forwardJet.E()>="+energy+")",binning,"Mass B [GeV]");
   std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass","weight*(TopTagDis.mass >0 &&((abs(TopTagDis.forwardJet.eta())<"+eta+")||TopTagDis.forwardJet.E()<"+energy+"))",binning,"Mass B [GeV]");                            
-
-
 
   string fitoption = "UUNORM P";
 
@@ -123,12 +121,14 @@ int main(){
       central_hists.at(i).at(m)->SetTitle(histTitel.c_str());
       central_hists.at(i).at(m)->SetMarkerStyle(20);
       //central_hists.at(i).at(m)->Scale(forward_hists.at(i).at(m)->GetEntries()/central_hists.at(i).at(m)->GetEntries());
+      if(central_hists.at(i).at(m)->GetEntries()==0 || forward_hists.at(i).at(m)==0)continue;
       comparison.loadHists((TH1F*)central_hists.at(i).at(m)->Clone(),"Central","PE");
       comparison.loadHists((TH1F*)forward_hists.at(i).at(m)->Clone(),"Forward","PE");
       comparison.plotHists(2,false);
       comparison.clearAll();
     }
   }
+
   for(unsigned int i =0; i<sum_central.size();i++){
     sum_central[i]->SetTitle(category[i].c_str());
     sum_forward[i]->SetTitle(category[i].c_str());
@@ -139,18 +139,44 @@ int main(){
     comparison.clearAll();
   }
 
-  //[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
+  //do rebining since from 2000-3000 stats are rather low!
+  unsigned int number_bins = chi2_0btag_forward_hist[0]->GetNbinsX();
+  double low_edge = chi2_0btag_forward_hist[0]->GetBinLowEdge(1);
+  double bin_width = chi2_0btag_forward_hist[0]->GetBinWidth(1);
+  double high_edge = chi2_0btag_forward_hist[0]->GetBinLowEdge(number_bins)+chi2_0btag_forward_hist[0]->GetBinWidth(1);
+  vector<double> bins;
+  for(unsigned int i = 0; i<number_bins;++i){
+    if(low_edge+i*bin_width < 1800)
+      bins.push_back(low_edge+i*bin_width);
+    else{
+      bins.push_back(low_edge+i*bin_width);
+      break;
+    }
+  }
+  bins.push_back(high_edge);
+  cout<<"NBins "<<number_bins<<" low "<<low_edge<<" high "<<high_edge<<" width "<<bin_width<<endl;
+  cout<<"[";
+  for(auto i : bins)
+    cout<<" "<<i<<",";
+  cout<<'\b'<<"]"<<endl;
+
+  // [800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
   // B+b: 3.016,2.219,1.653,1.192,0.896,0.679, 0.529, 0.415, 0.319,0.249,0.195
   // B+t: 0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540
   vector<double> signal_crosssection =  {3.016,0.365,1.653,0.203,0.415,0.0540};
   simplePlots signal_contamination("plots/"+lepton_name+"signal_contamination.ps");
   signal_contamination.set_histYTitle("Signal/Background [%]");
+  signal_contamination.set_XTitle("B mass [GeV]");
   signal_contamination.switch_ratio(false);
   for(unsigned int m=0; m<central_hists.size();m++){
     for(unsigned int i=1;i<7;i++){
-      cout<<central_hists.at(m).at(i)->GetTitle()<<endl;
       central_hists.at(m).at(i)->SetTitle(("Central "+category[m]).c_str());
       central_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
+      sum_central[m] = (TH1F*) sum_central[m]->Rebin(bins.size()-1,"rebin_sum_central", (double*) &bins[0]);
+      central_hists.at(m).at(i) =(TH1F*) central_hists.at(m).at(i)->Rebin(bins.size()-1,"rebin_sum_central", (double*) &bins[0]);
+      cout<<"=========================================="<<endl;
+      cout<<central_hists.at(m).at(i)->GetTitle()<<endl;
+      cout<<"Total S/B: "<<central_hists.at(m).at(i)->GetEntries()/sum_central[m]->GetEntries()<<endl;
       central_hists.at(m).at(i)->Divide(sum_central[m]);
       central_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
       central_hists.at(m).at(i)->GetXaxis()->SetTitleOffset(1.2);
@@ -167,6 +193,11 @@ int main(){
     for(unsigned int i=1;i<7;i++){
       forward_hists.at(m).at(i)->SetTitle(("Forward "+category[m]).c_str());
       forward_hists.at(m).at(i)->Scale(signal_crosssection[i]*0.5*100);
+      cout<<"=========================================="<<endl;
+      cout<<forward_hists.at(m).at(i)->GetTitle()<<endl;
+      cout<<"Total S/B: "<<forward_hists.at(m).at(i)->GetEntries()/sum_forward[m]->GetEntries()<<endl;
+      sum_forward[m] = (TH1F*) sum_forward[m]->Rebin(bins.size()-1,"rebin_sum_central", (double*) &bins[0]);
+      forward_hists.at(m).at(i) =(TH1F*) forward_hists.at(m).at(i)->Rebin(bins.size()-1,"rebin_sum_central", (double*) &bins[0]);
       forward_hists.at(m).at(i)->Divide(sum_forward[m]);
       //forward_hists.at(m).at(i)->GetYaxis()->SetTitle("Signal/Background [%]");
       forward_hists.at(m).at(i)->GetXaxis()->SetTitle("B mass [GeV]");
@@ -179,8 +210,6 @@ int main(){
     signal_contamination.plotHists(2,false);
     signal_contamination.clearAll();
   }
-
-
 
   /*
   all[1]->SetTitle("hadronic Top");
