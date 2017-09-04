@@ -47,9 +47,6 @@ bool create_overlayhists(std::string plotname, std::string distibution, std::str
   return true;
 }
 */
-std::string deltaRstring(std::string var1, std::string var2){
-  return "(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi()))";
-}
 
 int main(){
 

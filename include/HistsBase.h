@@ -17,12 +17,13 @@
 
 //boost libs
 #include <boost/filesystem.hpp>
+#include "boost/algorithm/string.hpp"
 
 using namespace std;
 
 class HistsBase{
  public:
-  HistsBase(string saveName);
+  HistsBase(string saveName, bool single=false);
   ~HistsBase();
 
   void addFile(string filedir, string hist_draw_option ="",int color = -1, int marker =-1 ,bool stack = false, string nickname = "", double uncer = 0, double scalefactor=1.);
@@ -31,7 +32,7 @@ class HistsBase{
   void addFolder(string dir, string contains ="", string ends="");
   void addText(TLatex * text){texts_to_print.push_back(text);}
   void printText(){for(auto text : texts_to_print)text->Draw();}
-  void switch_singleplots(bool single= true){ singleplots =single;}
+  //void switch_singleplots(bool single= true){ singleplots =single;}
 
 
   TCanvas* get_can(){return can;}

@@ -8,3 +8,6 @@ bin/*
 *.txt
 *.pdf
 *.root
+*.swn
+*.swo
+*.swp

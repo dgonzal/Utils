@@ -1,9 +1,11 @@
 #include "simplePlots.h"
 
+
+
 using namespace std;
 
 
-simplePlots::simplePlots(string saveName): HistsBase(saveName){
+simplePlots::simplePlots(string saveName, bool single): HistsBase(saveName, single){
   normArea=false;
   legx1=0.6; legx2= 0.8; legy1=0.6; legy2=0.8;
   max=-1;
@@ -95,6 +97,18 @@ void simplePlots::loadStackHists(TH1F * hist, string legend_entry){
 }
 
 void simplePlots::plotHists(int options, bool logy){
+  get_can()->cd();
+  bool single_plots = get_single();
+  TString singlefile_result;
+  if(single_plots){
+    page_number++;
+    TString filestring = get_resultFile()+to_string(page_number).c_str()+".pdf";
+    filestring.ReplaceAll("/","_");
+    singlefile_result = get_resultFile()+filestring;
+    cout<<"Single File name "<<singlefile_result<<endl;
+    //get_can()->Print(singlefile_result+"[");
+  }
+
   leg = new TLegend(legx1, legy1, legx2, legy2);
   leg->SetFillColor(0);
   leg->SetLineColor(1);
@@ -123,6 +137,26 @@ void simplePlots::plotHists(int options, bool logy){
   if(!draw_ratio  || !(histos.size()>1) ){
     get_can()->SetCanvasSize(800,600);
   }
+  get_can()->Update();
+  if(draw_ratio){
+    pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.01);pad1->SetLeftMargin(0.15);pad1->SetRightMargin(0.1);
+    pad2->SetTopMargin(0.01); pad2->SetBottomMargin(0.35); pad2->SetLeftMargin(0.15); pad2->SetRightMargin(0.1);
+    get_can()->Divide(2);
+    pad1->Draw();
+    pad2->Draw();
+  }
+  else{
+    pad1 = new TPad("histograms","histograms",0, 0, 1, 1);
+    pad1->Draw();
+  }
+
+  if(logy)
+    pad1->SetLogy(1);
+  else
+    pad1->SetLogy(0);
+
+
+  /*
   //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
   pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
   //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
@@ -136,6 +170,9 @@ void simplePlots::plotHists(int options, bool logy){
   //pad2->SetFillColor(0);
 
   if(logy) get_can()->SetLogy();
+  */
+
+  
   double maximum =0;
   for(unsigned int m = 0; m < histos.size(); ++m ){
     if(histos[m]->GetMaximum() > maximum) maximum = histos[m]->GetMaximum();
@@ -151,9 +188,14 @@ void simplePlots::plotHists(int options, bool logy){
   }    
   if(max!=-1)maximum=max;
   //cout<<maximum<<" "<<max<<" "<<normArea<<" "<<histos.size()<<endl;
-  for(unsigned int m = 0; m < histos.size(); ++m ){  
+  for(unsigned int m = 0; m < histos.size(); ++m ){
+    
     if(!hist_title.empty()) histos[m]->SetTitle(hist_title.c_str());
-    if(changecolors)histos[m]->SetLineColor(1+m);
+    if(changecolors){
+      int b = m+1;
+      if(b>9) b++; 
+      histos[m]->SetLineColor(b);
+    }
     if(histos.size()>1 && draw_ratio)pad1->cd();
     if(options==1 && legend.size()>m) 
       leg->AddEntry( histos[m], legend[m].c_str(), "lpe");
@@ -162,10 +204,16 @@ void simplePlots::plotHists(int options, bool logy){
       //leg->AddEntry((TObject*)0,("Entries: "+to_string( int(histos[m]->GetEntries()))).c_str(),"");
     }
     if(m==0){
+      
+      if(histos[m]->GetMaximum()<0.09)TGaxis::SetMaxDigits(2);
+      else TGaxis::SetMaxDigits(5);
+      histos[m]->SetMinimum(hist_minimum);    
       histos[m]->GetYaxis()->SetTitle(hist_ytitle.c_str());
       //histos[m]->GetYaxis()->SetLabelSize(0.04/bottomSize); 
       histos[m]->GetYaxis()->SetTitleSize(0.08);
       histos[m]->GetYaxis()->SetTitleOffset(0.6);
+      //cout<<histos[m]->GetYaxis()->GetXmin()<<endl;
+      
       if(!draw_ratio||histos.size()==1){
 	histos[m]->GetYaxis()->SetTitleSize(0.05);
 	histos[m]->GetYaxis()->SetTitleOffset(1.);
@@ -204,7 +252,8 @@ void simplePlots::plotHists(int options, bool logy){
     pad2->cd();
     for(unsigned int m = 0; m < histos.size(); ++m ){  
       if(!plotInratio[m])continue;
-      TH1F* h_ratio = ratio(histos[m],(TH1F*)histos[0]->Clone(),normArea);
+
+      TH1F* h_ratio = ratio(histos[m],(TH1F*)histos[0]->Clone(),normArea,zeroratiobin);
       //control over size for label size and offset ...
       double bottomSize = 0.273;
       h_ratio->SetTitle("");
@@ -220,15 +269,39 @@ void simplePlots::plotHists(int options, bool logy){
       h_ratio->GetYaxis()->CenterTitle();
       h_ratio->SetTickLength( 0.03 / bottomSize );
       
+      if(fit_ratio ==true && m==1 &&  h_ratio->GetEntries()>10 ){
+         TF1* linear_fit = new TF1("linfit","[0]*x+[1]");
+	 TH1F* fitratio = (TH1F*) h_ratio->Clone();
+	 fitratio->SetFillColor(TColor::GetColor("#ffa500")); 
+         TFitResultPtr fitres = fitratio->Fit(linear_fit,"S0EQ");
+	 TMatrixDSym cov = fitres->GetCovarianceMatrix();
+	 fitres->Print("V");
+	 TF1* fiterrup = (TF1*) linear_fit->Clone();
+	 TF1* fiterrdown = (TF1*) linear_fit->Clone();
+	 fiterrup->SetParameter(1,linear_fit->GetParameter(1)+linear_fit->GetParError(1));
+	 //fiterrup->SetParameter(0,linear_fit->GetParameter(0)+linear_fit->GetParError(0));
+	 fiterrdown->SetParameter(1,linear_fit->GetParameter(1)-linear_fit->GetParError(1));
+	 //fiterrdown->SetParameter(0,linear_fit->GetParameter(0)-linear_fit->GetParError(0));
+	 for(int bin=0;bin<fitratio->GetNcells();++bin){
+	    double bincenter = fitratio->GetBinCenter(bin);
+	    fitratio->SetBinContent(bin,linear_fit->Eval(bincenter));
+            //fitratio->SetBinError(bin,0);
+            fitratio->SetBinError(bin,fabs(fiterrup->Eval(bincenter)-fiterrdown->Eval(bincenter)));
+	    //cout<<linear_fit->Eval(bincenter)<<" "<<offset+slope*bincenter<<endl;
+         } 
+	 //assert(1==0);
+	 fitratio->Draw("E3 same");
+         //linear_fit->Draw("same");
+      }
       if(changecolors)h_ratio->SetLineColor(1+m);
       h_ratio->SetMaximum(ratio_max);
       h_ratio->SetMinimum(ratio_min);
       if(m==0) {
 	h_ratio->SetFillColor(TColor::GetColor( "#aaaaaa" ));
-	h_ratio->Draw("e2");
+	h_ratio->Draw(ratio_drawopt_nom.c_str());
       }
       else
-	h_ratio->Draw("same E0");
+	h_ratio->Draw(ratio_drawopt_next.c_str());
     }
   }
     //if(histos.size()) pad2->Update();
@@ -271,10 +344,16 @@ void simplePlots::plotHists(int options, bool logy){
   
   get_can()->Update();
   leg->Draw();
-  get_can()->Print(get_resultFile());
-  if(logy) get_can()->SetLogy(0);  
-  pad1->Close();
-  pad2->Close();
+  if(single_plots){
+    get_can()->Print(singlefile_result);
+  }
+  else{
+    get_can()->Print(get_resultFile());
+  }
+  
+  if(logy) get_can()->SetLogy(0);
+  if(draw_ratio)pad1->Close();
+  if(draw_ratio)pad2->Close();
   get_can()->Clear();
 }
 
@@ -299,7 +378,7 @@ void simplePlots::plotTH2(int options){
   }
 } 
 
-TH1F* simplePlots::ratio(TH1F* num, TH1F* denom, bool norm){
+TH1F* simplePlots::ratio(TH1F* num, TH1F* denom, bool norm, bool zeroBinAsOne){
   TH1F* ratio = (TH1F*)num->Clone();
   TH1F* denom_zero_error = (TH1F*)denom->Clone();
    for(int m=0;m<denom_zero_error->GetNcells();m++)
@@ -314,6 +393,14 @@ TH1F* simplePlots::ratio(TH1F* num, TH1F* denom, bool norm){
   ratio->Divide(denom_zero_error);
   ratio->SetMarkerStyle(0);
   ratio->SetMarkerSize(0);
+  if(zeroBinAsOne){
+    for(int m=0;m<ratio->GetNcells();m++)
+      if(ratio->GetBinContent(m)==0.){
+	ratio->SetBinContent(m,1);
+	ratio->SetBinError(m,0);
+      }
+  }
+  
   //ratio->SetLineColor(TColor::GetColor( "#aaaaaa" ));
   //ratio->SetFillColor(TColor::GetColor( "#aaaaaa" ));
   //eAsym->SetFillColor(TColor::GetColor( "#aaaaaa" ));

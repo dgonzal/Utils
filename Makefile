@@ -2,7 +2,7 @@
 
 CXX      = g++ -std=c++11 -O3
 LINKER   = g++ -O3 -o
-TARGETS = cutflow trigger treehist rootfilecreator moneyplots recofit wjets width_comp #scan_forwardJet fastsim uncer matchingPlots regionsratio run
+TARGETS = resolution cutflow trigger treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer moneyplots_chain eletriggerscale compare_fc different_recocomp #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 SRCDIR  = src
 INCDIR  = include
@@ -37,16 +37,16 @@ BOOST_LIB := $(call scramtag,boost,LIB) $(call scramtag,boost_filesystem,LIB) $(
 BOOST_LIB := $(patsubst %,-l%,$(BOOST_LIB)) -L$(call scramtag,boost,LIBDIR) -Lboost_system
 
 USERLDFLAGS += $(BOOST_LIB) $(PYTHON_LIBPATH) $(PYTHONLIBS) $(ROOTLIBS) $(ROOFITLIBS)  
-USERCXXFLAGS += -g -Wall -O2  -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=1
+USERCXXFLAGS += -g -Wall -O2  -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=1 
 USERCXXFLAGS += $(PYTHON_CFLAGS) $(ROOTFLAGS) $(ROOFITFLAGS)
 USERINCFLAGS += $(BOOST_INC) $(PYTHON_INC) $(ROOTINC) $(ROOFITINC) -I$(INCDIR)
-
+USERLASTFLAGS := -lstdc++fs
 # do the work
 progs : $(TARGETS)
 
 $(TARGETS): $(OBJECTS) $(MAINOBJ)
 	@mkdir -p $(BINDIR)
-	@$(LINKER) $(BINDIR)/$@ $(USERLDFLAGS) $(OBJECTS) $(OBJDIR)/$@.obj
+	@$(LINKER) $(BINDIR)/$@ $(USERLDFLAGS) $(OBJECTS) $(OBJDIR)/$@.obj $(USERLASTFLAGS)
 	@echo "Linking complete for" $@"!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cxx

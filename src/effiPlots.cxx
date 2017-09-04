@@ -3,9 +3,7 @@
 
 using namespace std;
 
-effiPlots::effiPlots(string saveName): HistsBase(saveName){
-  rangeMax = 0;
-  rangeMin = 0;
+effiPlots::effiPlots(string saveName, bool single): HistsBase(saveName,single){
   imposeDistri=false;
   legend_bool=true;
 }
@@ -18,6 +16,7 @@ void effiPlots::loadTHHists(string s_denominator, string s_numerator){
     else  numerator = (TH1*) file->Get(s_denominator.c_str());
     TH1 * denominator = (TH1*) file->Get(s_denominator.c_str());
     histsTH.push_back(TH1EffiCont(numerator,denominator));
+    file->Close();
   }
 }
 
@@ -82,11 +81,22 @@ void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_e
   }
 }
 
-void effiPlots::plotEffi(int options){
+
+TString effiPlots::create_resultfilename(int & number, bool summary){
+  TString filestring = get_resultFile()+to_string(number).c_str()+".pdf";
+  if(summary) filestring = get_resultFile()+"summary"+to_string(number).c_str()+".pdf";
+  filestring.ReplaceAll("/","_");
+  number++;
+  return get_resultFile()+filestring;  
+}
+
+void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
+  get_can()->cd();
+  bool single_plots = get_single();
   double maximum = 0;
   TMultiGraph * resultGraphs = new TMultiGraph();
   //get_can()->SetLogy();
-  TLegend* multigraphLeg = new TLegend(0.3,0.2,0.5,0.4); 
+  TLegend* multigraphLeg = new TLegend(0.5,0.2,0.7,0.3); 
   multigraphLeg->SetBorderSize(0);
   for(unsigned int i = 0; i < histos.size(); ++i ){
     /*
@@ -103,6 +113,8 @@ void effiPlots::plotEffi(int options){
     histos[i].denominator->SetLineColor(kBlack);
     if(rangeMax!=rangeMin)histos[i].numerator->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
     if(rangeMax!=rangeMin)histos[i].denominator->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
+    if(yRangeMax!=yRangeMin)histos[i].numerator->GetYaxis()->SetRangeUser(yRangeMin,yRangeMax);
+    if(yRangeMax!=yRangeMin)histos[i].denominator->GetYaxis()->SetRangeUser(yRangeMin,yRangeMax);
     //if(!x_axis.empty()){
     //	histos[i].numerator->GetXaxis()->SetTitle(x_axis.c_str());
     //	histos[i].denominator->GetXaxis()->SetTitle(x_axis.c_str());
@@ -118,7 +130,13 @@ void effiPlots::plotEffi(int options){
     leg->AddEntry(histos[i].denominator,("Denominator Events: "+to_string(int (integram_denom))+"+-"+to_string(int(ceil(error_denom)))).c_str(), "l");
     leg->AddEntry((TObject*)0,("Total Efficiency: "+to_string(int (integral_num/integram_denom *100))).c_str(),"");
     leg->Draw();
-    get_can()->Print(get_resultFile());
+
+    if(single_plots){
+      get_can()->Print(create_resultfilename(page_number));
+    }
+    else
+      get_can()->Print(get_resultFile());
+    
     double current_num = 0;
     double current_den = 0;
     double num_error =0;
@@ -139,14 +157,23 @@ void effiPlots::plotEffi(int options){
 	histos[i].denominator->SetBinContent(m,current_den); histos[i].denominator->SetBinError(m,den_error);
       }
     }
+    for(int bini =0; bini < histos[i].numerator->GetNcells();++bini){
+      if(histos[i].numerator->GetBinContent(bini) <=0){
+	histos[i].numerator->SetBinContent(bini,0.);
+	histos[i].numerator->SetBinError(bini,0.);
+      }
+      if(histos[i].denominator->GetBinContent(bini) <=0){
+	histos[i].denominator->SetBinContent(bini,0.);
+	histos[i].denominator->SetBinError(bini,0.);
+      }
+    }
     TGraphAsymmErrors* graph = new TGraphAsymmErrors((TH1F*)histos[i].numerator->Clone(),(TH1F*)histos[i].denominator->Clone(),"cl=0.683 b(1,1) mode");
     if(rangeMax!=rangeMin)graph->GetXaxis()->SetRangeUser(rangeMin,rangeMax);
     //graph->SetTitle((string(histos[i].numerator->GetTitle())+" Efficiency").c_str());//+"/"+string(histos[i].denominator->GetTitle())).c_str());
     if(debug) std::cout<<"legend size "<<legend_entries.size()<<" entry "<< legend_entries[i]<<std::endl;
     if(!legend_entries[i].empty()){
       multigraphLeg->AddEntry(graph,legend_entries[i].c_str(),"lp");
-      graph->SetTitle(legend_entries[i].c_str());
-    }
+      graph->SetTitle(legend_entries[i].c_str());    }
     graph->SetMinimum(0.);
     graph->Draw("sameap");
     graph->GetYaxis()->SetTitle(y_axis.c_str());
@@ -156,7 +183,9 @@ void effiPlots::plotEffi(int options){
     get_can()->Print(get_resultFile());
     graph->SetLineColor(1+i);
     resultGraphs->Add(graph);
-  }   
+    //delete graph;
+    //graph->Close();
+  }
   /*
   gStyle->SetPadTickY(2);
   //get_can()->UseCurrentStyle();
@@ -173,15 +202,143 @@ void effiPlots::plotEffi(int options){
   
   //if(imposeDistri)histos[0].denominator->DrawNormalized("hist same"); 
   multigraphLeg->Draw();
- 
- 
+  
   //resultGraphs->Draw("ap");//should be ap have to change marker style
   //get_can()->BuildLegend();
   //resultGraphs->SetMinimum(0.9);
   //if(imposeDistri)drawDistri(0);
   if(legend_bool)get_can()->BuildLegend(0.15, 0.1, 0.9, 0.4);
-  get_can()->Print(get_resultFile());
+  if(single_plots){
+    get_can()->Print(create_resultfilename(summary_number,true));
+  }
+  else
+    get_can()->Print(get_resultFile());
+
+  if(scalefactor.size()>0){
+    for(auto tuple : scalefactor){
+      TH1F* num_h = (TH1F*) histos[tuple.first].numerator->Clone();
+      num_h->Divide(histos[tuple.first].denominator);
+      TH1F* den_h = (TH1F*) histos[tuple.second].numerator->Clone();
+      den_h->Divide(histos[tuple.second].denominator);
+      
+      TGraphAsymmErrors* scaleresult = compute_scalefactorerrors(num_h,den_h, (TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.first),(TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.second));
+      scaleresult->Draw("Al");
+      get_can()->Print(get_resultFile());
+      //delete num_h;delete den_h;
+      //delete scaleresult;
+      
+    }
+    //delete resultGraphs;
+    //multigraphLeg->Close();
+    
+  }  
 }
+
+
+TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h, TGraphAsymmErrors* scaledenom, TGraphAsymmErrors* scalenum){
+  TH1F* scalehist = (TH1F*) num_h->Clone();
+  scalehist->Divide(den_h);
+  int bins = scalehist->GetNcells()-2;
+  //scalehist->Draw();
+  nominal ="";up_var="";down_var="";
+  double x[bins], xlow[bins], xhigh[bins], y[bins], ylow[bins], yhigh[bins];
+  TAxis *xaxis = scalehist->GetXaxis();
+  int firstbin = 0, lastbin = bins;
+  bool first = false;
+  for(int i=0; i<bins;++i){
+    double num_con = num_h->GetBinContent(i+1); 
+    double den_con = den_h->GetBinContent(i+1);
+    if(den_con != 0 && num_con != 0){
+      if(!first){
+	firstbin=i;
+	first = true;
+      }
+      lastbin=i;
+    }
+  }
+  cout<<"TGraphAsymmErrors denominator"<<endl;
+  for(int i=0;i<scaledenom->GetN();++i){
+    double graph_x=0,graph_y=0;
+    scaledenom->GetPoint(i,graph_x,graph_y);
+    cout<<"denom graph content "<<graph_y<<" x "<<graph_x <<" + "<<scaledenom->GetErrorYhigh(i)<<" - "<<scaledenom->GetErrorYlow(i) <<endl;
+  }
+  cout<<"TGraphAsymmErrors numerator"<<endl;
+  for(int i=0;i<scalenum->GetN();++i){
+    double graph_x=0,graph_y=0;
+    scalenum->GetPoint(i,graph_x,graph_y);
+    cout<<"numerator graph content "<<graph_y<<" x "<<graph_x<<" + "<<scalenum->GetErrorYhigh(i)<<" - "<<scalenum->GetErrorYlow(i) <<endl;
+  }
+  cout<<"hist denom"<<endl;
+  for(int i=1;i<den_h->GetNcells()-1;++i){
+    cout<<"denominator hist content "<<num_h->GetBinContent(i)<<" x "<< xaxis->GetBinCenter(i) <<endl;
+  }
+  cout<<"hist num"<<endl;
+  for(int i=1;i<den_h->GetNcells()-1;++i){
+    cout<<"numerator hist content "<<den_h->GetBinContent(i)<<" x "<< xaxis->GetBinCenter(i) <<endl;
+  }
+
+
+  int graphcount = 0;
+  cout<<"first bin with entries "<<firstbin<<" last bin with entries "<<lastbin<<endl;
+  for(int i=0; i<bins;++i){
+    double num_con = num_h->GetBinContent(i+1); 
+    double den_con = den_h->GetBinContent(i+1);
+    if(den_con == 0 || num_con == 0) continue;
+    if(scalenum->GetErrorYhigh(i)!=scalenum->GetErrorYhigh(i) ||  scalenum->GetErrorYlow(i)!=scalenum->GetErrorYlow(i)|| scaledenom->GetErrorYhigh(i)!=scaledenom->GetErrorYhigh(i) ||  scaledenom->GetErrorYlow(i)!=scaledenom->GetErrorYlow(i))continue;
+    //cout<<"numerator "<<num_con<<" + "<<scalenum->GetErrorYhigh(i)<<" - "<<scalenum->GetErrorYlow(i) <<" denominator "<<den_con<<" + "<< scaledenom->GetErrorYhigh(i) <<" - "<< scaledenom->GetErrorYlow(i)<<endl;    
+    x[i]= xaxis->GetBinCenter(i+1);    
+    y[i]= scalehist->GetBinContent(i+1);
+    ylow[i]  = sqrt(pow((1/den_con)*scalenum->GetErrorYlow(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYhigh(graphcount),2));
+    yhigh[i] = sqrt(pow(1/den_con*scalenum->GetErrorYhigh(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYlow(graphcount),2));
+    xlow[i]=scalehist->GetBinLowEdge(i+1);
+    xhigh[i]=xlow[i]+scalehist->GetBinWidth(i+1);
+    graphcount++;
+    
+    /*/
+    double graph_x=0,graph_y=0;
+    scalenum->GetPoint(i+1,graph_x,graph_y);
+    cout<<"num hist "<<num_con<<" num graph content "<<graph_y<<" x "<<graph_x <<endl;
+    /*/
+    
+    cout<<"iter "<<i<<" x "<<x[i]<<" x low "<<xlow[i]<<" x high "<<xhigh[i] <<" y "<<y[i]<<" low "<<ylow[i]<<" high "<<yhigh[i]<<endl;
+
+    if(i==firstbin){
+      nominal += "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i])+")";
+      up_var  += "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]-ylow[i])+")"; 
+    }
+    else if(i<lastbin && i>firstbin){
+      nominal += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i])+")";
+      up_var  += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]-ylow[i])+")";
+    }
+    else if(i==lastbin){
+      nominal += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i])+")";
+      up_var  += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i]-ylow[i])+")";
+
+    }
+    boost::replace_all(nominal , ".000000", ".");
+    boost::replace_all(up_var  , ".000000", ".");
+    boost::replace_all(down_var, ".000000", ".");
+
+  }
+  nominal = "("+nominal+")";
+  up_var= "("+up_var+")";
+  down_var= "("+down_var+")";
+
+  
+  //nominal= nominal.substr(1);
+  //up_var=up_var.substr(1);
+  //down_var=down_var.substr(1);
+  //cout<<nominal<<endl;
+  //cout<<up_var<<endl;
+  //cout<<down_var<<endl;
+  
+  return new TGraphAsymmErrors(bins,x,y, 0, 0,ylow,yhigh);
+}
+
+
 
 void effiPlots::drawDistri(TH1F* hist, double max){
   /*

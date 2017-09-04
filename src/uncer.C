@@ -12,14 +12,19 @@
 
 #include <iostream>
 #include <string>
+#include <experimental/filesystem>
+
 
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
+
+namespace fs = std::experimental::filesystem;
 using namespace std;
 
-int main(){
-  string file_dir = "/nfs/dust/cms/user/gonvaq/fast_limits/BpReco_RH_rebinned.root";
+
+int fill_histograms(string file_dir_, string file_prefix=""){
+  string file_dir = file_dir_;//"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/ROOTDataShape/Bay_BprimeB_Ele_RH.root";
 
   TFile* file = new TFile(file_dir.c_str(),"READ");
   TIter next(file->GetListOfKeys());
@@ -41,8 +46,16 @@ int main(){
     }
   }
   
-  for(auto uncer :uncer_names){ 
-    simplePlots uncerPlots("plots/"+uncer+"_plots.ps");
+  for(auto uncer : uncer_names){ 
+    simplePlots uncerPlots("plots/"+file_prefix+uncer+"_plots.ps");
+    uncerPlots.addLegendEntry("nominal");
+    uncerPlots.addLegendEntry(uncer+" up");	
+    uncerPlots.addLegendEntry(uncer+" down");
+    uncerPlots.set_ratiodrawoption("e2","Hist same");
+    uncerPlots.set_zerobinsratio(true);
+    uncerPlots.set_ratioYTitle("Unc. ratio");			    
+    uncerPlots.set_ratioLimtis(0.5,1.5);
+    //simplePlots uncerStackPlots("plots/"+uncer+"_stackplots.ps");
     uncerPlots.addFile(file_dir);
     next = TIter(file->GetListOfKeys());
     while ((key = (TKey*)next())) {
@@ -56,13 +69,37 @@ int main(){
 	uncerPlots.loadHists(name,name);
 	uncerPlots.loadHists(name+"__"+uncer+"__plus");
 	uncerPlots.loadHists(name+"__"+uncer+"__minus");
+		
 	uncerPlots.plotHists(2,false);
 	uncerPlots.clearHists();
-	uncerPlots.clearLegend();
+	//uncerPlots.clearLegend();
       }
     }
   }
 
+  //cout<<"I'm done with the uncertainties"<<endl;
+  return 0;
+}
+
+
+
+int main(){
+  std::string path = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/ROOTDataShape/";
+
+  
+  for (auto & p : fs::directory_iterator(path)){
+    string working_path = p.path();//.string().c_str();
+    if(boost::contains(working_path,"Mu") || boost::contains(working_path,"Ele") || !boost::contains(working_path,"rebinned") )
+      continue;
+    else{     
+      vector<string> splitted_file;
+      boost::split_regex(splitted_file,working_path,boost::regex("/"));
+      string prefix = splitted_file[splitted_file.size()-1];
+      boost::replace_all(prefix, ".root", "");
+      cout<<working_path<<" "<<prefix <<endl;
+      fill_histograms(working_path, prefix+"_");
+    }
+  }
   cout<<"I'm done with the uncertainties"<<endl;
   return 0;
 }

@@ -21,7 +21,9 @@
 #include "TGraphAsymmErrors.h"
 #include "TColor.h"
 #include "TList.h"
-
+#include "TFitResult.h"
+#include "TMatrixDSym.h"
+#include "TGaxis.h"
 
 //c++ libs
 #include <iostream>
@@ -40,7 +42,7 @@ using namespace std;
 
 class simplePlots: public HistsBase{
  public:
-  simplePlots(string saveName);
+  simplePlots(string saveName, bool single=false);
   void addLegendEntry(string legendEntry){legend.push_back(legendEntry);}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
 
@@ -63,7 +65,12 @@ class simplePlots: public HistsBase{
   void set_ratioLimtis(double ratio_min_, double ratio_max_){ratio_min = ratio_min_; ratio_max=ratio_max_;}
   void set_XTitle(string xtitle_){xtitle= xtitle_;}
   void set_title(string hist_title_){hist_title=hist_title_;}
+  void set_ratiodrawoption(string nom_opt="e2", string var_opt="same E0"){ratio_drawopt_nom=nom_opt;ratio_drawopt_next=var_opt;}
+  void set_zerobinsratio(bool zeroratiobin_){zeroratiobin=zeroratiobin_;}
+  void set_histminimum(double min=0.00001){hist_minimum=min;}
+  void set_ratiofit(bool fit=false){fit_ratio=fit;}
 
+  
   void clearHists(){histos.clear();}
   void clearLegend(){legend.clear();stack_legend.clear();func_leg.clear();graph_leg.clear();}
   void clearFiles(){clear_filedirs();}
@@ -74,7 +81,7 @@ class simplePlots: public HistsBase{
   void clearAll(){clearHists();clearLegend();clearFiles();clearStack();clearGraphs();clearFunc();}
 
  private:
-  TH1F* ratio(TH1F* num, TH1F* denom, bool norm);
+  TH1F* ratio(TH1F* num, TH1F* denom, bool norm, bool zeroBinAsOne=false);
   vector<TGraph*> graphs;
   vector<TF1*> functions;
   vector<TH2F*> twoDhists;
@@ -83,14 +90,17 @@ class simplePlots: public HistsBase{
   std::vector<std::string> plotting_styles, func_plotting,graph_plotting;
   vector<bool> plotInratio;
   string ratio_ytitle = "Data/MC", hist_ytitle = "Events", xtitle="", hist_title="";
+  string ratio_drawopt_nom = "e2", ratio_drawopt_next="same E0";
   double ratio_min = 0.1, ratio_max = 2.9;
   double errorband_max = 2, errorband_min = 0;
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
-  bool normArea,changecolors=true;
+  bool normArea,changecolors=true,zeroratiobin =false;
   double max;
   THStack* stack;
   bool using_stack=false;
   bool draw_ratio =true;
-
+  bool fit_ratio = false;
+  int page_number =0;
+  double hist_minimum = 0.00001;
 };

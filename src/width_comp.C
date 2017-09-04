@@ -9,20 +9,24 @@
 
 
 int main(){
-  string resultfile = "plots/width_comparison.ps";
+  string resultfile = "plots/width_comparisonMu/";
   string CMSSW = "8_0_24_patch1";
-  string folder= "MuSigSel_v1/";
+  string folder= "MuSigSel/"; //"EleSigSel_v1/";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
   
   string eta = "2.0";
-  string energy = "0.";
-  string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
-  string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
-  string toptag_central_string = "TopTagDis.mass>-1 &&((abs(TopTagDis.forwardJet.eta()) <" +eta+") || TopTagDis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
-  string toptag_forward_string = "TopTagDis.mass>-1 && (abs(TopTagDis.forwardJet.eta()) >="+eta+") && TopTagDis.forwardJet.E()>="+energy;
+  string chi2_central_string = "TopTagDis.mass==-1 && abs(Chi2Dis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
+  string chi2_forward_string = "TopTagDis.mass==-1 && abs(Chi2Dis.forwardJet.eta()) >="+eta;
+  string toptag_central_string = "TopTagDis.mass>-1 && abs(TopTagDis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
+  string toptag_forward_string = "TopTagDis.mass>-1 && abs(TopTagDis.forwardJet.eta()) >="+eta;
 
 
-  vector<vector<string>> container={{"BprimeT-800_LH","BprimeT-800_Width-10p_LH","BprimeT-800_Width-20p_LH","BprimeT-800_Width-30p_LH"},
+  vector<vector<string>> container={{"BprimeT-800_LH","BprimeT-1000_LH","BprimeT-1200_LH","BprimeT-1400_LH","BprimeT-1600_LH"},
+				    {"BprimeT-800_RH","BprimeT-1000_RH","BprimeT-1200_RH","BprimeT-1400_RH","BprimeT-1600_RH"},
+				    {"BprimeB-800_LH","BprimeB-1000_LH","BprimeB-1200_LH","BprimeB-1400_LH","BprimeB-1600_LH"},
+				    {"BprimeB-800_RH","BprimeB-1000_RH","BprimeB-1200_RH","BprimeB-1400_RH","BprimeB-1600_RH"},
+				    
+                                    {"BprimeT-800_LH","BprimeT-800_Width-10p_LH","BprimeT-800_Width-20p_LH","BprimeT-800_Width-30p_LH"},
 				    {"BprimeT-1000_LH","BprimeT-1000_Width-10p_LH","BprimeT-1000_Width-20p_LH","BprimeT-1000_Width-30p_LH"},
 				    {"BprimeT-1200_LH","BprimeT-1200_Width-10p_LH","BprimeT-1200_Width-20p_LH","BprimeT-1200_Width-30p_LH"},
 				    {"BprimeT-1400_LH","BprimeT-1400_Width-10p_LH","BprimeT-1400_Width-20p_LH","BprimeT-1400_Width-30p_LH"},
@@ -43,7 +47,12 @@ int main(){
   };
 
   
-  vector<vector<string>> names_con={{"B+t M(800)","10%","20%","30%"},
+  vector<vector<string>> names_con={{"B+t M(800) LH","B+t M(1000) LH","B+t M(1200) LH","B+t M(1400) LH","B+t M(1600) LH"},
+				    {"B+t M(800) RH","B+t M(1000) RH","B+t M(1200) RH","B+t M(1400) RH","B+t M(1600) RH"},
+				    {"B+b M(800) LH","B+b M(1000) LH","B+b M(1200) LH","B+b M(1400) LH","B+b M(1600) LH"},
+				    {"B+b M(800) RH","B+b M(1000) RH","B+b M(1200) RH","B+b M(1400) RH","B+b M(1600) RH"},
+				    
+				    {"B+t M(800)","10%","20%","30%"},
 				    {"B+t M(1000)","10%","20%","30%"},
 				    {"B+t M(1200)","10%","20%","30%"},
 				    {"B+t M(1400)","10%","20%","30%"},
@@ -65,10 +74,10 @@ int main(){
 
   };
 
-  TreeHists treehists(resultfile);
+  TreeHists treehists(resultfile,true);
   treehists.switch_ratio();
   treehists.SetTree("AnalysisTree");
-  treehists.SetLegend(0.6, 0.3, 0.86, 0.86);
+  treehists.SetLegend(0.5, 0.3, 0.8, 0.86);
 
   for(unsigned int m=0; m<container.size();++m){
     if(m==10)treehists.SetLegend(0.5, 0.3, 0.8, 0.8);
@@ -82,8 +91,10 @@ int main(){
       col++;
     }
 
-    treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+")","30,500,3000","forward X^{2} B mass [GeV]");	    
-    treehists.Draw("TopTagDis.mass","weight*("+toptag_forward_string+")","30,500,3000","forward toptag B mass [GeV]");
+    //treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+")","30,500,3000","forward X^{2} B mass [GeV]");	    
+    //treehists.Draw("TopTagDis.mass","weight*("+toptag_forward_string+")","30,500,3000","forward toptag B mass [GeV]");
+    treehists.Draw("Chi2Dis.mass","weight","30,500,3000","X^{2} B mass [GeV]");	    
+    treehists.Draw("TopTagDis.mass","weight","30,500,3000","t-tag B mass [GeV]");
 
     treehists.clearFiles();
   }

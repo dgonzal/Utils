@@ -5,7 +5,8 @@ using namespace std;
 
 
 
-HistsBase::HistsBase(string saveName){
+HistsBase::HistsBase(string saveName, bool single){
+  singleplots=single;
   resultFile=saveName;
   TH1::AddDirectory(kFALSE);
 
@@ -66,11 +67,13 @@ void HistsBase::addFolder(const string dir, const string contains, const string 
 }
 
 void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname, double uncer, double scalefactor){
-  if(!boost::filesystem::exists(filedir)){
+  if(!boost::filesystem::exists(filedir) && !boost::algorithm::contains(filedir,"*")){
     cout<<"File does not exist "<<filedir<<endl;
     cout<<"Skipping File"<<endl;
   }
   else{
+    if(boost::algorithm::contains(filedir,"*"))
+      cout<<"File dir with * wildcard "<<filedir<<endl;
     filedirs.push_back(filedir);
     hist_draw_options.push_back(hist_draw_option);
     hist_colors.push_back(color);
