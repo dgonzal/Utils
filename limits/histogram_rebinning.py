@@ -41,7 +41,7 @@ def merge(old,new):
 def findMaximum(histogram):
     index = 1
     maximum = 0
-    for i in range(1,histogram.GetNbinsX()+1):
+    for i in xrange(1,histogram.GetNbinsX()+1):
         if histogram.GetBinContent(i) > maximum:
             maximum = histogram.GetBinContent(i)
             index = i
@@ -90,9 +90,11 @@ def computeBinning(histogram, rerror):
     highindexes = []
     lowindex = findLowIndex(histogram, rerror)
     maxindex, maximum = findMaximum(histogram)
+    #print 'Number of bins',histogram.GetNbinsX()
     findBinSize(histogram, highindexes, rerror, 0, histogram.GetNbinsX(), histogram.GetNbinsX(), lowindex)     
     highindexes = sorted(highindexes)
     binning = [histogram.GetBinLowEdge(0), histogram.GetBinLowEdge(lowindex)+histogram.GetBinWidth(lowindex)]
+    #print 'nominal binning', binning
     #print highindexes
     for i in highindexes[1:]:
         binning.append(histogram.GetBinLowEdge(i))
@@ -107,9 +109,13 @@ def binFile(rerror, filename, xtitle, backgrounds):
     file = TFile(filename)
     keys = file.GetListOfKeys()
 
+    print 'input file:',filename
+    print 'background:',backgrounds
     h_bkg = {}
     h_data = {}
 
+    resultfile = filename.split('.')[0]+'_rebinned.root'
+    
     # load all the background and data histograms
     for key in keys:
         key = key.GetName()
@@ -117,8 +123,10 @@ def binFile(rerror, filename, xtitle, backgrounds):
         if not info.systematic:
             if info.process in backgrounds:
                 if info.channel in h_bkg:
+                    print 'merging',info.channel
                     h_bkg[info.channel] = merge(h_bkg[info.channel], file.Get(key).Clone())
                 else:
+                    print 'adding',info.channel
                     h_bkg[info.channel] = file.Get(key).Clone()
             elif info.process == 'data' or info.process == 'DATA':
                 if info.channel in h_data:
@@ -126,42 +134,53 @@ def binFile(rerror, filename, xtitle, backgrounds):
                 else:
                     h_data[info.channel] = file.Get(key).Clone()
 
+                    
     canvas = TCanvas()
     canvas.SetLogy()
 
-    keys = file.GetListOfKeys()
-    output = TFile(filename.split('.')[0]+'_rebinned.root', 'RECREATE')
+    #keys = file.GetListOfKeys()
+    output = TFile(resultfile, 'RECREATE')
     #print h_bkg[1]	
     # print all the histograms for all the channels
     for key in h_bkg:
         binning = array.array('d', computeBinning(h_bkg[key], rerror))
+        #print binning
         h_bkg[key] = h_bkg[key].Rebin(len(binning)-1, h_bkg[key].GetName(), binning)
-        h_data[key] = h_data[key].Rebin(len(binning)-1, h_data[key].GetName(), binning)
        
         h_bkg[key].SetLineColor(ROOT.kGray+1)
         h_bkg[key].SetFillColor(ROOT.kGray+1)
-        h_data[key].SetLineColor(ROOT.kBlack)  
-        h_data[key].SetMarkerStyle(20)
 
+        maxs=h_bkg[key].GetMaximum()
+        
+        if len(h_data)>0:
+          h_data[key] = h_data[key].Rebin(len(binning)-1, h_data[key].GetName(), binning)
+          h_data[key].SetLineColor(ROOT.kBlack)  
+          h_data[key].SetMarkerStyle(20)
+          maxs = [h_data[key].GetMaximum(), h_bkg[key].GetMaximum()]
+          
         pad = canvas.cd(1)
         pad.SetLeftMargin(0.15)
         pad.SetBottomMargin(0.15)
-        
-        maxs = [h_data[key].GetMaximum(), h_bkg[key].GetMaximum()]
+
         min = h_bkg[key].GetBinContent(h_bkg[key].GetMinimumBin())
 
-        h_data[key].GetYaxis().SetRangeUser(0.5*min,max(maxs)*1.8)
 
-        h_data[key].GetYaxis().SetLabelSize(0.05)
-        h_data[key].GetYaxis().SetTitleSize(0.05)
-        h_data[key].GetYaxis().SetTitle('event yield')
-        h_data[key].GetXaxis().SetLabelSize(0.05)
-        h_data[key].GetXaxis().SetTitleSize(0.05)
-        h_data[key].GetXaxis().SetTitle(xtitle)
+        if len(h_data)>0:
+          h_data[key].GetYaxis().SetRangeUser(0.5*min,max(maxs)*1.8)
 
-        h_data[key].Draw('e')
+          h_data[key].GetYaxis().SetLabelSize(0.05)
+          h_data[key].GetYaxis().SetTitleSize(0.05)
+          h_data[key].GetYaxis().SetTitle('event yield')
+          h_data[key].GetXaxis().SetLabelSize(0.05)
+          h_data[key].GetXaxis().SetTitleSize(0.05)
+          h_data[key].GetXaxis().SetTitle(xtitle)
+
+          h_data[key].Draw('e')
+          
         h_bkg[key].Draw('samehist')
-        h_data[key].Draw('samee')
+        
+        if len(h_data)>0:
+          h_data[key].Draw('samee')
 
         legend = TLegend(.67, .78, .89, .88)
         legend.SetMargin(0.12);
@@ -169,7 +188,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         legend.SetFillColor(10);
         legend.SetBorderSize(0);
         legend.AddEntry(h_bkg[key], "Background", "f")
-        legend.AddEntry(h_data[key], "CMS Data 2015", "lp")
+        if len(h_data)>0:legend.AddEntry(h_data[key], "CMS Data 2016", "lp")
         legend.Draw()
 
         labelcms = TLegend(.15, .91, 1, .96)
@@ -185,7 +204,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
         labellumi.SetMargin(0.12);
         labellumi.SetFillColor(10);
         labellumi.SetBorderSize(0);
-        labellumi.SetHeader('L = 2.3 fb^{-1}')
+        labellumi.SetHeader('L = 35.8 fb^{-1}')
         labellumi.Draw()
 
         labellumi2 = TLegend(.67, .70, .89, .75)
@@ -197,12 +216,17 @@ def binFile(rerror, filename, xtitle, backgrounds):
         labellumi2.Draw()
 
         canvas.SaveAs('h_'+filename.split('.')[0]+'_'+key+'.pdf')
-
+      
         for hkey in keys:
             hkey = hkey.GetName()
             info = hinfo(hkey)
+           
             if info.channel == key:
+                #print hkey
+                #print info.channel,key
+                #print hkey
                 histogram = file.Get(hkey).Clone()
+		
                 # Hack to fix the data lowercase names
                 #if info.systematic == 'pdf':
                 #    continue
@@ -214,7 +238,7 @@ def binFile(rerror, filename, xtitle, backgrounds):
                     histogram.SetName(histogram.GetName().replace('data','DATA'))
 
                 if info.systematic:
-                  if 'ttjets' in info.process.lower() and 'scale' in info.systematic:
+                  if ('ttjets' in info.process.lower() or 'ttbar' in info.process.lower()) and 'scale' in info.systematic:
                     orig = histogram.GetName()
                     histogram.SetName(histogram.GetName().replace('scaleWeight','scale_ttbar'))
                     if debug: print "Renaming: %s to %s" % (orig, histogram.GetName())
@@ -239,10 +263,43 @@ def binFile(rerror, filename, xtitle, backgrounds):
                     orig = histogram.GetName()
                     histogram.SetName(histogram.GetName().replace('matching','matching_vjets'))
                     print "Renaming: %s to %s" % (orig, histogram.GetName())
+
+
+                if 'mcregion' in hkey:
+                  print key
+                  channel = info.channel.replace('Mu','')
+                  channel = channel.replace('Ele','')
+                  histogram.SetName(histogram.GetName().replace('mcregion','mcregion_'+channel))
+
+                    
+		#Rename the hists to make it easier for theta to find the mass
+		if 'X53' in info.process:
+		  histogram.SetName(histogram.GetName().replace('X53','X'))
+                    
+                #norm signal, just pure shape
+                if ('Bprime' in info.process or 'X53' in info.process) and info.systematic:
+                  for h_hkey in keys:
+                    h_hkey = h_hkey.GetName()
+                    h_info = hinfo(h_hkey)
+                    if not h_info.systematic and info.process == h_info.process and h_info.channel == info.channel:
+                      h_norm = file.Get(hkey).Clone()
+                      events_unc = 0
+                      events_nom = 0
+                      for i in xrange(1,histogram.GetNbinsX()+1):
+                        events_nom += h_norm.GetBinContent(i) 
+                        events_unc += histogram.GetBinContent(i)
+                      #print 'Going to normalize to the same value', h_info.process,h_info.channel,info.systematic,'factor',events_nom/events_unc
+                      #histogram.Scale(events_nom/events_unc)
+                      
+                #print 'rebinning',hkey 
                 histogram = histogram.Rebin(len(binning)-1, histogram.GetName(), binning)
+                for i in xrange(1,histogram.GetNbinsX()+1):
+                  if histogram.GetBinContent(i)<=0. : histogram.SetBinContent(i,0.0001)
+                  
                 output.cd()
+		histogram.Sumw2()
                 histogram.Write()
-    #return binning
+    return resultfile
 
 
 #binFile(0.3, 'RecoBp.root', 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleTsChannel','SingleTtChannel', 'SingleTWAntitop','SingleTWTop','TTJets','QCD'])

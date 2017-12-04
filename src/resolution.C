@@ -29,9 +29,9 @@ bool check_name_difference(string oldname, string newname){
 
 int main(){
   string CMSSW = "8_0_24_patch1";
-  string folder = "MuSigSel";//"MuSigSel";
+  string folder = "EleSigSel_v1";//"MuSigSel";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
-  string output ="plots/resolutionMu/";
+  string output ="plots/resolutionEle/";
   bool single = true;
   
   //vector<string> filenames ={"BprimeB-800_LH","BprimeB-900_LH","BprimeB-1000_LH","BprimeB-1100_LH","BprimeB-1200_LH","BprimeB-1300_LH","BprimeB-1400_LH","BprimeB-1500_LH","BprimeB-1600_LH","BprimeB-1700_LH","BprimeB-1800_LH","BprimeB-800_RH","BprimeB-900_RH","BprimeB-1000_RH","BprimeB-1100_RH","BprimeB-1200_RH","BprimeB-1300_RH","BprimeB-1400_RH","BprimeB-1500_RH","BprimeB-1600_RH","BprimeB-1700_RH","BprimeB-1800_RH"};

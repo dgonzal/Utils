@@ -3,6 +3,20 @@
 
 using namespace std;
 
+std::vector<std::string> matching(const std::string& pat){
+  using namespace std;
+  glob_t glob_result;
+  cout<<"pattern "<<pat<<endl;
+  
+  glob(pat.c_str(),0,NULL,&glob_result);
+  vector<string> ret;
+  for(unsigned int i=0;i<glob_result.gl_pathc;++i){
+    ret.push_back(string(glob_result.gl_pathv[i]));
+  }
+  globfree(&glob_result);
+  return ret; 
+}
+
 
 
 HistsBase::HistsBase(string saveName, bool single){
@@ -72,16 +86,33 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
     cout<<"Skipping File"<<endl;
   }
   else{
-    if(boost::algorithm::contains(filedir,"*"))
+    if(boost::algorithm::contains(filedir,"*")){
       cout<<"File dir with * wildcard "<<filedir<<endl;
-    filedirs.push_back(filedir);
-    hist_draw_options.push_back(hist_draw_option);
-    hist_colors.push_back(color);
-    hist_stack.push_back(stack);
-    hist_marker.push_back(marker);
-    nicknames.push_back(nickname);
-    uncertainties.push_back(uncer);
-    scale.push_back(scalefactor);
+      bool first = true;
+      for(auto f : matching(filedir)){
+	cout<<"adding "<<f<<" to list of files"<<endl;
+	filedirs.push_back(f);
+	hist_draw_options.push_back(hist_draw_option);
+	hist_colors.push_back(color);
+	hist_stack.push_back(stack);
+	hist_marker.push_back(marker);
+	if(first)nicknames.push_back(nickname);
+	else nicknames.push_back("");
+	uncertainties.push_back(uncer);
+	scale.push_back(scalefactor);
+	first =false;
+      }
+    }
+    else{
+      filedirs.push_back(filedir);
+      hist_draw_options.push_back(hist_draw_option);
+      hist_colors.push_back(color);
+      hist_stack.push_back(stack);
+      hist_marker.push_back(marker);
+      nicknames.push_back(nickname);
+      uncertainties.push_back(uncer);
+      scale.push_back(scalefactor);
+    }
   }
 }
 

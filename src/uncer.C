@@ -85,8 +85,9 @@ int fill_histograms(string file_dir_, string file_prefix=""){
 
 int main(){
   std::string path = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/ROOTDataShape/";
+  fill_histograms(path+"Bay_BprimeB_Ele_RH_rebinned.root");
+  return 0;
 
-  
   for (auto & p : fs::directory_iterator(path)){
     string working_path = p.path();//.string().c_str();
     if(boost::contains(working_path,"Mu") || boost::contains(working_path,"Ele") || !boost::contains(working_path,"rebinned") )

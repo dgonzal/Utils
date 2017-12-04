@@ -14,25 +14,28 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     model = build_model_from_rootfile(fname)
     #model.scale_predictions(5.0 / 1.1)
     model.fill_histogram_zerobins()
-    model.set_signal_processes('Bp'+particle+'_TW_*_'+Chirality+'*')
+    model.set_signal_processes('Bprime'+particle+'-*_'+Chirality+'*')
 
     for p in model.processes:
         model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
-
+        model.add_lognormal_uncertainty('Wtag_unc', math.log(1.05), p, obsname='WTag*')
+        if not 'SingleT_s' in p:
+            model.add_asymmetric_lognormal_uncertainty('toptag_unc', math.log(1.04), math.log(1.07), p, obsname='TopTag*')
+        
     model.add_lognormal_uncertainty('ZJets_rate', math.log(1.20), 'ZJets')
-    model.add_lognormal_uncertainty('WJets_rate', math.log(1.20), 'WJets')
-    model.add_lognormal_uncertainty('SingleTsChannel_rate', math.log(1.50), 'SingleTsChannel')
-    model.add_lognormal_uncertainty('SingleTtChannel_rate', math.log(1.50), 'SingleTtChannel')
+    model.add_lognormal_uncertainty('WJets_rate', math.log(1.20), 'WJets_Pt')
+    model.add_lognormal_uncertainty('SingleTsChannel_rate', math.log(1.50), 'SingleT_s')
+    model.add_lognormal_uncertainty('SingleTtChannel_rate', math.log(1.50), 'SingleT_t')
     model.add_lognormal_uncertainty('SingleTWAntitop_rate', math.log(1.50), 'SingleTWAntitop')
-    model.add_lognormal_uncertainty('SingleTWTop_rate', math.log(1.50), 'SingleTWTop')
+    model.add_lognormal_uncertainty('SingleTWTop_rate', math.log(1.50), 'SingleTWtop')
     model.add_lognormal_uncertainty('QCD_rate', math.log(2.0), 'QCD')
-    model.add_lognormal_uncertainty('TTbar_rate', math.log(1.20), 'TTJets')
+    model.add_lognormal_uncertainty('TTbar_rate', math.log(1.20), 'TTbar')
     
     #model_summary(model)
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
  
 
-   #dist = model.distribution
+    #dist = model.distribution
     #model.distribution = get_fixed_dist(dist)
 
     #for r in runs: run_theta(options, in_background_thread = True)
@@ -47,6 +50,17 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
          
     #evaluate_prediction(model)
 
+
+    mle_input = 'toys:0.'
+    signal_process_groups = {'':[]}
+    fit = mle(model, input=mle_input, n = 10, signal_process_groups=signal_process_groups, with_error=False,  options=options)
+    parameter_values = {}
+    for p in model.get_parameters([]):
+        parameter_values[p] = fit[''][p][0][0]
+    histos = evaluate_prediction(model, parameter_values, include_signal = False)
+    write_histograms_to_rootfile(histos, 'fit.root') 
+    
+    
     if write_report:
         output_directory =""
         if channel:
@@ -61,19 +75,21 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
         savelimits.close()
    
         try:
-        #options.set('minimizer', 'always_mcmc', 'True')
-        #options.set('global','debug','True')
+            options.set('minimizer', 'always_mcmc', 'True')
             options.set('minimizer','minuit_tolerance_factor','10000')
-            mle_output = mle(model, input='data',n=100, options=options)
-            try:
-                mle_background = mle(model, input='data',n=1,signal_process_groups ={"background_only":[]} )
-                mle_output.update(mle_background)
-            except:
-                print 'Postfit MLE was not possible for background. Channel Bp'+particle+'_TW_'+Chirality
+            mle_output = mle(model, input=mle_input,n=10, options=options)
+            mle_background = mle(model, input=mle_input,n=1, signal_process_groups ={"background_only":[]}, options=options)
+            mle_output.update(mle_background)
+            fit =  mle_background  #mle(model, input=mle_input, n = 10, signal_process_groups=signal_process_groups, with_error=False,  options=options)
+            parameter_values = {}
+            for p in model.get_parameters([]):
+                parameter_values[p] = fit[''][p][0][0]
+            histos = evaluate_prediction(model, parameter_values, include_signal = True)
+            write_histograms_to_rootfile(histos, output_directory+'/fit.root') 
             postfit = ThetaPostFitPlot(mle_output)
             postfit.make_plots(output_directory)
         except:
-            print 'Postfit MLE was not possible Bp'+particle+'_TW_'+Chirality
+            print 'Postfit MLE was not possible Bprime'+particle+"_"+Chirality
         limit_file = open(output_directory+"limit.txt",'w+')
         limit_file.write("expected limit "+Chirality+":\n")
         print >> limit_file, exp
@@ -101,9 +117,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     if channel:
         pp = PdfPages("limit_"+"Bprime"+particle+"_"+Chirality+'_'+channel+".pdf")
 
-    theory13TeV_x =[800,900,1000,1100,1200,1300,1400,1500]
-    theory13TeV_y =[0.365,0.271,0.203,0.152,0.116,0.0894,0.0692,0.0540]
-
+    theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
+    theory13TeV_y =[0.745,0.532,0.388,0.285,0.212,0.159,0.12,0.0917,0.0706,0.0541,0.042,0.0324 ]
 
     legend_string =""
     if "LH" in Chirality:
@@ -132,7 +147,10 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #matplotlib.rcParams['text.usetex']=True
     #matplotlib.rcParams['text.latex.unicode']=True
     #f,ax = plt.subplots()
-    plt.title("2.2 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
+    axes = plt.gca()
+    axes.set_xlim([700,1800])
+    axes.set_ylim([0.01,5])
+    plt.title("35.8 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
     plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
     plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
@@ -147,12 +165,17 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #plt.plot(theory13TeV_x,upper,linestyle='-.',color='cyan')
 
 
-    if obs: plt.plot(obs.x, obs.y, label='Obs $95\%$ CL', color ='black')
+    #if obs: plt.plot(obs.x, obs.y, label='Obs $95\%$ CL', color ='black')
     plt.xlabel('B quark Mass (GeV)')
     plt.ylabel(r'$\mathbf{\sigma \times}$  BR(B$\mathbf{\rightarrow}$tW) (pb)')
     plt.legend(loc="upper center",prop={'size':12},frameon=False)
     plt.savefig(pp, format='pdf')
 
+    pp.close()
+
+    return exp,obs
+
+    
     # coupling limits
     exp_cl_y = []
     exp_cl_bands_sigma1up_y = []
@@ -169,13 +192,14 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                 exp_cl_bands_sigma1down_y.append(math.sqrt(exp.bands[0][1][i]/theory13TeV_y[m]))
                 exp_cl_bands_sigma2up_y.append(math.sqrt(exp.bands[1][0][i]/theory13TeV_y[m]))
                 exp_cl_bands_sigma2down_y.append(math.sqrt(exp.bands[1][1][i]/theory13TeV_y[m]))
+    """
     if obs:
         for i in range(len(obs.x)):
             for m in range(len(theory13TeV_x)):
                 if obs.x[i] == theory13TeV_x[m]:
                     #print obs.x[i],theory13TeV_x[m],obs.y[i],theory13TeV_y[m],
                     obs_cl_y.append(math.sqrt(obs.y[i]/theory13TeV_y[m]))
-
+    """
     plt.clf()
     plt.plot(exp.x, exp_cl_y, label= Chirality+' Chirality', color ='black',linestyle='--')#,color = exp_LH.bands[0][2])
     
@@ -186,7 +210,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                      alpha=0.8, facecolor = 'green', edgecolor='green', # exp_LH.bands[1][2],
                      linewidth=0)
     
-    if obs: plt.plot(obs.x, obs_cl_y, label='Obs', color ='black')
+    #if obs: plt.plot(obs.x, obs_cl_y, label='Obs', color ='black')
     plt.xlabel('Mass B [GeV]')
     plt.ylabel('|cL|')
     plt.legend(loc=2,prop={'size':12},frameon=False)

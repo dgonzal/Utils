@@ -24,11 +24,25 @@ std::string deltaPhistring(std::string var1, std::string var2);
 std::string deltaEtastring(std::string var1, std::string var2);
 std::string deltaRstring(std::string var1, std::string var2);
 
+
+struct error_folder_rep{
+  std::vector<TTree*> error_trees;
+  std::vector<std::string> replace_variables;
+  std::string folder;
+  std::string nick;
+  std::vector<TH1F*> histos;
+};
+
 struct tree_folderinfo{
   std::vector<TTree*> error_trees_up;
+  std::vector<TH1F*> histos_up;
   std::vector<TTree*> error_trees_down;
+  std::vector<TH1F*> histos_down;
   std::string dir_up;
   std::string dir_down;
+  std::string nick_up;
+  std::string nick_down;
+  std::vector<std::string> samples;
 };
 
 
@@ -44,7 +58,8 @@ class TreeHists: public HistsBase{
   void set_ignorePages(int ig=-1, int ig_up=-1){ignore_pages=ig; igup_pages=ig_up;}
   void load_tree_once(bool val=false){if(treeload_once!=val){treeload_once=val; treeloaded=false;}}
   void AddErrorFolder(std::vector<std::string> folder_name);
-  void AddErrorFolderAlias(std::string var , std::string new_name, std::string condition="");
+  void AddErrorFolderRep(std::string folder_name, std::string variable, std::string replace, std::string nick="");
+  void AddErrorFolderAlias(std::string var, std::string new_name, std::string condition="");
   void switch_logy(bool logy_=false){logy =logy_;}
   //no data points are plotted into the ratio
   void set_ratiolimits(double up, double down){ratio_up=up; ratio_down=down;}
@@ -53,11 +68,12 @@ class TreeHists: public HistsBase{
   void fit_ratio(bool fitrat_=true, string func_string=""){fitrat=fitrat_;ratio_func=new TF1("myfitratiofunc",func_string.c_str());}
   TF1* get_ratiofunction(){return ratio_func;}
  
-  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true);
+  bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="");
   std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
   //optionen: 0 no pull, 1 pull for stats, 2 pull for total error, 3 pull for 1 and 2
   // not yet implimented
   void set_pull(int pull_option_ =0){pull_option = pull_option_;}
+  void set_single_errors(bool single_error_ratio_){single_error_ratio= single_error_ratio_;}
   
  private:
   TTree* load_tree(std::string fileDir);
@@ -68,8 +84,13 @@ class TreeHists: public HistsBase{
   TH1F* calc_pull(TH1F* data, TH1F* pred);
   void calc_weightErr(unsigned int i_error,error_method method, TH1F* result);
   void calc_fixedErr(const std::vector<double> & uncertainties, const std::vector<bool> & stacked, TH1F* result, THStack* stack);
-  void calc_errorfolder(std::vector<unsigned int> is, TH1F* result, TH1F* nominal);
+  void calc_errorfolder(tree_folderinfo & folder, TH1F* result, TH1F* nominal);
+  void calc_errorfolder(error_folder_rep & folder, TH1F* result, TH1F* nominal);
 
+  void calc_single_errors(tree_folderinfo folder);
+ 
+  vector<TH1F*> weight_err_sum;
+ 
   TF1* ratio_func;
   bool fitrat=false;
   TLegend* leg;
@@ -84,7 +105,8 @@ class TreeHists: public HistsBase{
   std::vector<error_method> methods_forerrors;
   std::vector<std::vector<std::string>> replace_strings;
   std::vector<std::vector<std::string>> error_folders;
-  std::vector<std::vector<TH1F*>> error_folder_histos;
+  std::vector<error_folder_rep> error_folder_replace;
+  //std::vector<std::vector<TH1F*>> error_folder_histos;
   //if something changed for the folders
   std::vector<std::string> alias;
   std::vector<std::string> oldnames;
@@ -94,4 +116,5 @@ class TreeHists: public HistsBase{
   bool logy=false, debug=false, draw_ratio=true, mcratio=false;
   //Tpads for pretty print
   TPad *pad1, *pad2;
+  bool single_error_ratio=false;
 };

@@ -15,7 +15,7 @@
 #include "TMultiGraph.h"
 #include "TEfficiency.h"
 #include "TGaxis.h"
-
+#include "TList.h"
 
 
 using namespace std;
@@ -55,6 +55,7 @@ class effiPlots: public HistsBase{
   void set_debug(bool debug_ =true){debug=debug_;}
   void clear_histos(){histos.clear();histsTH.clear();legend_entries.clear();}//std::vector<effiContainer>().swap(histos); std::vector<TH1EffiCont>().swap(histsTH); std::vector<std::string>().swap(legend_entries);}
   void set_Rebin(int reb){rebin_int = reb;}
+  void set_Rebin(std::vector<double> reb){rebin_bins = reb;}
   void set_val(string val_="val"){val=val_;}
   string get_nominal(){return nominal;}
   string get_up(){return up_var;}
@@ -76,5 +77,6 @@ class effiPlots: public HistsBase{
   bool debug = false;
   int rebin_int=-1, page_number=1, summary_number=1;
   string nominal="",up_var="",down_var="",val="val";
-  
+  std::vector<double> rebin_bins={};
 };
+

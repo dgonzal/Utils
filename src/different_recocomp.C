@@ -6,12 +6,12 @@
 
 
 int main(int argc, char** argv){
-  string version = "2jets_v4";
+  string version = "new";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;
   bool electron = false;
   bool errors = false;
-  string resultfile = "muon_recocompi_w2jets_van.ps";
+  string resultfile = "muon_chi2_prob_van.ps";
   bool single = false;
 
  
@@ -20,21 +20,21 @@ int main(int argc, char** argv){
   TreeHists treehists(resultfile,single);
   //if(single) treehists.switch_singleplots(true);
   treehists.SetLegend(0.6, 0.3, 0.8, 0.7);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",6,-1,false,"B+b M(0.8) new ",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",5,-1,false,"B+t M(0.8) new",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",20,-1,false,"B+b M(1) new",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",4,-1,false,"B+t M(1) new",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",6,-1,false,"B+b M(0.8) new ",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",5,-1,false,"B+t M(0.8) new",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",20,-1,false,"B+b M(1) new",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",4,-1,false,"B+t M(1) new",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",7,-1,false,"B+t M(1.5) new",0,5);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",7,-1,false,"B+b M(1.5) new",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",8,-1,false,"B+b M(1.5) new",0,5);
 
   //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",40,-1,false,"B+b M(1.5)",0,5);
   //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",800,-1,false,"B+t M(1.5)",0,5);
   folder = "MuSel_wtag_topjetcorr";
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",40,-1,false,"B+b M(0.8)",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",2,-1,false,"B+t M(1)",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",40,-1,false,"B+b M(0.8)",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",2,-1,false,"B+t M(1)",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",3,-1,false,"B+t M(1.5)",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",42,-1,false,"B+b M(0.8)",0,5);
-  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",50,-1,false,"B+b M(1)",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",42,-1,false,"B+b M(0.8)",0,5);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",50,-1,false,"B+b M(1)",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",60,-1,false,"B+b M(1.5)",0,5);
 
 
@@ -144,13 +144,13 @@ int main(int argc, char** argv){
   treehists.Draw("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 && "+chi2cut+")","70,0,3000","X^{2} B mass for top_{had} & W_{lep}");
   treehists.Draw("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==11 && "+chi2cut+")","70,0,3000","X^{2} B mass for top_{lep} & W_{had}");
 
-  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 && "+chi2cut+")","70,0,3000","X^{2} for top_{had} & W_{lep}");
-  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==11 && "+chi2cut+")","70,0,3000","X^{2} for top_{lep} & W_{had}");
+  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 && "+chi2cut+")","70,0,1","X^{2} for top_{had} & W_{lep}");
+  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==11 && "+chi2cut+")","70,0,1","X^{2} for top_{lep} & W_{had}");
 
   treehists.Draw("Chi2Dis.wLep.M()","weight*(TopTagDis.mass==-1 &&"+chi2cut+")","70,0,120","X^{2} W_{lep} mass [GeV]");
   treehists.Draw("Chi2Dis.mass","weight*(TopTagDis.mass==-1 && "+chi2cut+")","70,100,3000","B mass [GeV]");
-  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 && "+chi2cut+")","70,0,20","X^{2} top_{had} X_{dis}");
-  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==11 && "+chi2cut+")","70,0,20","X^{2} top_{lep} X_{dis}");
+  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 && "+chi2cut+")","70,0,1","X^{2} top_{had} X_{dis}");
+  treehists.Draw("Chi2Dis.chi","weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==11 && "+chi2cut+")","70,0,1","X^{2} top_{lep} X_{dis}");
   treehists.Draw("Chi2Dis.forwardJet.eta()","weight*(TopTagDis.mass==-1 &&"+chi2cut+")","40,-5,5","forward ak4 #eta");
 
 

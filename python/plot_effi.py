@@ -36,11 +36,13 @@ def compute(filename):
         if tuple_store:
           for item in tuple_store:
             if item[0] == signalname:
-              item[1] += entries
-              found_sig = True
-              break
+                #print 'process',key,'additional ',entries,'old', item[1] 
+                item[1] += entries
+                found_sig = True
+                break
         if not found_sig:
-          if not tuple_store: tuple_store=[]
+          if not tuple_store:tuple_store=[]
+          #print 'new process',key,'new',entries 
           tuple_store.append([signalname,entries])
  
     for item in tuple_store:
@@ -53,7 +55,7 @@ def compute(filename):
 
 
 execfile("lumi_signal.py")
-for res_file in glob.glob("../limits/ROOTDataShape/*LH_rebinned.root"):
+for res_file in glob.glob("../limits/ROOTDataShape/*LH*0_rebinned.root"):
     if 'Mu' in res_file or 'Ele' in res_file:
         continue
     print res_file

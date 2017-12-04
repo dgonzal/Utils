@@ -42,8 +42,9 @@ void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_e
     TFile* file = new TFile(fileDir.c_str());
     if(debug)cout<<"loaded file"<<endl;
     TH1F * numerator;
-    if(file->GetListOfKeys()->Contains(s_numerator.c_str()))cout<< s_numerator<<" does not exist"<<endl;
-    if(file->GetListOfKeys()->Contains(s_denominator.c_str()))cout<< s_denominator<<" does not exist"<<endl;
+    // you have to check first the dir and than the hist!!
+    //if(file->GetListOfKeys()->Contains(s_numerator.c_str())==1)cout<< s_numerator<<" does not exist"<<endl;
+    //if(file->GetListOfKeys()->Contains(s_denominator.c_str())==1)cout<< s_denominator<<" does not exist"<<endl;
     if(!s_numerator.empty()){
       numerator = (TH1F*) file->Get(s_numerator.c_str());
       if(debug) cout<<numerator->GetTitle()<<endl;
@@ -74,6 +75,13 @@ void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_e
     if(rebin_int > 0){
       numerator->Rebin(rebin_int);
       denominator->Rebin(rebin_int);
+    }
+    if(rebin_bins.size()>0){  
+      cout<<"============================="<<endl;
+      cout<<"*****************************"<<endl;
+      cout<<"rebin with list"<<endl; 
+      numerator->Rebin(rebin_bins.size()-1,"", (double*) &rebin_bins[0]);
+      denominator->Rebin(rebin_bins.size()-1,"", (double*) &rebin_bins[0]);
     }
     histos.push_back(effiContainer(numerator,denominator));
     if(debug)cout<<"push_back done"<<endl;
@@ -191,7 +199,9 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   //get_can()->UseCurrentStyle();
   get_can()->Update();
   */
-  resultGraphs->SetMinimum(0.);
+  resultGraphs->SetMinimum(0.01);
+  resultGraphs->SetMinimum(0.4);
+  resultGraphs->SetMaximum(0.95);
   resultGraphs->Draw("ap");//should be ap have to change marker style
   resultGraphs->GetYaxis()->SetTitle("Efficiency");
   resultGraphs->GetXaxis()->SetTitle(x_axis.c_str());
@@ -215,6 +225,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
     get_can()->Print(get_resultFile());
 
   if(scalefactor.size()>0){
+    TList * graphlist = (TList*)resultGraphs->GetListOfGraphs ();
     for(auto tuple : scalefactor){
       TH1F* num_h = (TH1F*) histos[tuple.first].numerator->Clone();
       num_h->Divide(histos[tuple.first].denominator);
@@ -222,16 +233,56 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
       den_h->Divide(histos[tuple.second].denominator);
       
       TGraphAsymmErrors* scaleresult = compute_scalefactorerrors(num_h,den_h, (TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.first),(TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.second));
-      scaleresult->Draw("Al");
-      get_can()->Print(get_resultFile());
-      //delete num_h;delete den_h;
-      //delete scaleresult;
-      
+
+      //scaleresult->GetXaxis()->SetRangeUser(45,800);
+      scaleresult->SetTitle("");
+      scaleresult->GetXaxis()->SetTitle(x_axis.c_str());
+      scaleresult->GetYaxis()->SetRangeUser(.85,1.04);
+      scaleresult->Draw("P");
+      TH1F* hist = (TH1F*) scaleresult->GetHistogram();
+      hist->SetMaximum(1.04);
+      hist->SetMinimum(0.95);
+      hist->Draw();
+      scaleresult->Draw("P");
+      get_can()->Update();
+      if(single_plots){
+	get_can()->Print(create_resultfilename(summary_number,true));
+      }
+      else
+	get_can()->Print(get_resultFile());
+
+      // Calculate pull between two
+      TGraphAsymmErrors* first = (TGraphAsymmErrors*) graphlist->At(tuple.first);
+      TGraphAsymmErrors* second = (TGraphAsymmErrors*) graphlist->At(tuple.second);
+      TH1F* result = (TH1F*) first->GetHistogram();
+      result->SetMaximum(4);
+      result->SetMinimum(-4);
+      result->Rebin(result->GetNcells()/first->GetN()); 
+      double x_f, y_f, x_s, y_s;
+      for(int i=0; i<first->GetN();i++){
+	first->GetPoint(i,x_f,y_f);
+	int m=0;
+	while(second->GetPoint(m,x_s,y_s) >=0){
+	  if(x_s==x_f) break;
+	  m++;
+	}
+	double bin_result = y_f-y_s;
+	if(bin_result>0) bin_result /= sqrt(pow(first->GetErrorYlow(i),2)+pow(second->GetErrorYhigh(m),2));
+	else bin_result /= sqrt(pow(first->GetErrorYhigh(i),2)+pow(second->GetErrorYlow(m),2));
+	result->SetBinContent(i,bin_result);
+	cout<<"pull "<<bin_result<<" first bin "<<i<<" second bin "<<m<< " x "<< x_f<<" y first "<<y_f<<" y second "<<y_s <<endl;
+	
+      }  
+      result->Draw();
+      if(single_plots){
+	get_can()->Print(create_resultfilename(summary_number,true));
+      }
+      else
+	get_can()->Print(get_resultFile());
     }
     //delete resultGraphs;
-    //multigraphLeg->Close();
-    
-  }  
+    //multigraphLeg->Close(); 
+  }
 }
 
 
@@ -290,10 +341,8 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
     y[i]= scalehist->GetBinContent(i+1);
     ylow[i]  = sqrt(pow((1/den_con)*scalenum->GetErrorYlow(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYhigh(graphcount),2));
     yhigh[i] = sqrt(pow(1/den_con*scalenum->GetErrorYhigh(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYlow(graphcount),2));
-    xlow[i]=scalehist->GetBinLowEdge(i+1);
-    xhigh[i]=xlow[i]+scalehist->GetBinWidth(i+1);
-    graphcount++;
-    
+    xlow[i]= fabs(scalehist->GetBinLowEdge(i+1)-xaxis->GetBinCenter(i+1));
+    xhigh[i]= fabs(scalehist->GetBinLowEdge(i+1) +scalehist->GetBinWidth(i+1)-xaxis->GetBinCenter(i+1));
     /*/
     double graph_x=0,graph_y=0;
     scalenum->GetPoint(i+1,graph_x,graph_y);
@@ -303,19 +352,19 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
     cout<<"iter "<<i<<" x "<<x[i]<<" x low "<<xlow[i]<<" x high "<<xhigh[i] <<" y "<<y[i]<<" low "<<ylow[i]<<" high "<<yhigh[i]<<endl;
 
     if(i==firstbin){
-      nominal += "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i])+")";
-      up_var  += "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]+yhigh[i])+")";
-      down_var+= "(("+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]-ylow[i])+")"; 
+      nominal += "(("+val+"<="+to_string(boost::math::round(xhigh[i]+x[i]))+")*"+to_string(y[i])+")";
+      up_var  += "(("+val+"<="+to_string(boost::math::round(xhigh[i]+x[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "(("+val+"<="+to_string(boost::math::round(xhigh[i]+x[i]))+")*"+to_string(y[i]-ylow[i])+")"; 
     }
     else if(i<lastbin && i>firstbin){
-      nominal += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i])+")";
-      up_var  += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]+yhigh[i])+")";
-      down_var+= "+(("+val+">"+to_string(boost::math::round(xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(xhigh[i]))+")*"+to_string(y[i]-ylow[i])+")";
+      nominal += "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(x[i]+xhigh[i]))+")*"+to_string(y[i])+")";
+      up_var  += "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(x[i]+xhigh[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+"&& "+val+"<="+to_string(boost::math::round(x[i]+xhigh[i]))+")*"+to_string(y[i]-ylow[i])+")";
     }
     else if(i==lastbin){
-      nominal += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i])+")";
-      up_var  += "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i]+yhigh[i])+")";
-      down_var+= "+(("+val+">"+to_string(boost::math::round(xlow[i]))+")*"+to_string(y[i]-ylow[i])+")";
+      nominal += "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+")*"+to_string(y[i])+")";
+      up_var  += "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+")*"+to_string(y[i]+yhigh[i])+")";
+      down_var+= "+(("+val+">"+to_string(boost::math::round(x[i]-xlow[i]))+")*"+to_string(y[i]-ylow[i])+")";
 
     }
     boost::replace_all(nominal , ".000000", ".");
@@ -327,6 +376,9 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
   up_var= "("+up_var+")";
   down_var= "("+down_var+")";
 
+
+  
+  
   
   //nominal= nominal.substr(1);
   //up_var=up_var.substr(1);
@@ -335,7 +387,7 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
   //cout<<up_var<<endl;
   //cout<<down_var<<endl;
   
-  return new TGraphAsymmErrors(bins,x,y, 0, 0,ylow,yhigh);
+  return new TGraphAsymmErrors(bins,x,y, xlow, xhigh,ylow,yhigh);
 }
 
 

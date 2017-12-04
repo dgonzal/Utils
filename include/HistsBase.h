@@ -14,12 +14,16 @@
 #include <vector>
 #include <string>
 #include <stdlib.h>
+#include <glob.h>
 
 //boost libs
 #include <boost/filesystem.hpp>
 #include "boost/algorithm/string.hpp"
 
 using namespace std;
+
+
+std::vector<std::string> matching(const std::string& pat);
 
 class HistsBase{
  public:

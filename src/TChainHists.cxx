@@ -1,35 +1,6 @@
 #include "TChainHists.h"
 
 using namespace std;
-/*/
-//From -pi<phi<pi to 0<phi<2pi convention 
-std::string deltaPhistring(std::string var1, std::string var2){
-  return "sqrt(std::fmod((("+var1+".Phi()+3.1415)-("+var2+".Phi()+3.1415)),3.1415)*std::fmod((("+var1+".Phi()+3.1415)-("+var2+".Phi()+3.1415)),3.1415))";
-  //return "(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+(("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi())))";
-}
-std::string deltaEtastring(std::string var1, std::string var2){
-  return "sqrt(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta()))";
-}
-std::string deltaRstring(std::string var1, std::string var2){
- return "sqrt(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+(std::fmod("+var1+".Phi()-"+var2+".Phi(),3.1415)*std::fmod("+var1+".Phi()-"+var2+".Phi(),3.1415)))";
- //return "(("+var1+".Eta()-"+var2+".Eta())*("+var1+".Eta()-"+var2+".Eta())+(("+var1+".Phi()-"+var2+".Phi())*("+var1+".Phi()-"+var2+".Phi())))";
-}
-/*/
-
-
-std::vector<std::string> glob(const std::string& pat){
-  using namespace std;
-  glob_t glob_result;
-  cout<<"pattern "<<pat<<endl;
-  
-  glob(pat.c_str(),0,NULL,&glob_result);
-  vector<string> ret;
-  for(unsigned int i=0;i<glob_result.gl_pathc;++i){
-    ret.push_back(string(glob_result.gl_pathv[i]));
-  }
-  globfree(&glob_result);
-  return ret; 
-}
 
 
 
@@ -43,26 +14,8 @@ ChainHists::ChainHists(string saveName, bool single): HistsBase(saveName, single
 }
 
 TChain* ChainHists::load_chain(std::string fileDir){
-  //Long_t id=0, size=0, flag=0, modtime=0; 
-  //cout<<(fileDir+"_"+to_string(page_number)).c_str()<<endl;
   TChain* chain = new TChain(fileDir.c_str());//(fileDir+"_"+to_string(page_number)).c_str());
   chain->Add((fileDir+"/"+treeName).c_str());
-  /*/
-  for(auto file_iter: glob(fileDir)){
-    cout<<"add file to chain "<<file_iter<<endl;
-    
-    if(gSystem->GetPathInfo(file_iter.c_str(),&id, &size, &flag, &modtime)!=0){
-      std::cerr<<"File "<<file_iter.c_str()<<" does not exist"<<std::endl;
-      std::cerr<<"id "<<id<<" size "<<size<<" flag "<<flag<<" modtime "<<modtime<<std::endl;
-      exit(EXIT_FAILURE);
-    }
-    chain->AddFile(file_iter.c_str(),TTree::kMaxEntries,treeName.c_str());
-    //chain->Add((file_iter+"/"+treeName).c_str());
-    
-    }
-  /*/
-  //exit(0);
-  //assert(1==0);
   return chain;
 }
 
@@ -117,21 +70,8 @@ bool ChainHists::Draw(string variable, string draw_option, string binning, std::
     }
     TString filestring = get_resultFile()+to_string(page_number).c_str()+".pdf";
     filestring.ReplaceAll("/","_");
-    //boost::replace_all(filestring,"/","_");
-    //too complicated instead use page_1,page_2....
-    /*
-    string filestring =variable+"_"+draw_option+"_"+binning+".ps";
-    boost::replace_all(filestring," ","");
-    boost::replace_all(filestring,",","_");
-    boost::replace_all(filestring,"+","");
-    boost::replace_all(filestring,"-","minus");
-    boost::replace_all(filestring,"&&","AND");
-    boost::replace_all(filestring,"||","OR");
-    boost::replace_all(filestring,"$","");
-    */
     singlefile_result = get_resultFile()+filestring;
     cout<<"Single File name "<<singlefile_result<<endl;
-    //get_can()->Print(singlefile_result+"[");
   }
 
   for(unsigned int i=0; i< error_weights.size();i++){
@@ -139,17 +79,11 @@ bool ChainHists::Draw(string variable, string draw_option, string binning, std::
     error_histos.push_back(tmp_vec); 
   }
   int counter= -1;
-  //std::vector<std::vector<TTree*>> error_trees;
 
   std::vector<chain_folderinfo> error_chains_info;
   for(unsigned int i=0;i<error_folders.size();i++)
     error_chains_info.push_back(chain_folderinfo());
-  /*
-  for(unsigned int i=0;i<error_folders.size();i++)
-    for(unsigned int m=0;m<error_folders[i].size();m++)
-      error_chains.push_back(std::vector<TChain*>());
-  */
-
+  
   for(const auto & fileDir : get_filedirs()){
     if(chainload_once == true && chainloaded ==true)
 	break;

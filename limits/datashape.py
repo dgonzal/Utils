@@ -8,9 +8,9 @@ productions = ['B','T'] #'B','T']
 chiralities = ['RH','LH'] #['RH','LH']
 witdths =['','10','20','30']
 
-signal_prefixes = ['Bprime']#'X53',
-channels = ['Mu','Ele','']
-productions = ['T']
+signal_prefixes = ['X53']
+channels = ['']
+productions = ['']
 chiralities = ['LH']
 witdths =['','10','20','30']
 
@@ -63,12 +63,11 @@ for source_num,channel in enumerate(channels):
                             pass
                             print 'Going create files for combination'
                             call(['rm '+rootfile+'_rebinned.root '],shell=True)
-                            #print 'hadd '+rootfile+'_rebinned.root '+dirstring+'_rebinned.root'
-                            #sys.exit(0)
 			    print dirstring+"_rebinned.root"
                             if glob.glob(dirstring+"_rebinned.root"):
                                 pass
                                 call(['hadd '+rootfile+'_rebinned.root '+dirstring+'_rebinned.root'],shell=True)
+				time.sleep(1)
                     else:
                         signal = None
                         print rootfile,dirstring
@@ -107,14 +106,15 @@ for source_num,channel in enumerate(channels):
                             ##binFile(0.2, rootfile+'.root', 'M_{B} [GeV/c^{2}]', ['Background'])    
 			    signal_rebin(rootfile+'_rebinned.root', signal_pre, 'Background')
                             scale_pdf_reweight(rootfile+'_rebinned.root',xmldir, signal_pre+production,chirality,width)
-                    print 'working on',rootfile+'.root'
                     #print signal_pre
 		    #continue
 		    #if width: sys.exit(0)
                     if limits and os.path.isfile(rootfile+"_rebinned.root"):
                         if 'X53' in signal_pre:
+			    rename_hists(rootfile+"_rebinned.root",'X53','X')
                             exp,obs = run_cutopt(rootfile+"_rebinned.root",chirality,channel,'X',False,"",0,prefix+width+'_')
                         else:
+			    rename_hists(rootfile+"_rebinned.root",'-','_')
                             exp,obs = run_cutopt(rootfile+"_rebinned.root",chirality,channel,signal_pre+production,False,"",0,prefix+width+'_')
                         #sys.exit(0)
 

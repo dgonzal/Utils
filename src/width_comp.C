@@ -9,9 +9,9 @@
 
 
 int main(){
-  string resultfile = "plots/width_comparisonMu/";
+  string resultfile = "plots/width_comparisonEle/";
   string CMSSW = "8_0_24_patch1";
-  string folder= "MuSigSel/"; //"EleSigSel_v1/";
+  string folder= "EleSigSel_v1/";//"MuSigSel/"; //"EleSigSel_v1/";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
   
   string eta = "2.0";

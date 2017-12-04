@@ -9,10 +9,10 @@ int main(){
   string version = "wtag_topjetcorr";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  bool electron = false;
+  bool electron = true;
   if (electron)folder = "EleSel_cross";
   bool single = true;
-  string output = "plots/matching/treeMu";
+  string output = "plots/matching/treeEle";
  
   //if(single) output = plots/treehists/ 
   
@@ -56,7 +56,7 @@ int main(){
   std::vector<TH1F*> toptag_hist = treehists.return_hists(deltaRstring("TopTagDis.bprime","BprimeGen.bprime"),"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400)",binning,"#Delta R(B_{gen},B_{reco}) ");
 
   
-  simplePlots matching("plots/matching/effiMu",single);
+  simplePlots matching("plots/matching/effiEle",single);
   matching.switch_ratio(false);
   matching.setLegend(0.2, 0.6, 0.45, 0.86);
   

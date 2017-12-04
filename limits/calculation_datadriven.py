@@ -3,76 +3,86 @@ import numpy
 import matplotlib
 #matplotlib.rcParams['text.usetex']=True
 #matplotlib.rcParams['text.latex.unicode']=True
+# -*- coding: utf-8 -*-
 import cPickle as pickle
 from matplotlib.backends.backend_pdf import PdfPages
 import os
 
-# -*- coding: utf-8 -*-
-def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
+def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
     if write_report:report.reopen_file()
+    print 'signal',particle+'*'+Chirality+'*','for particle',particle
+    print 'working on', fname
 
     model = build_model_from_rootfile(fname)
-    #model.scale_predictions(5.0 / 1.1)
     model.fill_histogram_zerobins()
-    model.set_signal_processes('Bprime*'+particle+'*'+Chirality+'*')
+    model.set_signal_processes(particle+'*'+Chirality+'*')
 
+    elescale = 1.01
     for p in model.processes:
-        if "Background" not in p: 
-            model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
-
-    """
+        if "Background" not in p:
+            model.add_lognormal_uncertainty('lumi', math.log(1.026), p)
+	    mass = ''.join(x for x in p if x.isdigit())
+	    wtag_unc = 3.9*math.log(float(mass)/2/200)
+            wtag_unc = math.sqrt(wtag_unc*wtag_unc+1)/100+1
+            print p, 'Wtag_unc', wtag_unc
+            model.add_lognormal_uncertainty('Wtag_unc', math.log(wtag_unc), p, obsname='WTag*')
+            model.add_asymmetric_lognormal_uncertainty('toptag_unc', math.log(1.04), math.log(1.07), p, obsname='TopTag*')
+            if channel =="Ele" or not channel:
+               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_AntiBTagEle')    
+               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_1_BTagEle')    
+               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_2_BTagEle')    
+               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='TopTagEle')         
+            
+    #10% on the normalization
+    uncer = 1.1
+            
     if channel =="Mu" or not channel:
-        model.add_lognormal_uncertainty('chi2_rate'   , math.log(3), procname='Background',obsname='Chi2Mu')    
-        model.add_lognormal_uncertainty('top-tag_rate', math.log(3), procname='Background',obsname='TopTagMu')    
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagMu')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagMu')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagMu')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagMu')    
     if channel =="Ele" or not channel:
-        model.add_lognormal_uncertainty('chi2_rate'   , math.log(3), procname='Background',obsname='Chi2Ele')    
-        model.add_lognormal_uncertainty('top-tag_rate', math.log(3), procname='Background',obsname='TopTagEle')    
-    """
-    if channel =="Mu" or not channel:
-        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(2), procname='Background',obsname='Chi2_AntiBTagMu')    
-        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_1_BTagMu')    
-        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_2_BTagMu')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(2), procname='Background',obsname='TopTagMu')    
-    if channel =="Ele" or not channel:
-        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(2), procname='Background',obsname='Chi2_AntiBTagEle')    
-        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_1_BTagEle')    
-        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(2), procname='Background',obsname='Chi2_2_BTagEle')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(2), procname='Background',obsname='TopTagEle')         
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagEle')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagEle')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagEle')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagEle')         
     
+	#model.add_lognormal_uncertainty('electron_scalefactor',math.log(1.01),)
         
     #model_summary(model)
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
-    #exp, obs = asymptotic_cls_limits(model, use_data=True, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)    
+
     exp = None
     obs = None
 
-    if not injected_signal: 
-        exp, obs  = bayesian_limits(model, 'all', n_toy = 1000, n_data = 100,options=options)
-    else: 
-        exp,obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
-
+    #exp, obs = asymptotic_cls_limits(model, use_data=False, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)    
+     
+    #if not injected_signal: 
+    exp, obs = bayesian_limits(model, 'expected', n_toy = 1000 ,options=options)
+    #else: 
+    #    exp, obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
+    
     #evaluate_prediction(model)
     if write_report:
         output_directory =""
         if channel:
-            output_directory = './'+glob_prefix+'output_Bprime'+particle+'_'+Chirality+'_'+channel+'/'
+            output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'_'+channel+'/'
         else:
-             output_directory = './'+glob_prefix+'output_Bprime'+particle+'_'+Chirality+'/'
+             output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'/'
             
 
-        if injected_signal: 
-            output_directory = './Injected/'+injected_signal+output_directory[1:-1]+"/"
-            if not os.path.exists(output_directory):
-                os.makedirs(output_directory)
+        print 'Output directory',output_directory
+        if output_directory  and not os.path.exists(output_directory):
+            os.makedirs(output_directory)
 
         report.write_html(output_directory)
-        savelimits = open(output_directory+"/"+injected_signal+"limits.pickle",'w+') 
+        #savelimits = open(output_directory+"/"+injected_signal+"limits.pickle",'w+') 
         #pickle.dump(exp,savelimits)   
         #pickle.dump(obs,savelimits)
-        savelimits.close()
-   
+        #savelimits.close()
+        """
         fit_result = []
         mle_output = None
 
@@ -80,7 +90,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
             #options.set('minimizer', 'always_mcmc', 'True')
             #options.set('global','debug','True')
             #options.set('minimizer','minuit_tolerance_factor','1000')
-            mle_output = mle(model, input='data',n=5, options=options)
+            mle_output = mle(model, input='toys:0',n=5, options=options)
             #mle_output = mle(model, input='data',n=1000, options=options,signal_process_groups ={"background_only":[]} )
             postfit = ThetaPostFitPlot(mle_output)
             postfit.make_plots(output_directory)
@@ -91,7 +101,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
 
         try:
             #options.set('minimizer','minuit_tolerance_factor','0.001')
-            mle_background = mle(model, input='data',n=5,signal_process_groups ={"background_only":[]} )
+            mle_background = mle(model, input='toys:0',n=5,signal_process_groups ={"background_only":[]} )
             for pf_vals in mle_background.itervalues():
                 del pf_vals['__nll']
                 for key in pf_vals:
@@ -107,23 +117,24 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
                     mean_err = numpy.average(errs)
                     pf_vals[key] = ((3**wei_mean, 3**mean_err),)
                     #print wei_mean, mean_err
-                    print key,'Mean',3**wei_mean,"Error",3**mean_err-1
+                    print key,'Mean',math.exp(wei_mean),"Error",math.exp(mean_err-1)
                     fit_result.append(str(key)+' Mean '+str(math.exp(wei_mean))+" Error "+str(math.exp(mean_err)))
                     #print vals,'Error',wei_mean,"Mean",mean_err, 'no exp' 
             postfit = ThetaPostFitPlot(mle_background)
             postfit.make_plots(output_directory)
         except Exception as e:
-            print 'Postfit MLE was not possible for background. Channel Bprime'+particle+'_'+Chirality+":"
+            print 'Postfit MLE was not possible for background. Channel '+particle+'_'+Chirality+":"
             print e
-           
+        """   
         limit_file = open(output_directory+"limit.txt",'w+')
         limit_file.write("expected limit "+Chirality+":\n")
         print >> limit_file, exp
         limit_file.write("observed limit "+Chirality+":\n")
         print >> limit_file, obs
-        
+        """
         for item in fit_result:
             print >> limit_file, item
+        """
         limit_file.close()
         
 
@@ -132,8 +143,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     print "observed limit "+Chirality+' '+channel +":"
     print obs
 
-    
-
+    return exp,obs
 
     #x = np.linspace(0, 2, 100)
     #plt.title("B+t -> tW 100%")
@@ -145,14 +155,13 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
 
     pp =None
     if channel:
-        pp = PdfPages(output_directory+injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+'_'+channel+".pdf")
+        pp = PdfPages(output_directory+injected_signal+"limit_"+particle+"_"+Chirality+'_'+channel+".pdf")
     else:
-        pp = PdfPages(output_directory+injected_signal+"limit_"+"Bprime"+particle+"_"+Chirality+".pdf")
+        pp = PdfPages(output_directory+injected_signal+"limit_"+particle+"_"+Chirality+".pdf")
 
 
     theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
-    theory13TeV_y =[0.745,0.532,0.388,0.285,0.212,0.159,0.12,0.0917,0.0706,0.0541,0.042,0.0324 ]
-
+    theory13TeV_y =numpy.array([0.745,0.532,0.388,0.285,0.212,0.159,0.12,0.0917,0.0706,0.0541,0.042,0.0324 ])
 
     legend_string =""
     if "LH" in Chirality:
@@ -160,7 +169,12 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     elif "RH" in Chirality:
         legend_string = "Bt, $\mathbf{c_R=1.0}$, BR(tW)=100$\%$"
 
-    if particle is 'b':
+    if 'X' in particle:
+        legend_string = legend_string.replace('Bt','$X_{53}$')
+
+    
+        
+    if 'BprimeB' in particle:
         theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800]
         theory13TeV_y =numpy.array([4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195])
         theory13TeV_y =theory13TeV_y*0.5
@@ -168,6 +182,13 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
             legend_string = "Bb, c$_L$=1.0, BR(tW)=50$\%$"
         elif "RH" in Chirality:
             legend_string = "Bb, c$_R$=1.0, BR(tW)=50$\%$"
+
+    theory13TeV_y05 = theory13TeV_y*0.5*0.5
+    #print 'vanilla',theory13TeV_y
+    #print '0.5',theory13TeV_y05
+    
+
+    print 'legen string',legend_string,'for particle',particle
             
     upper = []
     for i in theory13TeV_x:
@@ -176,13 +197,19 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     #cross section times branching ratio  limits
     plt.clf()
     plt.semilogy()
+    ax=plt.gca()
+    ax.set_ylim([.01,60])
+    ax.set_xlim([700,1800])
+    if 'X' in particle: ax.set_xlim([700,1600])
     #plt.rc('text', usetex=True)
     #plt.title("2.2 $fb^{-1}$ (13 TeV) ",horizontalalignment='center')
     #matplotlib.rcParams['text.usetex']=True
     #matplotlib.rcParams['text.latex.unicode']=True
     #f,ax = plt.subplots()
-    plt.title("36 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
-    if "LH" in Chirality :plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
+    plt.title("CMS $\it{Preliminary}$       35.9 fb$^{-1}$ (13 TeV)", fontsize=10)# , loc='right')
+    #if "LH" in Chirality :plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--')
+    plt.plot(theory13TeV_x, theory13TeV_y, label=legend_string,linestyle='--',color='blue')
+    plt.plot(theory13TeV_x, theory13TeV_y05, label=legend_string.replace('1.0','0.5'),linestyle='--',color='red')
     plt.plot(exp.x, exp.y, label="Exp $95\%$ CL" , color ='black',linestyle='dotted')#,color = exp_LH.bands[0][2])
     plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
                      alpha=0.6, facecolor=sigma2_color, edgecolor=sigma2_color,
@@ -197,11 +224,18 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
 
 
     if obs: plt.plot(obs.x, obs.y, label='Obs $95\%$ CL', color ='black')
-    plt.xlabel('B quark Mass (GeV)')
+    
+    plt.xlabel('VLQ mass (GeV)')
     plt.ylabel(r'$\mathbf{\sigma \times}$  BR(B$\mathbf{\rightarrow}$tW) (pb)')
+    if 'X' in particle: plt.ylabel(r'$\mathbf{\sigma \times}$  BR(X$\mathbf{\rightarrow}$tW) (pb)')
     plt.legend(loc="upper center",prop={'size':12},frameon=False)
     plt.savefig(pp, format='pdf')
 
+    pp.close()
+
+    return exp,obs
+
+    
     # coupling limits
     exp_cl_y = []
     exp_cl_bands_sigma1up_y = []
@@ -244,22 +278,5 @@ def run_cutopt(fname, Chirality, channel = "", particle = "b", write_report = Tr
     pp.close()
 
     return exp,obs
-    """
-    plt.clf()
-    plt.semilogy()
-    plt.plot(exp_RH.x, exp_RH.y, label='RH Chirality', color ='black',linestyle='--')#,color = exp_RH.bands[0][2])
-    plt.fill_between(exp_RH.x, exp_RH.bands[0][0] ,  exp_RH.bands[0][1],
-                     alpha=0.6, facecolor='yellow', edgecolor='yellow',
-                     linewidth=0)
-    plt.fill_between(exp_RH.x, exp_RH.bands[1][0] ,  exp_RH.bands[1][1],
-                     alpha=0.8, facecolor = 'green', edgecolor='green', # exp_RH.bands[1][2],
-                     linewidth=0)
-
-    plt.plot(theory13TeV_x, theory13TeV_y, label='Theory cross section 13TeV')
-    plt.plot(obs_RH.x, obs_RH.y, label='Obs', color ='black')
-    plt.xlabel('Mass B [GeV]')
-    plt.ylabel('cross section times branching ratio [pb]')
-    plt.legend(loc=2,prop={'size':7})
-    plt.savefig("limit_RH.pdf")
-    """
+ 
     

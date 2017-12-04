@@ -5,18 +5,16 @@
 #include "simplePlots.h"
 #include "eletriggerresult.h"
 #include "forwardjetfitresult.h"
-#include "mutrkfactors.h"
-
 
 int main(int argc, char** argv){
-  string version = "_new";//"_wtag_topjetcorr";//"w2jet";//"wtag_topjetcorr";
+  string version = "_number_forwadjet";//"_wtag_topjetcorr";//"w2jet";//"wtag_topjetcorr";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel"+version;
-  bool electron = true;
-  bool errors = true;
+  bool electron = false;
+  bool errors = false;
   bool blind = true;
-  string resultfile = "MET_eta_plots.ps";//"moneyplots.pdf";
-  bool single = true; 
+  string resultfile = "wtag_comp.ps";//"moneyplots.pdf";
+  bool single = false; 
   
   if(argc>1){
     std::string channel(argv[1]);
@@ -47,24 +45,22 @@ int main(int argc, char** argv){
   }
 
   if (electron){
-    folder = "EleSel_new";
+    folder = "EleSel_cross";
     if(resultfile=="moneyplots.ps")
       resultfile = "plots/Ele_"+resultfile;
-    if(single) resultfile= "plots/singleEleMoney_nomsig_reco_noforwardreweight/";
+    if(single) resultfile= "plots/singleEleMoneyForwardJet_reco/";
   }
   else{
     if(resultfile=="moneyplots.ps")
       resultfile = "plots/Mu_"+resultfile;
-    if(single) resultfile= "plots/singleMuMoney_nomsig_reco_noforwardreweight/";
+    if(single) resultfile= "plots/singleMuMoneyForwardJet_reco/";
   }
   cout<<"Folder: "<<folder<<" end file: "<<resultfile<<endl;
   //std::cout<<"going to print "<<resultfile<<" from "<< electron ? "electron" : "muon"<<" channel " <<errors ? " with sys errors":" without sys errors"<<endl; 
 
   string eletriggerfactors = "";
-  if(electron)  eletriggerfactors ="("+eletriggerscale()+"*(1-isRealData)+isRealData)*";
-  string muontrkfactors =""; 
-  if(!electron) muontrkfactors = "("+muon_trk_factors()+"*(1-isRealData)+isRealData)*";
-  string factors = muontrkfactors+eletriggerfactors;//+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
+  if(electron)  eletriggerfactors ="("+eletriggerscale()+"*(1-isRealData)+isRealData)*"  ;
+  string factors = eletriggerfactors+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
   //factors = eletriggerfactors;
   cout<<"applying factors: "<<factors<<endl;
 
@@ -75,44 +71,25 @@ int main(int argc, char** argv){
   //if(single) treehists.switch_singleplots(true);
   treehists.SetLegend(0.6, 0.3, 0.86, 0.86);
   //treehists.set_ignorePages(15);
-  
   if(!electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuData.root","PE",1,20,false,"Data");
-  if(electron){
-	treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleEleData.root","PE",1,20,false,"Data");
-	treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SinglePhotonData.root","PE",1,20,false,"");
-  }
-  
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt*.root","",3,-1,true,"W+Jets"); 
+  if(electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleEleData.root","PE",1,20,false,"Data");
+
+
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt.root","",3,-1,true,"W+Jets");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Tune.root","",2,-1,true,"t#bar{t}");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt700to1000.root","",2,-1,true,"");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt1000toInf.root","",2,-1,true,"");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets*.root","",5,-1,true,"Z+Jets");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.SingleT*.root","",41,-1,true,"single t");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.QCD*.root","",4,-1,true,"QCD");
-  
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets.root","",5,-1,true,"Z+Jets");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.SingleT.root","",41,-1,true,"single t");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.QCD.root","",4,-1,true,"QCD");
 
-  //
-  //Scaled to 5 pb
-  //
-  /*/ 
+
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",4,-1,false,"B+b M(0.8) RH #times 3",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",7,-1,false,"B+t M(0.8) RH #times 9",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",20,-1,false,"B+b M(1) RH #times 6",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",30,-1,false,"B+t M(1) RH #times 18",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",40,-1,false,"B+b M(1.5) RH #times 24",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",800,-1,false,"B+t M(1.5) RH #times 71",0,5);
-   /*/  
-
-
-  //
-  // Scaled to cross section
-  // [4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.248,0.195]*0.5
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",4,-1,false,"B+b M(0.8) RH",0,1.5);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",7,-1,false,"B+t M(0.8) RH",0,.532);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",20,-1,false,"B+b M(1) RH",0,0.82);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",30,-1,false,"B+t M(1) RH",0,0.285);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",40,-1,false,"B+b M(1.5) RH",0,0.2);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",800,-1,false,"B+t M(1.5) RH",0,0.07);
 
 
   treehists.set_ratiolimits(1.69,0.39);
@@ -149,7 +126,7 @@ int main(int argc, char** argv){
   }
   //treehists.switch_logy(true);
 
-  TLatex *lumi_text = new TLatex(3.5, 24,"35.9 fb^{-1} (13 TeV)"); //CMS Preliminary
+  TLatex *lumi_text = new TLatex(3.5, 24,"35.8 fb^{-1} (13 TeV)"); //CMS Preliminary
   lumi_text->SetNDC();
   lumi_text->SetTextAlign(33);
   lumi_text->SetX(0.9);
@@ -167,7 +144,7 @@ int main(int argc, char** argv){
   treehists.addText(preliminary_text);
   
 
-  string eta = "2.4";
+  string eta = "2.0";
   string chi2_central_string = "(TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && Chi2Dis.chi<10 && abs(Chi2Dis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
   string chi2_forward_string = "(TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && Chi2Dis.chi<10 && abs(Chi2Dis.forwardJet.eta()) >="+eta;
   string toptag_central_string = "(TopTagDis.mass>-1&& TopTagDis.topHad.pt()>=400) && abs(TopTagDis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
@@ -175,62 +152,53 @@ int main(int argc, char** argv){
   string toptag_scalefactor = "1.01";
   //string wtag_scalefactor = "";
 
-    
+  //AK4 Jets
   treehists.Draw("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_eta",factors+"weight","70,-5,5","ak4 #eta","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_phi",factors+"weight","50,-3.14,3.14","ak4 #phi","Events");
-  treehists.Draw("Sum$(slimmedJets.slimmedJets.m_pt>50)",factors+"weight","11,-0.5,10.5","Number of ak4","Events");
-  //return 0; 
+  treehists.Draw("Sum$(slimmedJets.slimmedJets.m_pt>50)",factors+"weight","11,-0.5,10.5","Number of ak4","Events"); 
   //AK8 Jets
   treehists.Draw("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)",factors+"weight","11,-0.5,10.5","Number of ak8","Events");
-  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt",factors+"weight","50,170,1200","ak8 p_{T} [GeV]","Events");
+  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt * (fabs(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)<=2.4)",factors+"weight","50,170,1200","ak8 p_{T} [GeV]","Events");
   treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta",factors+"weight","50,-5,5","ak8 #eta","Events");
-  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_phi",factors+"weight","50,-3.14,3.14","ak8 #phi","Events");
+  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_phi* (1 - 500*(!fabs(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)<=2.4))",factors+"weight","50,-3.14,3.14","ak8 #phi","Events");
 
-  treehists.Draw("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_subjets.m_eta)",factors+"weight","9,-0.5,8.5","Number of ak8 subjets","Events");
+  //treehists.Draw("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_subjets.m_eta)",factors+"weight","9,-0.5,8.5","Number of ak8 subjets","Events");
   treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau3/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2",factors+"weight","50,0.,1.","#tau_{3}/#tau_{2}","Events");
   treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau1",factors+"weight","50,0.,1.","#tau_{2}/#tau_{1}","Events");
 
+  //AK4 in wtag events
+  treehists.Draw("slimmedJets.slimmedJets.m_pt",factors+"weight*(WTagDis.mass>0)","70,30,900","ak4 p_{T} [GeV]","Events");
+  treehists.Draw("slimmedJets.slimmedJets.m_eta",factors+"weight*(WTagDis.mass>0)","70,-5,5","ak4 #eta","Events");
+  treehists.Draw("slimmedJets.slimmedJets.m_phi",factors+"weight*(WTagDis.mass>0)","50,-3.14,3.14","ak4 #phi","Events");
+  treehists.Draw("Sum$(slimmedJets.slimmedJets.m_pt>50)",factors+"weight*(WTagDis.mass>0)","11,-0.5,10.5","Number of ak4","Events"); 
+  //AK8 in wtag events
+  treehists.Draw("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)",factors+"weight*(WTagDis.mass>0)","11,-0.5,10.5","Number of ak8","Events");
+  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt* (1 - 500*(!fabs(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)<=2.4))",factors+"weight*(WTagDis.mass>0)","50,170,1200","ak8 p_{T} [GeV]","Events");
+  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta",factors+"weight*(WTagDis.mass>0)","50,-5,5","ak8 #eta","Events");
+  treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_phi* (1 - 500*(!fabs(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)<=2.4))",factors+"weight*(WTagDis.mass>0)","50,-3.14,3.14","ak8 #phi","Events");
 
-   //electron
-  if(electron){
-    treehists.Draw("slimmedElectronsUSER.slimmedElectronsUSER.m_eta",factors+"weight","50,-2.4,2.4","electron #eta","Events");
-    treehists.Draw("slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","70,118,800"," electron p_{T} [GeV]","Events");
-    treehists.Draw("slimmedElectronsUSER.slimmedElectronsUSER.m_phi",factors+"weight","50,-3.14,3.14"," electron #phi","Events");
-  }
-  //muon
-  else{
-    treehists.Draw("slimmedMuonsUSER.slimmedMuonsUSER.m_eta",factors+"weight","50,-2.4,2.4","muon #eta","Events");
-    treehists.Draw("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","70,55,800"," muon p_{T} [GeV]","Events");
-    treehists.Draw("slimmedMuonsUSER.slimmedMuonsUSER.m_phi",factors+"weight","50,-3.14,3.14"," muon #phi","Events");
-  }
+
+  treehists.Draw("WTagDis.wHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1)","50,0,1200","W_{had} p_{T}","Events");
+  treehists.Draw("Chi2Dis.wHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1)","50,0,1200","W_{had} p_{T} X^2","Events");
+
+  treehists.Draw("WTagDis.wHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && Chi2Dis.num_whad==1)","50,0,1200","W_{had} p_{T}","Events");
+  treehists.Draw("Chi2Dis.wHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && Chi2Dis.num_whad==1)","50,0,1200","W_{had} p_{T} X^2","Events");
+
+  treehists.Draw("WTagDis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1)","50,500,3000","W-tag B mass","Events");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1)","50,500,3000","X^2 B mass with W-tag","Events");
+
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && Chi2Dis.num_whad==1)","50,500,3000","X^2 B mass with W-tag","Events");
+  treehists.Draw("WTagDis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && Chi2Dis.num_whad==1)","50,500,3000","B mass with W-tag","Events");
+
+
   
-  //event stuff 
-  treehists.Draw("HT",factors+"weight","50,100,2000","H_{T} [GeV]","Events");
-  if(electron){
-    treehists.Draw("slimmedMETs.m_pt","weight","70,60,1000","MET [GeV]","Events");
-    treehists.Draw("slimmedMETs.m_pt + slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","35,290,1000","H_{T,lep} [GeV]","Events");
-    treehists.Draw("slimmedMETs.m_pt + slimmedElectronsUSER.slimmedElectronsUSER.m_pt + HT",factors+"weight","70,290,2000","S_{T} [GeV]","Events");
-  }
-  else{
-    treehists.Draw("slimmedMETs.m_pt",factors+"weight","70,50,1000","MET [GeV]","Events");
-    treehists.Draw("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","30,250,1000","H_{T,lep} [GeV]","Events");
-    treehists.Draw("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt + HT",factors+"weight","30,250,2000","S_{T} [GeV]","Events");
-  }
-  /*/
-  treehists.Draw("slimmedMETs.eta()","weight","70,-5,5","MET [GeV]","Events");
-  treehists.Draw("slimmedMETs.eta()","weight*(fabs(Chi2Dis.forwardJet.eta())<2.4)","70,-5,5","MET [GeV]","Events");
-  treehists.Draw("slimmedMETs.eta()","weight*(fabs(Chi2Dis.forwardJet.eta())>=2.4)","70,-5,5","MET [GeV]","Events");
+
+
   
-  treehists.switch_logy(true);
-  treehists.Draw("slimmedMETs.eta()","weight","70,-5,5","MET [GeV]","Events");
-  treehists.Draw("slimmedMETs.eta()","weight*(fabs(Chi2Dis.forwardJet.eta())<2.4)","70,-5,5","SR MET [GeV]","Events");
-  treehists.Draw("slimmedMETs.eta()","weight*(fabs(Chi2Dis.forwardJet.eta())>=2.4)","70,-5,5","CR MET [GeV]","Events");
-
-
   return 0;
-  /*/
-  treehists.Draw("Chi2Dis.btagEventNumber",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.btagEventNumber>-0.1)","6,-.5,5.5"," Number of b-tags");
+
+
   
   //forward jet
   //X2
@@ -298,33 +266,4 @@ int main(int argc, char** argv){
  
  
   return 0;
-
-
-
-  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())",factors+"weight*(TopTagDis.mass==-1 )","50,0,5"," forward ak4 |eta| ");
-  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 )","50,30,300","X^{2} forward ak4 pt");
-  treehists.Draw("Chi2Dis.forwardJet.E()",factors+"weight*(TopTagDis.mass==-1 )","50,0,400"," X^{2} forward ak4 E");
-
-  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==0 )","50,0,5"," forward ak4 |eta| ");
-  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==0)","50,30,300","X^{2} forward ak4 pt");
-  treehists.Draw("Chi2Dis.forwardJet.E()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==0)","50,0,400"," X^{2} forward ak4 E");
-  
-  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==1 )","50,0,5"," forward ak4 |eta| ");
-  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==1)","50,30,300","X^{2} forward ak4 pt");
-  treehists.Draw("Chi2Dis.forwardJet.E()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.num_forward_eta2==1)","50,0,400"," X^{2} forward ak4 E");
-
-
-  
-
-  treehists.Draw("Chi2Dis.num_forward",factors+"weight*(TopTagDis.mass==-1)","6,-.5,5.5","additional ak4 jets for X^{2}");
-  treehists.Draw("Chi2Dis.num_forward_eta2",factors+"weight*(TopTagDis.mass==-1)","6,-.5,5.5","additional ak4 jets for X^{2} |#eta| > 2  ");
-  treehists.Draw("TopTagDis.num_forward",factors+"weight*(TopTagDis.mass>-1)","6,-.5,5.5","additional ak4 jets for t-tag");
-  treehists.Draw("TopTagDis.num_forward_eta2",factors+"weight*(TopTagDis.mass>-1)","6,-.5,5.5","additional ak4 jets for t-tag |#eta| > 2");
-
-  return 0;
-
-
-
-
-
 }
