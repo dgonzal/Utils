@@ -66,10 +66,15 @@ class TreeHists: public HistsBase{
   void mcratio_only(bool mcratio_=true){mcratio=mcratio_;}
   void switch_ratio(bool rat=false){draw_ratio=rat;}
   void fit_ratio(bool fitrat_=true, string func_string=""){fitrat=fitrat_;ratio_func=new TF1("myfitratiofunc",func_string.c_str());}
-  TF1* get_ratiofunction(){return ratio_func;}
- 
+
+  TF1* get_ratiofunction(){return ratio_func;}  
+  
   bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="");
   std::vector<TH1F*> return_hists(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events");
+
+  void sample_weight(std::string weight, std::string with_name);
+  void sample_weight(std::string weight, std::vector<int> sample_numbers={});
+  
   //optionen: 0 no pull, 1 pull for stats, 2 pull for total error, 3 pull for 1 and 2
   // not yet implimented
   void set_pull(int pull_option_ =0){pull_option = pull_option_;}

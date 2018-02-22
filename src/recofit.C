@@ -59,25 +59,25 @@ int main(){
   treehists.Draw("sqrt("+deltaPhistring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
   treehists.Draw("sqrt("+deltaEtastring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
   /*/
-  std::vector<TH1F*> mass_toplep  = treehists.return_hists("BestFit.mass"      ,"weight*("+helper_chooser+" BestFit.recoTyp ==21)","50,500,3000" ,"mass [GeV]");
-  std::vector<TH1F*> top_toplep   = treehists.return_hists("BestFit.topLep.M()","weight*("+helper_chooser+" BestFit.recoTyp ==21)","20,100,300"  ,"mass [GeV]");
-  std::vector<TH1F*> w_toplep     = treehists.return_hists("BestFit.wHad.M()"  ,"weight*("+helper_chooser+" BestFit.recoTyp ==21)","20,50,180"   ,"mass [GeV]");
-  std::vector<TH1F*> dR_toplep    = treehists.return_hists("sqrt("+deltaRstring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
+
+  string factor = "((BestFit.num_top+BestFit.num_whad)==3)*";
+
+  std::vector<TH1F*> mass_toplep  = treehists.return_hists("BestFit.mass"      ,factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","50,500,3000" ,"mass [GeV]");
+  std::vector<TH1F*> top_toplep   = treehists.return_hists("BestFit.topLep.M()",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","20,100,300"  ,"mass [GeV]");
+  std::vector<TH1F*> w_toplep     = treehists.return_hists("BestFit.wHad.M()"  ,factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","20,50,180"   ,"mass [GeV]");
+  std::vector<TH1F*> dR_toplep    = treehists.return_hists("sqrt("+deltaRstring("BestFit.wHad","BestFit.topLep")+")",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
   std::vector<TH1F*> dRtop_toplep = treehists.return_hists("topDR","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
   std::vector<TH1F*> dRw_toplep   = treehists.return_hists("topDR","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
-  std::vector<TH1F*> dPhi_toplep  = treehists.return_hists("sqrt("+deltaPhistring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
-  std::vector<TH1F*> dEta_toplep  = treehists.return_hists("sqrt("+deltaEtastring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
+  std::vector<TH1F*> dPhi_toplep  = treehists.return_hists("sqrt("+deltaPhistring("BestFit.wHad","BestFit.topLep")+")",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
+  std::vector<TH1F*> dEta_toplep  = treehists.return_hists("sqrt("+deltaEtastring("BestFit.wHad","BestFit.topLep")+")",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
      
-  std::vector<TH1F*> mass_tophad = treehists.return_hists("BestFit.mass"      ,"weight*("+helper_chooser+" BestFit.recoTyp ==22)","50,500,3000" ,"mass [GeV]");
-  std::vector<TH1F*> top_tophad  = treehists.return_hists("BestFit.topHad.M()","weight*("+helper_chooser+" BestFit.recoTyp ==22)","20,100,300"  ,"mass [GeV]");
-  std::vector<TH1F*> w_tophad    = treehists.return_hists("BestFit.wLep.M()"  ,"weight*("+helper_chooser+" BestFit.recoTyp ==22)","20,50,180"   ,"mass [GeV]");
-  std::vector<TH1F*> dR_tophad    = treehists.return_hists("sqrt("+deltaRstring("BestFit.wLep","BestFit.topHad")+")","weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
-  std::vector<TH1F*> dRtop_tophad    = treehists.return_hists("topDR","weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
-  std::vector<TH1F*> dRw_tophad    = treehists.return_hists("topDR","weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
-  std::vector<TH1F*> dPhi_tophad    = treehists.return_hists("sqrt("+deltaPhistring("BestFit.wLep","BestFit.topHad")+")","weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
-
-
-
+  std::vector<TH1F*> mass_tophad = treehists.return_hists("BestFit.mass"      ,factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","50,500,3000" ,"mass [GeV]");
+  std::vector<TH1F*> top_tophad  = treehists.return_hists("BestFit.topHad.M()",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","20,100,300"  ,"mass [GeV]");
+  std::vector<TH1F*> w_tophad    = treehists.return_hists("BestFit.wLep.M()"  ,factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","20,50,180"   ,"mass [GeV]");
+  std::vector<TH1F*> dR_tophad    = treehists.return_hists("sqrt("+deltaRstring("BestFit.wLep","BestFit.topHad")+")",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
+  std::vector<TH1F*> dRtop_tophad    = treehists.return_hists("topDR",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
+  std::vector<TH1F*> dRw_tophad    = treehists.return_hists("topDR",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
+  std::vector<TH1F*> dPhi_tophad    = treehists.return_hists("sqrt("+deltaPhistring("BestFit.wLep","BestFit.topHad")+")",factor+"weight*("+helper_chooser+" BestFit.recoTyp ==22)","30,0,4"   ,"");
   
   vector<double> fitmean_toplep;
   vector<double> fitmean_tophad;
@@ -94,7 +94,7 @@ int main(){
   recofit.set_histYTitle("AU");
   recofit.set_title(" ");
   for(unsigned int i=0; i<mass_toplep.size();++i){
-    if(mass_toplep[i]->GetEntries()<100) continue;
+    if(mass_toplep[i]->GetEntries()<50) continue;
 
     recofit.set_XTitle("B mass [GeV]");
     recofit.loadHists(mass_toplep[i],nicks[i]+" top_{lep}","PE");
@@ -182,7 +182,7 @@ int main(){
     recofit.clearAll();
     
   }
-  return 0;
+  
   double N = fitmean_toplep.size();
   double sum_rms_toplep=0, sum_rms_tophad=0, sum_rms_whad=0;
   double rec_rms_toplep=0, rec_rms_tophad=0, rec_rms_whad=0;

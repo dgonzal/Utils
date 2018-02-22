@@ -9,6 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import os
 
 def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
+    #write_report = True        
     if write_report:report.reopen_file()
     print 'signal',particle+'*'+Chirality+'*','for particle',particle
     print 'working on', fname
@@ -17,24 +18,37 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     model.fill_histogram_zerobins()
     model.set_signal_processes(particle+'*'+Chirality+'*')
 
-    elescale = 1.01
+    eletrigger = 1.01
+    mutrigger  = 1.02
     for p in model.processes:
         if "Background" not in p:
-            model.add_lognormal_uncertainty('lumi', math.log(1.026), p)
-	    mass = ''.join(x for x in p if x.isdigit())
-	    wtag_unc = 3.9*math.log(float(mass)/2/200)
+            model.add_lognormal_uncertainty('lumi', math.log(1.025), p)
+            process_name = p
+            if 'Width' in p:
+                process_name =process_name.replace('10p','')
+                process_name =process_name.replace('20p','')
+                process_name =process_name.replace('30p','')
+	    mass = ''.join(x for x in process_name if x.isdigit())
+	    wtag_unc = 3.9*math.log(float(mass)/2/200)            
             wtag_unc = math.sqrt(wtag_unc*wtag_unc+1)/100+1
             print p, 'Wtag_unc', wtag_unc
             model.add_lognormal_uncertainty('Wtag_unc', math.log(wtag_unc), p, obsname='WTag*')
             model.add_asymmetric_lognormal_uncertainty('toptag_unc', math.log(1.04), math.log(1.07), p, obsname='TopTag*')
             if channel =="Ele" or not channel:
-               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_AntiBTagEle')    
-               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_1_BTagEle')    
-               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='Chi2_2_BTagEle')    
-               model.add_lognormal_uncertainty('ele_scale_rate'   , math.log(elescale), p, obsname='TopTagEle')         
-            
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_AntiBTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_1_BTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_2_BTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagEle')         
+            if channel =="Mu" or not channel:
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_AntiBTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_1_BTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_2_BTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagMu')         
+        
+	                  
+
     #10% on the normalization
-    uncer = 1.1
+    uncer = 1.2
             
     if channel =="Mu" or not channel:
         model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagMu')    
@@ -53,39 +67,36 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
-
+    options.set('main', 'n_threads', '5')
     exp = None
     obs = None
 
     #exp, obs = asymptotic_cls_limits(model, use_data=False, signal_process_groups=None, beta_signal_expected=beta_sig, bootstrap_model=True, input=None, n=1, options=options)    
      
     #if not injected_signal: 
-    exp, obs = bayesian_limits(model, 'expected', n_toy = 1000 ,options=options)
-    #else: 
-    #    exp, obs = bayesian_limits(model, 'expected', n_toy = 3000, n_data = 1000,options=options)
-    
-    #evaluate_prediction(model)
-    if write_report:
-        output_directory =""
-        if channel:
-            output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'_'+channel+'/'
-        else:
-             output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'/'
-            
+    exp, obs = bayesian_limits(model, 'expected', n_toy = 2000 ,options=options)
 
-        print 'Output directory',output_directory
-        if output_directory  and not os.path.exists(output_directory):
-            os.makedirs(output_directory)
+
+    output_directory =""
+    if channel:
+       output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'_'+channel+'/'
+    else:
+       output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'/'
+    print 'Output directory',output_directory
+    if output_directory  and not os.path.exists(output_directory):
+       os.makedirs(output_directory)
+
+    if write_report:
 
         report.write_html(output_directory)
         #savelimits = open(output_directory+"/"+injected_signal+"limits.pickle",'w+') 
         #pickle.dump(exp,savelimits)   
         #pickle.dump(obs,savelimits)
         #savelimits.close()
-        """
+        
         fit_result = []
         mle_output = None
-
+        """
         try:
             #options.set('minimizer', 'always_mcmc', 'True')
             #options.set('global','debug','True')
@@ -125,7 +136,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
         except Exception as e:
             print 'Postfit MLE was not possible for background. Channel '+particle+'_'+Chirality+":"
             print e
-        """   
+        """  
         limit_file = open(output_directory+"limit.txt",'w+')
         limit_file.write("expected limit "+Chirality+":\n")
         print >> limit_file, exp
@@ -143,15 +154,15 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     print "observed limit "+Chirality+' '+channel +":"
     print obs
 
-    return exp,obs
+    #return exp,obs
 
     #x = np.linspace(0, 2, 100)
     #plt.title("B+t -> tW 100%")
     #plt.ylim([0.4,10])
      
 
-    sigma2_color = 'yellow' #"yellow"
-    sigma1_color = 'darkgreen' #"green"
+    sigma2_color = '#ffcc00'# hopefully kOrange #'yellow' #"yellow"
+    sigma1_color = '#00cc00'# hopefully kGreen+1 #'darkgreen' #"green"
 
     pp =None
     if channel:
@@ -198,7 +209,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     plt.clf()
     plt.semilogy()
     ax=plt.gca()
-    ax.set_ylim([.01,60])
+    ax.set_ylim([.01,1000])
     ax.set_xlim([700,1800])
     if 'X' in particle: ax.set_xlim([700,1600])
     #plt.rc('text', usetex=True)
@@ -218,8 +229,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
                      alpha=0.8, facecolor=sigma1_color, edgecolor=sigma1_color, # exp_LH.bands[1][2],
                      linewidth=0, label="$\pm$ 1 std. deviation")
     #workaround since normal mode does not work!
-    plt.plot([],[],label="$\pm$ 1 std. deviation",color=sigma1_color,linewidth=10)#, edgecolor='black')
-    plt.plot([],[],label="$\pm$ 2 std. deviation",color=sigma2_color,linewidth=10)#, edgecolor='black')
+    #plt.plot([],[],label="$\pm$ 1 std. deviation",color=sigma1_color,linewidth=10)#, edgecolor='black')
+    #plt.plot([],[],label="$\pm$ 2 std. deviation",color=sigma2_color,linewidth=10)#, edgecolor='black')
     #plt.plot(theory13TeV_x,upper,linestyle='-.',color='cyan')
 
 
@@ -280,3 +291,101 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     return exp,obs
  
     
+def background_signal_discovery(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
+    if write_report:report.reopen_file()
+    print 'signal',particle+'*'+Chirality+'*','for particle',particle
+    print 'working on', fname
+
+    model = build_model_from_rootfile(fname)
+    model.fill_histogram_zerobins()
+    model.set_signal_processes(particle+'*'+Chirality+'*')
+
+    eletrigger = 1.01
+    mutrigger  = 1.02
+    for p in model.processes:
+        if "Background" not in p and not 'Signal' in p:
+            model.add_lognormal_uncertainty('lumi', math.log(1.025), p)
+            process_name = p
+            if 'Width' in p:
+                process_name =process_name.replace('10p','')
+                process_name =process_name.replace('20p','')
+                process_name =process_name.replace('30p','')
+	    mass = ''.join(x for x in process_name if x.isdigit())
+	    wtag_unc = 3.9*math.log(float(mass)/2/200)
+            wtag_unc = math.sqrt(wtag_unc*wtag_unc+1)/100+1
+            print p, 'Wtag_unc', wtag_unc
+            model.add_lognormal_uncertainty('Wtag_unc', math.log(wtag_unc), p, obsname='WTag*')
+            model.add_asymmetric_lognormal_uncertainty('toptag_unc', math.log(1.04), math.log(1.07), p, obsname='TopTag*')
+            if channel =="Ele" or not channel:
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_AntiBTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_1_BTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_2_BTagEle')    
+               model.add_lognormal_uncertainty('ele_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagEle')         
+            if channel =="Mu" or not channel:
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_AntiBTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_1_BTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_2_BTagMu')    
+               model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagMu')         
+        elif 'Signal' in p:
+            model.add_lognormal_uncertainty('beta_signal', math.log(2.), procname='Signal',obsname='*')
+    #model.scale_predictions(0, procname='Signal', obsname='*')              
+
+    #10% on the normalization
+    uncer = 5.
+            
+    if channel =="Mu" or not channel:
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagMu')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagMu')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagMu')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagMu')    
+    if channel =="Ele" or not channel:
+        model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagEle')    
+        model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagEle')    
+        model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagEle')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagEle')         
+ 
+    options = Options()
+    options.set('minimizer', 'strategy', 'robust')
+    #options.set('main', 'n_threads', '5')
+
+    theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    theory13TeV_y =numpy.array([0.745,0.532,0.388,0.285,0.212,0.159,0.12,0.0917,0.0706,0.0541,0.042,0.0324,0.0252,0.0198])
+
+    legend_string =""
+    if "LH" in Chirality:
+        legend_string = "Bt, $c_L=1.0, BR(tW)=100\%$"
+    elif "RH" in Chirality:
+        legend_string = "Bt, $\mathbf{c_R=1.0}$, BR(tW)=100$\%$"
+
+    if 'X' in particle:
+        legend_string = legend_string.replace('Bt','$X_{53}$')
+
+    
+        
+    if 'BprimeB' in particle:
+        theory13TeV_x =[700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+        theory13TeV_y =numpy.array([4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.249,0.195, 0.157, 0.120])
+        theory13TeV_y =theory13TeV_y*0.5
+        if "LH" in Chirality:
+            legend_string = "Bb, c$_L$=1.0, BR(tW)=50$\%$"
+        elif "RH" in Chirality:
+            legend_string = "Bb, c$_R$=1.0, BR(tW)=50$\%$"
+
+    theory13TeV_y05 = theory13TeV_y*0.5*0.5
+    #print 'vanilla',theory13TeV_y
+    #print '0.5',theory13TeV_y05
+
+    cross_dict = dict(zip(theory13TeV_x, theory13TeV_y))
+    
+    print cross_dict[1100]
+    
+    discovery_val = []
+    for i, signal in enumerate(model.signal_processes):
+        mass = signal
+        mass = mass.replace('10p','').replace('20p','').replace('30p','')
+        mass = ''.join(x for x in mass if x.isdigit())
+        discovery_val.append(discovery(model, use_data=True, spid=signal , Z_error_max=0.2, maxit=1, n=1000, n_expected=400, input_expected='toys:'+str(cross_dict[int(mass)]), options=options, ts_method=derll))
+        
+    for i, signal in enumerate(model.signal_processes):
+        print signal, discovery_val[i]
+    #print discovery_val

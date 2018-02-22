@@ -2,7 +2,8 @@
 
 CXX      = g++ -std=c++11 -O3
 LINKER   = g++ -O3 -o
-TARGETS = resolution cutflow trigger treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer moneyplots_chain eletriggerscale compare_fc different_recocomp #scan_forwardJet fastsim uncer matchingPlots regionsratio run
+
+TARGETS = pu_reweight mc_background single_errors resolution cutflow trigger triggerSel treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer eletriggerscale compare_fc different_recocomp wtag_comp muonscalefactors wtag_unc quickAndDirty signalReco reader #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 SRCDIR  = src
 INCDIR  = include
@@ -10,11 +11,15 @@ OBJDIR  = obj
 BINDIR  = bin
 PYDIR = python
 
+
 SOURCES  := $(wildcard $(SRCDIR)/*.cxx)
 INCLUDES := $(wildcard $(INCDIR)/*.h)
 OBJECTS  := $(patsubst $(SRCDIR)%.cxx,$(OBJDIR)%.o,$(SOURCES))
 MAINSRC  := $(wildcard $(SRCDIR)/*.C) 
 MAINOBJ  := $(patsubst $(SRCDIR)%.C,$(OBJDIR)%.obj,$(MAINSRC))
+
+#TARGETS = $(patsubst %.C,%"" ,$(SRCDIR)/*.C)  #pu_reweight mc_background single_errors resolution cutflow trigger triggerSel treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer eletriggerscale compare_fc different_recocomp wtag_comp muonscalefactors wtag_unc quickAndDirty signalReco reader #scan_forwardJet fastsim uncer matchingPlots regionsratio run
+
 
 #get staff you need from your cmssw enviroment
 scramtag = $(shell cd $$CMSSW_BASE; scram tool tag $(1) $(2))

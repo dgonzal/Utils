@@ -1,38 +1,35 @@
-
-
 from subprocess import call
 import os, sys
 from matplotlib.backends.backend_pdf import PdfPages
 import glob
+
+sys.path.append('/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/')
+sys.path.append('/nfs/dust/cms/user/gonvaq/theta/utils2/theta_auto')
+
+from signal_background_uncertainty import *    
+from backgroundfit import *
+from injection_merge import *
+from calc_chi2 import *
+#execfile("histogram_rebinning.py")
+
 
 prod_channels = ['Mu','Ele']# 'Mu','Ele',''
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/config/'
 sourcedirs = ['/MuSel_new/','/EleSel_new/'] #'/MuSel_wtag_topjetcorr/'
 
-prod_channels = ['Ele']# 'Mu','Ele',''
-sourcedirs = ['/EleSel_new/']
+#prod_channels = ['Ele']# 'Mu','Ele',''
+#sourcedirs = ['/EleSel_new/']
 
-signal_src = ['MuSigSel','EleSigSel_v1']
 
-rootDir = 'ROOTBackgroundFit/'
+rootDir = 'ROOT_60_0_3500/'
 prefix =''
 
 #MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt.root,QCD.root"
-MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets*.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt*.root,QCD*.root"
-#MC = "TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt.root"#,QCD.root"
-background = 'PhotonData.root' #"SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar.root,WJets_Pt.root,QCD.root"
-
-
-signal_prefix = 'Bprime' #'X53',
-production = 'T' #,'T'] #'B','T']
-chirality = 'RH' #,'LH'] #['RH','LH']
-masses = ['700','800','900','1000','1100','1200','1300','1400','1500','1600','1700','1800']
-witdth = '' #,'10','20','30']
-cross_sec = [4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.248,0.195]
-cross_sec = [x*0.5 for x in cross_sec]
-
-cross_sec = [0.745,0.532,0.388,0.285,0.212,0.159,0.120,0.0917,0.0706,0.0541,0.042,0.0324]
+#MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets*.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt*.root,QCD*.root"
+MC = "MC.TTbar_*.root,WJets_Pt*.root,ZJets*.root,SingleT*.root"#,QCD*.root"
+Signal = "BprimeB-1100_LH.root,BprimeB-1700_LH.root"
+background = 'Merge_Data.root' #"SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar.root,WJets_Pt.root,QCD.root"
 
 if not os.path.exists(rootDir):
     os.makedirs(rootDir)
@@ -40,14 +37,17 @@ if not os.path.exists("h_"+rootDir):
     os.makedirs("h_"+rootDir)
 
 
-execfile("signal_background_uncertainty.py")    
-execfile("backgroundfit.py")
-execfile("injection_merge.py")
-execfile("histogram_rebinning.py")
-
-
 sigma1_color = 'gray' #"green"
-x = [float(i) for i in masses]
+
+plotting_files = ""
+mc_channel_f= []
+mc_channel_c= []
+data_channel =[]
+
+create = False
+
+signal_files = ""
+
 
 for i,channel in enumerate(prod_channels):
     nominal_results = None
@@ -64,50 +64,73 @@ for i,channel in enumerate(prod_channels):
                sample_list+=item+','
         MC = sample_list[:-1]
         
-    rootfile = rootDir+prefix+channel+'_background'
-    #call(['./../bin/rootfilecreator', background, rootfile,dirstring,channel,"","","DATA_central"])
-    #call(['./../bin/rootfilecreator', background, rootfile,dirstring,channel,"","",""])
-    #continue 
-    #rootfile = rootDir+prefix+channel+'_MC_central'
-    #call(['./../bin/rootfilecreator', MC, rootfile,dirstring,channel,"","","central"])
-    ##rootfile = rootDir+prefix+channel+'_MC_central_sig'
-    ##call(['./../bin/rootfilecreator', signal_prefix+production+'-'+mass+'_'+chirality, rootfile,dirstring,channel,"","","central"])
-    #rootfile = rootDir+prefix+channel+'_MC_forward'
-    #call(['./../bin/rootfilecreator', MC, rootfile,dirstring,channel,"","","forward"])
- 
-    rootfile = rootDir+prefix+channel+'_MC'
-    rootfileData = rootDir+prefix+channel+'_background.root'
-    create_merged_hists(rootfile+'_central.root',rootfile+'_central_merged.root' , 'Background')
-    create_merged_hists(rootfile+'_forward.root',rootfile+'_forward_merged.root' , 'DATA')
+    data_rootfile = rootDir+prefix+channel+'_background.root'
+    central_mc_rootfile = rootDir+prefix+channel+'_MC_central.root'
+    forward_mc_rootfile = rootDir+prefix+channel+'_MC_forward.root'
+        
+    signal_file  = rootDir+prefix+channel+'_signal.root'
+    signal_files= signal_files+" "+signal_file
     
-    call(['rm '+rootfile+'_merged.root'],shell=True) 
-    print 'hadd '+rootfile+'_merged.root '+rootfile+'_*_merged.root'
-    call(['hadd '+rootfile+'_merged.root '+rootfile+'_*_merged.root'],shell=True)
-    call(['rm '+rootfile+'_merged_mc_unc.root'],shell=True)
-    call(['hadd '+rootfile+'_merged_mc_unc.root '+rootfile+'_*_merged.root'],shell=True)
+    print rootfile
+    if create:
+        #call(['./../bin/rootfilecreator', background, data_rootfile,dirstring,channel,"","","DATA_central"])
+        call(['./../bin/rootfilecreator', background, data_rootfile,dirstring,channel,"","",""])    
+        call(['./../bin/rootfilecreator', MC, central_mc_rootfile,dirstring,channel,"","","central"])
+        call(['./../bin/rootfilecreator', MC, forward_mc_rootfile,dirstring,channel,"","","forward"])
+        call(['./../bin/rootfilecreator', Signal, signal_file,dirstring,channel,"","","DATA_forward"])
+        
+
+        
+    central_merged = central_mc_rootfile.replace('.root','_merged.root')
+    forward_merged = forward_mc_rootfile.replace('.root','_merged.root')
+    create_merged_hists(central_mc_rootfile,central_merged, 'Background')
+    create_merged_hists(forward_mc_rootfile,forward_merged, 'DATA')
+
+    data_channel.append(data_rootfile)
+    mc_channel_f.append(forward_merged)
+    mc_channel_c.append(central_merged)
+
     
-    add_signal_background_uncer(rootfile+'_merged.root', rootfile+'_forward_merged.root', rootfile+'_central_merged.root', rootfile+'_merged_mc_unc.root',True )
-    add_signal_background_uncer(rootDir+prefix+channel+'_background.root', rootfile+'_forward_merged.root', rootfile+'_central_merged.root',  rootfileData.replace('.root','_unc.root'),True )
+    mc_merged = rootDir+prefix+channel+'_mc_merged.root'
+    mc_merged_unc = mc_merged.replace('.root','_unc.root')
+    data_unc = data_rootfile.replace('.root','_unc.root')
+    
+    #call(['rm '+mc_merged],shell=True) 
+    #call(['hadd '+mc_merged+' '+forward_merged+' '+central_merged],shell=True)
+    #call(['rm '+mc_merged_unc],shell=True)
+    #call(['hadd '+mc_merged_unc+' '+mc_merged],shell=True)
     
 
-    stat_uncer = 0.15
-    #binFile(stat_uncer, rootfile+'_merged_mc_unc.root', 'M_{B} [GeV/c^{2}]', ['Background'])
-    #print binFile(stat_uncer, rootfileData.replace('.root','_unc.root'), 'M_{B} [GeV/c^{2}]', ['DATA'])
-    #print binFile(stat_uncer, rootfileData.replace('.root','_unc_rebinned.root'), 'M_{B} [GeV/c^{2}]', ['Background'])
-    #print binFile(stat_uncer, rootfileData, 'M_{B} [GeV/c^{2}]', ['Background'])
-    #print binFile(stat_uncer, rootfileData.replace('.root','_rebinned.root'), 'M_{B} [GeV/c^{2}]', ['DATA'])
-
-    print 'Rebinned sample', simpleRebin(rootfileData,stat_uncer,['Background'])
-    add_signal_background_uncer(rootDir+prefix+channel+'_background_rebinned.root', rootfile+'_forward_merged.root', rootfile+'_central_merged.root',  rootfileData.replace('.root','_unc_rebinned.root'),True )
-
-    workfile = simpleRebin(rootfileData.replace('.root','_unc_rebinned.root'),stat_uncer,['Background'],rootfileData.replace('.root','_unc_final_rebinned.root'),['Background'])
-    print workfile
-
+    stat_uncer = .18
+    #rebinned_unc_data = simpleRebin(data_unc,stat_uncer,['DATA'],data_unc.replace('.root','_rebinned.root'),['Background'])
+    #rebinned_data = simpleRebin(data_rootfile,stat_uncer,['Background'],data_rootfile.replace('.root','_rebinned.root'),['Background'])
+    
+    call(['hadd -f '+data_rootfile.replace('.root','_work.root')+' '+data_rootfile],shell=True)
+    data_rootfile=data_rootfile.replace('.root','_work.root')
+    antibtag_binning = [300.0, 370.0, 440.0, 510.0, 580.0, 650.0, 720.0, 790.0, 860.0, 930.0, 1000.0, 1070.0, 1140.0, 1210.0, 1280.0, 1350.0, 1420.0, 1490.0, 1560.0, 1630.0, 1700.0, 1770.0, 1840.0, 1910.0, 1980.0, 2050.0, 2190.0, 2540.0, 4500.0]
+    
+    #fixed_rebin(data_rootfile,2)#,'AntiBTag')
+    
+    rebinned_data = simpleRebin(data_rootfile,stat_uncer,['Background'],data_unc.replace('.root','_rebinned.root'),['Background'])
+    #rebinned_data = simpleRebin(rebinned_data,stat_uncer,['DATA'],rebinned_data.replace('.root','_final.root'),['Background'])    
+    rebinned_unc_data = add_signal_background_uncer(rebinned_data, forward_merged, central_merged,"",True )
+    rebinned_unc_data = simpleRebin(rebinned_unc_data,stat_uncer,['Background'],'',['Background'])
+    #if i ==0:
+    #    continue
+    #else:
+    #    exit(0)
+    
+    print 'final anti b-tag rebinning'
+    #rebinned_unc_data = simpleRebin(rebinned_unc_data,0.11,['Background'],'',['Background'],'Anti')
+    plotting_files += rebinned_unc_data+" "
+    
+    
     print '*'*10
     print '*'*10
     print "nominal results"
-    #nominal_results = background_fit(rootfile+'_merged_mc_unc_rebinned.root', channel, False, "")
-    nominal_results = background_fit(rootfileData.replace('.root','_unc_final_rebinned.root'), channel, False, "")
+    #scale_hists(rebinned_unc_data,'Background',0.25)
+    nominal_results, fitted = background_fit(rebinned_unc_data, channel, False, "")
+    #nominal_results = background_fit(rebinned_data, channel, False, "")
     
     print nominal_results    
     print '*'*10
@@ -116,134 +139,83 @@ for i,channel in enumerate(prod_channels):
     #continue
     print '+'*10
 
+    #scale_hists(rootfileData.replace('.root','_unc_rebinned.root'), 'Background', nominal_results)
+    scale_hists(rebinned_unc_data,'Background',nominal_results) 
+
+combined_fit = rootDir+'background.root'
+call(['hadd -f '+combined_fit+' '+plotting_files],shell=True)
+
+
+#mu_binning = [0.0, 225.0, 450.0, 525.0, 600.0, 675.0, 750.0, 825.0, 900.0, 975.0, 1050.0, 1125.0, 1200.0, 1275.0, 1425.0, 1500.0, 1650.0, 1725.0, 1875.0, 2475.0, 4500.0]
+#fixed_rebin(combined_fit,mu_binning,'AntiBTagMu')
+
+#ele_binning = [0.0, 300.0, 375.0, 450.0, 525.0, 600.0, 675.0, 750.0, 825.0, 900.0, 975.0, 1050.0, 1125.0, 1200.0, 1275.0, 1350.0, 1425.0, 1500.0, 1575.0, 1725.0, 1875.0, 2250.0, 4500.0] 
+#fixed_rebin(combined_fit,ele_binning,'AntiBTagEle')
+
+combined_results, fitted = background_fit(combined_fit, '', False, "")
+#scale_hists(combined_fit, 'Background', nominal_results)
+
+prefit_plot  = rootDir+'background_prefit.root'
+postfit_plot = rootDir+'background_postfit.root'
+
+call(['hadd -f '+prefit_plot +' '+combined_fit+' '+signal_files],shell=True)
+call(['hadd -f '+postfit_plot+' '+combined_fit.replace('.root','_fit_out.root')+' '+signal_files],shell=True)
+
+signal_rebin(prefit_plot , "Bprime", 'DATA')
+signal_rebin(postfit_plot, "Bprime", 'DATA')
+
+
+chi2_calc(postfit_plot,'DATA','Background')
+
+print events_per_width(prefit_plot)
+print events_per_width(postfit_plot)
+
+blind_final(postfit_plot,'DATA','Background')
+
+
+call(['Plots -f ../../../SFramePlotter/BackgroundTheta.steer'],shell=True)
+call(['Plots -f ../../../SFramePlotter/BackgroundTheta_postfit.steer'],shell=True)
+#print rootDir+'background.root'
+
+exit(0)
+
+mc_channel_merged_f = rootDir+prefix+'merged_channel_mc_forward.root'
+mc_channel_merged_c = rootDir+prefix+'merged_channel_mc_central.root'
+data_channel_merged = rootDir+prefix+'merged_channel_data.root'
+
+mc_channel_merged_hadd_f ='hadd '+mc_channel_merged_f
+mc_channel_merged_hadd_c ='hadd '+mc_channel_merged_c
+data_channel_merged_hadd = 'hadd '+data_channel_merged
+
+for item in mc_channel_f:
+    mc_channel_merged_hadd_f+=' '+item
+for item in mc_channel_c:
+    mc_channel_merged_hadd_c+=' '+item
+for item in data_channel:
+    data_channel_merged_hadd+=' '+item
+
+call(['rm '+mc_channel_merged_f],shell=True)
+call(['rm '+mc_channel_merged_c],shell=True)
+call(['rm '+data_channel_merged],shell=True) 
+call([mc_channel_merged_hadd_f],shell=True)
+call([mc_channel_merged_hadd_c],shell=True)
+call([data_channel_merged_hadd],shell=True)
     
-    scale_hists(rootfileData.replace('.root','_unc_rebinned.root'), 'Background', nominal_results)
-        
-    continue
+mc_channel_merged_f  =  merge_channel(mc_channel_merged_f,['Mu','Ele'])
+mc_channel_merged_c  =  merge_channel(mc_channel_merged_c,['Mu','Ele'])
+data_channel_merged=  merge_channel(data_channel_merged,['Mu','Ele'])
 
-    print dirstring+'/*'+signal_prefix+production+'*'+chirality+'.root'
-    signal_files=find_files(dirstring+'/*'+signal_prefix+production+'*'+chirality+'.root')
-    signal_rootfile = rootDir+prefix+channel+'_MC_forward_signal'
-    
-    call(['./../bin/rootfilecreator', signal_files, signal_rootfile,dirstring,channel,"","",""])
-    
-    call(['rm '+rootfile+'_nominal_with_signal_mc_unc.root'],shell=True)
-    call(['rm '+rootfile+'_nominal_with_signal_mc_unc_scale.root'],shell=True)
-
-    #Use background region MC also in the signal region 
-    #create_merged_hists(rootfile+'_central.root',rootfile+'_central_merged_data.root' , 'DATA')
-    #scale_hists(rootfile+'_central_merged_data.root', 'DATA', nominal_results)
-    #add_signal_background_uncer(rootfile+'_merged.root', rootfile+'_forward_merged.root', rootfile+'_central_merged.root', rootfile+'_merged_mc_unc.root',True )
-    
-    call(['hadd '+rootfile+'_nominal_with_signal_mc_unc.root '+rootfile+'_merged_mc_unc.root '+signal_rootfile+'.root'],shell=True)
-    call(['hadd '+rootfile+'_nominal_with_signal_mc_unc_scale.root '+rootfile+'_merged_mc_unc.root '+signal_rootfile+'.root'],shell=True)
-
-    scale_hists(rootfile+'_nominal_with_signal_mc_unc_scale.root', 'Background', nominal_results)
-   
-    binFile(0.2, rootfile+'_nominal_with_signal_mc_unc_scale.root', 'M_{B} [GeV/c^{2}]', ['Background'])
-    
-    nom_exp,nom_obs = injected_signal_mc_limits(rootfile+'_nominal_with_signal_mc_unc_scale_rebinned.root', chirality, channel, signal_prefix+production , False, "nominal")
-    
-    nominal_file = rootfile+'_nominal_with_signal_mc_unc.root'
-    
-    injected_mass_cross_section_expected = []
-    injected_mass_cross_section_observed = []
-    
-    for m,mass in enumerate(masses):
-        print 'Injecting ', signal_prefix, production, mass, 'GeV', 'cross section',  cross_sec[m]
-        rootfile = rootDir+prefix+channel+'_MC_central_sig'
-        call(['./../bin/rootfilecreator', signal_prefix+production+'-'+mass+'_'+chirality, rootfile,dirstring,channel,"","","central"])
-        rootfile = rootDir+prefix+channel+'_MC_forward_sig'
-        call(['./../bin/rootfilecreator', signal_prefix+production+'-'+mass+'_'+chirality, rootfile,dirstring,channel,"","","forward"])
-        rootfile = rootDir+prefix+channel+'_MC'
-        create_merged_hists(rootfile+'_central.root',rootfile+'_central_merged_'+mass+'.root' , 'Background')
-        create_merged_hists(rootfile+'_forward.root',rootfile+'_forward_merged_'+mass+'.root' , 'DATA')
-        signal = signal_prefix+production+'-'+mass+'_'+chirality
-        add_signal(rootfile+'_central_merged_'+mass+'.root', 'Background', rootfile+'_central_sig.root' , signal, cross_sec[m])
-        add_signal(rootfile+'_forward_merged_'+mass+'.root', 'DATA', rootfile+'_forward_sig.root' , signal, cross_sec[m])
-        call(['rm '+rootfile+'_merged_'+mass+'.root'],shell=True)
-        call(['hadd '+rootfile+'_merged_'+mass+'.root '+rootfile+'_*_merged_'+mass+'.root'],shell=True)
-        binFile(0.2, rootfile+'_merged_'+mass+'.root', 'M_{B} [GeV/c^{2}]', ['Background'])
-        mass_injection.append(background_fit(rootfile+'_merged_'+mass+'_rebinned.root', channel, False, ""))
-      
-        injected_file= nominal_file.replace('/','/'+mass+'_')
-        
-        call(['cp '+nominal_file+' '+injected_file],shell=True)
-
-        
-        add_signal(injected_file,'DATA', rootfile+'_forward_sig.root' , signal, cross_sec[m])
-        add_signal(injected_file,'Background', rootfile+'_forward_sig.root' , signal, cross_sec[m])
-        #add_signal(injected_file, 'Background', rootfile+'_central_sig.root' , signal, cross_sec[m])
-        scale_hists(injected_file, 'Background',  mass_injection[-1])
-        #add_signal(injected_file,'Background', rootfile+'_forward_sig.root' , signal, cross_sec[m])
-        binFile(0.2, injected_file, 'M_{B} [GeV/c^{2}]', ['Background'])
-        
-        rebinned_file = injected_file.replace('.root','_rebinned.root')
-        print 'Injecting ', signal_prefix, production, mass, 'GeV', 'cross section',  cross_sec[m]
-        print 'limit calculated for',rebinned_file
-        inj_exp,inj_obs = injected_signal_mc_limits(rebinned_file, chirality, channel, signal_prefix+production , False, mass+"_injected")
-        print 'expected limit ratio for injected mass',mass
-        for i in xrange(len(nom_exp.y)):
-            if i == m: injected_mass_cross_section_expected.append(inj_exp.y[i]/nom_exp.y[i]) 
-            #print 'Mass',nom_exp.x[i], 'nominal', nom_exp.y[i],'+-',nom_exp.yerrors[i], 'injection',inj_exp.y[i],'+-',inj_exp.yerrors[i], 'ratio', inj_exp.y[i]/nom_exp.y[i]
-            print 'Mass',nom_exp.x[i], 'nom/inj', nom_exp.y[i], ' / ',inj_exp.y[i], ' = ', inj_exp.y[i]/nom_exp.y[i]
-        print 'obs limit ratio for injected mass',mass
-        for i in xrange(len(nom_obs.y)):
-            if i == m: injected_mass_cross_section_observed.append(inj_obs.y[i]/cross_sec[m]) 
-            print 'Mass',nom_obs.x[i], 'nom/inj', nom_obs.y[i], ' / ',inj_obs.y[i], ' = ', inj_obs.y[i]/nom_obs.y[i]
- 
-    print nominal_results
-    print mass_injection
-
-    create_injectionratio_plots("injection_back_"+channel+".pdf", nom_exp.x, injected_mass_cross_section_expected, 'cross section before/after injection', 'ratio of nominal CL/injected CL on MC' )
-    create_injectionratio_plots("injection_signal_"+channel+".pdf", nom_obs.x, injected_mass_cross_section_observed,' injected/expected cross section ','ratio ')
-
-
-    continue
-
-    for m,res in enumerate(nominal_results):
-        nominal_bands_up   = [res[1]+res[2]]*len(masses)
-        nominal_bands_down = [res[1]-res[2]]*len(masses)
-
-        pp = PdfPages('Signal_Injection_'+signal_prefix+'_'+production+'_'+chirality+'_'+channel+'_'+res[0]+'.pdf')
-        plt.clf()
-        plt.title("CMS $\it{Preliminary}$  "+res[0].replace('_',' '), fontsize=10)# , loc='right')
-
-        ax=plt.gca()
-        ax.set_ylim([.3,.80])
-        ax.set_xlim([650,1850])
-        y_injection =[]
-        y_error =[]
-        x_error =[]
-        for p in xrange(len(masses)):
-            y_injection.append(mass_injection[p][m][1])
-            y_error.append(mass_injection[p][m][2])
-            x_error.append(0)
-            #plt.errorbar(x[p], mass_injection[p][m][1], yerr=mass_injection[p][m][2],xerr=0, ecolor='g', fmt='-o')
-        plt.errorbar(x, y_injection, yerr=y_error,xerr=x_error, color='red', fmt='o', label='Fit with injected signal')
-        #plt.plot(x,y_injection,color='g')
+stat_uncer = 0.8
        
-        """
-        plt.fill_between(exp.x, exp.bands[0][0] ,  exp.bands[0][1],
-        alpha=0.6, facecolor=sigma2_color, edgecolor=sigma2_color,
-        linewidth=0, label="$\pm$ 2 std. deviation")
-        """
-        plt.fill_between(x,  nominal_bands_up, nominal_bands_down,
-                         alpha=0.8, facecolor=sigma1_color, edgecolor=sigma1_color, # exp_LH.bands[1][2],
-                         linewidth=0, label="nominal fit $\pm$ 1 std. deviation")
-       
-
-        plt.plot([],[],label="nominal fit with $\pm$ 1 std. deviation",color=sigma1_color,linewidth=10) 
-        plt.legend(loc="upper center",prop={'size':12},frameon=False,numpoints=1) 
-        #plt.plot(theory13TeV_x,upper,linestyle='-.',color='cyan')
-        plt.xlabel('injected VLQ mass (GeV)')
-        plt.ylabel('signal/control region ratio')
-   
-        plt.savefig(pp, format='pdf')
-        pp.close()
-
-
-
-
-                    
+rebinned_data = simpleRebin(data_channel_merged,stat_uncer,['Background'],data_channel_merged.replace('.root','_rebinned.root'),['Background'])
+rebinned_data = simpleRebin(rebinned_data,stat_uncer+1,['DATA'],rootDir+'merged_channel_result.root',['Background'])
+rebinned_unc_data = add_signal_background_uncer(rebinned_data, mc_channel_merged_f, mc_channel_merged_c,"",True )
     
+nominal_results, fitted = background_fit(rebinned_unc_data, '', False, "")
+
+
+"""
+call(['cd ../../../SFramePlotter/'],shell=True)
+call(['Plots -f BackgroundTheta.steer'],shell=True)
+call(['cd -'],shell=True)
+"""

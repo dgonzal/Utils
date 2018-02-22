@@ -33,7 +33,7 @@ witdth = '' #,'10','20','30']
 cross_sec = [4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.248,0.195]
 cross_sec = [x*0.5 for x in cross_sec]
 
-cross_sec = [1.5, 0.9, 0.4, 0.2, 0.12, 0.11, 0.08, 0.09, 0.08, 0.05, 0.05, 0.07]
+#cross_sec = [1.5, 0.9, 0.4, 0.2, 0.12, 0.11, 0.08, 0.09, 0.08, 0.05, 0.05, 0.07]
 create = False 
 
 
@@ -103,8 +103,8 @@ for i,channel in enumerate(prod_channels):
     sys_reweight(signal_comb,'scale')
 
     
-    rootfile_MC_central_errors = merge_mc(['ZJets','WJets','SingleT','TTbar'],rootfile_MC_central_errors)
-    rootfile_MC_forward_errors = merge_mc(['ZJets','WJets','SingleT','TTbar'],rootfile_MC_forward_errors)
+    rootfile_MC_central_errors = merge_mc(['ZJets','WJets','SingleT','TTbar','QCD'],rootfile_MC_central_errors)
+    rootfile_MC_forward_errors = merge_mc(['ZJets','WJets','SingleT','TTbar','QCD'],rootfile_MC_forward_errors)
     
     
     #merge root files into one 
@@ -114,7 +114,7 @@ for i,channel in enumerate(prod_channels):
     call(['hadd '+rootfile_MC_merged+' '+rootfile_MC_central_merged+' '+rootfile_MC_forward_merged+' '+rootfile_MC_central_errors+' '+rootfile_MC_forward_errors+' '+signal_comb],shell=True)
 
    
-    rootfile_MC_merged_rebin =  binFile(0.2, rootfile_MC_merged, 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleT','TTbar'])
+    rootfile_MC_merged_rebin =  binFile(0.2, rootfile_MC_merged, 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleT','TTbar','QCD'])
 
     #calculate normalisation
     print '*'*10
@@ -127,98 +127,48 @@ for i,channel in enumerate(prod_channels):
     #continue
     print '+'*10
       
-    continue
+    #continue
     #exit(0)
     injected_mass_cross_section_expected = []
     injected_mass_cross_section_observed = []
 
-    result_file = open(channel+'_injection_result.txt','w+')
+    result_file = open(channel+'_mc_injection_result.txt','w+')
     print >> result_file, 'nominal result'
     print >> result_file, 'nominal exp'
     print >> result_file, nom_exp
     print >> result_file, 'nominal obs'
     print >> result_file, nom_obs    
-    
+    #continue
+
     for m,mass in enumerate(masses):
         #signal to inject
         signal = signal_prefix+production+'-'+mass+'_'+chirality
         print 'Injecting ', signal, ' with cross section',  cross_sec[m]
-        
-        #merge this histograms 
-        central_mass_h_merged = rootfile_MC_central.replace('.root','_'+mass+'_h_merged.root')
-        forward_mass_h_merged = rootfile_MC_forward.replace('.root','_'+mass+'_h_merged.root')
-        create_merged_hists(rootfile_MC_central, central_mass_h_merged, 'Background')
-        create_merged_hists(rootfile_MC_forward, forward_mass_h_merged, 'DATA')
-
-        central_mass_h_merged_mc_unc_rebinned = central_mass_h_merged.replace('.root','_mc_unc_rebinned.root')
-        region_unc_input = simpleRebin(central_mass_h_merged,unc,['Background'],central_mass_h_merged.replace('.root','_rebinned.root'),['All'])
-        add_signal_background_uncer(region_unc_input, rootfile_MC_forward_merged, rootfile_MC_central_merged, central_mass_h_merged_mc_unc_rebinned,True)
-        
+                
         #create signal histos to add to the CR & SR
         central_sig = rootDir+prefix+channel+'_MC_central_sig_'+mass+'.root'
         forward_sig = rootDir+prefix+channel+'_MC_forward_sig_'+mass+'.root'
         #forward_sig_unc = rootDir+prefix+channel+'_MC_forward_sig_'+mass+'_unc.root'
-        call(['./../bin/rootfilecreator', signal, central_sig, dirstring,channel,"","","central"])
-        call(['./../bin/rootfilecreator', signal, forward_sig, dirstring,channel,"","","forward"])
-        #call(['./../bin/rootfilecreator', signal, forward_sig_unc, dirstring,channel,"","",""])
-        #call(['./../bin/rootfilecreator', signal, forward_sig.replace(mass,masses[m+1]), dirstring,channel,"","","forward"])
+        call(['./../bin/rootfilecreator', signal, central_sig, dirstring,channel,"","","central_errors"])
+        call(['./../bin/rootfilecreator', signal, forward_sig, dirstring,channel,"","","forward_errors"])
 
+        
+        mass_injected = rootfile_MC_merged.replace('.root','_injected_'+mass+'.root')
+        #copy file
+        call(['rm '+mass_injected],shell=True)
+        call(['hadd '+mass_injected+' '+rootfile_MC_merged],shell=True)
         #add signal 
-        add_signal(central_mass_h_merged_mc_unc_rebinned, 'Background', central_sig, signal, cross_sec[m])
-        add_signal(forward_mass_h_merged,                 'DATA'      , forward_sig, signal, cross_sec[m])
+        add_signal(mass_injected, 'DATA', central_sig, signal, cross_sec[m])
+        add_signal(mass_injected, 'DATA', forward_sig, signal, cross_sec[m])
        
-        #exit(0) 
-        #merge central and forward region
-        mass_merged = central_mass_h_merged.replace('_central','')
-        backPlusSignalFile = mass_merged.replace('.root','_backSig.root')
-        call(['rm '+mass_merged],shell=True)
-        call(['rm '+backPlusSignalFile],shell=True)
-        
-        call(['hadd '+backPlusSignalFile+' '+central_mass_h_merged_mc_unc_rebinned+' '+forward_mass_h_merged+' '+forward_sig],shell=True)
-        call(['hadd '+mass_merged+' '+central_mass_h_merged_mc_unc_rebinned+' '+forward_mass_h_merged],shell=True)
-        
         #rebin with 20% stat unc.
-        mass_merged_rebinned = simpleRebin(mass_merged, unc, ['Background'],mass_merged.replace('.root','_rebinned.root'),['All'])
-        backPlusSignalFile_rebinned = simpleRebin(backPlusSignalFile, unc, ['Background'],backPlusSignalFile.replace('.root','_rebinned.root'),['All'])
+        final_injected = binFile(0.2, mass_injected, 'M_{B} [GeV/c^{2}]', ['ZJets','WJets', 'SingleT','TTbar'])
         #calculate the SR/CR fit
-        print '#'*5
-        print 'file for background fit',mass_merged_rebinned
-        mass_injection.append(background_fit(mass_merged_rebinned, channel, False, ""))#,signal))
-        print '*'*5
-        print 'Injected ', signal_prefix, production, mass, 'GeV', 'cross section',  cross_sec[m]
-        #back_signal_fit.append(background_fit(backPlusSignalFile_rebinned, channel, False, "",signal))
-        print '#'*5
-
-        mass_merged_limit = mass_merged.replace('.root','_limit.root')
-        call(['rm '+mass_merged_limit],shell=True)
-        call(['hadd '+mass_merged_limit+' '+mass_merged_rebinned+' '+signal_rootfile],shell=True)
-
-        #scale hists according to the background mle fit 
-        #scale_hists(mass_merged_limit, 'Background',  mass_injection[-1])
-        scale_hists(mass_merged_limit, 'Background',mass_injection[-1])#nominal_results)
-        signal_rebin(mass_merged_limit,signal_prefix)
-        sys_reweight(mass_merged_limit,'PDF')
-        sys_reweight(mass_merged_limit,'scale')
-        
+    
         #calculate limits
-        inj_exp,inj_obs, zvalue = injected_signal_mc_limits(mass_merged_limit, chirality, channel, signal_prefix+production , False)#, mass+"_injected")
+        inj_exp,inj_obs, zvalue = injected_signal_mc_limits(final_injected, chirality, channel, signal_prefix+production , False, mass+"_injected", mass)
         print 'Injected ', signal_prefix, production, mass, 'GeV', 'cross section',  cross_sec[m]
         print 'expected limit ratio for injected mass',mass
-
-        bands = list(inj_exp.bands[1])
-	print bands[0]
-	print bands[1]
-        for i in xrange(len(nom_exp.y)):
-	    error = bands[1][i]-inj_exp.y[i]
- 	    if (inj_exp.y[i]-nom_exp.y[i]) < 0: error = bands[0][i]-inj_exp.y[i]
-            #if i == m: injected_mass_cross_section_expected.append((inj_exp.y[i]-nom_exp.y[i])/math.sqrt(bands[0][i]*bands[0][i]+bands[1][i]*bands[1][i])) 
-            if i == m: injected_mass_cross_section_expected.append((inj_exp.y[i]-nom_exp.y[i])/math.sqrt(error*error)) 
-            #print 'Mass',nom_exp.x[i], 'nominal', nom_exp.y[i],'+-',nom_exp.yerrors[i], 'injection',inj_exp.y[i],'+-',inj_exp.yerrors[i], 'ratio', inj_exp.y[i]/nom_exp.y[i]
-            print 'Mass',nom_exp.x[i], 'nom/inj', nom_exp.y[i], ' / ',inj_exp.y[i], ' = ', inj_exp.y[i]/nom_exp.y[i]
-        print 'obs limit ratio for injected mass',mass
-        for i in xrange(len(nom_obs.y)):
-            if i == m: injected_mass_cross_section_observed.append(inj_obs.y[i]-cross_sec[m]) 
-            print 'Mass',nom_obs.x[i], 'nom/inj', nom_obs.y[i], ' / ',inj_obs.y[i], ' = ', inj_obs.y[i]/nom_obs.y[i]
 
 
         print >> result_file, "++"*10
@@ -228,16 +178,10 @@ for i,channel in enumerate(prod_channels):
         print >> result_file, 'injected obs'
         print >> result_file, inj_obs
         print >> result_file, 'z values'
-        print zvalue
+        print >> result_file, zvalue
             
     print nominal_results
     print mass_injection
-
-    create_injectionratio_plots("injection_back_"+channel+".pdf", nom_exp.x, injected_mass_cross_section_expected, 'cross section before/after injection', 'ratio of nominal CL/injected CL on MC' )
-    create_injectionratio_plots("injection_signal_"+channel+".pdf", nom_obs.x, injected_mass_cross_section_observed,' injected/expected cross section ','ratio ')
-
-
-    continue
 
 
 

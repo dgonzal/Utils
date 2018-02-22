@@ -104,7 +104,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   double maximum = 0;
   TMultiGraph * resultGraphs = new TMultiGraph();
   //get_can()->SetLogy();
-  TLegend* multigraphLeg = new TLegend(0.5,0.2,0.7,0.3); 
+  TLegend* multigraphLeg = new TLegend(0.5,0.2,0.7,0.6); 
   multigraphLeg->SetBorderSize(0);
   for(unsigned int i = 0; i < histos.size(); ++i ){
     /*
@@ -112,7 +112,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
     get_can()->UseCurrentStyle();
     get_can()->Update();
     */
-    resultGraphs->SetMinimum(0.);
+    resultGraphs->SetMinimum(0.7);
 
     leg = new TLegend(0.65,0.65,0.85,0.85);
     histos[i].numerator->GetMaximum() <= histos[i].denominator->GetMaximum() ? maximum = histos[i].denominator->GetMaximum() : maximum = histos[i].numerator->GetMaximum();  
@@ -182,7 +182,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
     if(!legend_entries[i].empty()){
       multigraphLeg->AddEntry(graph,legend_entries[i].c_str(),"lp");
       graph->SetTitle(legend_entries[i].c_str());    }
-    graph->SetMinimum(0.);
+    graph->SetMinimum(0.0);
     graph->Draw("sameap");
     graph->GetYaxis()->SetTitle(y_axis.c_str());
     graph->GetXaxis()->SetTitle((string(histos[i].numerator->GetXaxis()->GetTitle())).c_str());
@@ -199,9 +199,8 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   //get_can()->UseCurrentStyle();
   get_can()->Update();
   */
-  resultGraphs->SetMinimum(0.01);
-  resultGraphs->SetMinimum(0.4);
-  resultGraphs->SetMaximum(0.95);
+  resultGraphs->SetMinimum(0.5);
+  resultGraphs->SetMaximum(1.01);
   resultGraphs->Draw("ap");//should be ap have to change marker style
   resultGraphs->GetYaxis()->SetTitle("Efficiency");
   resultGraphs->GetXaxis()->SetTitle(x_axis.c_str());
@@ -211,13 +210,12 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   }
   
   //if(imposeDistri)histos[0].denominator->DrawNormalized("hist same"); 
-  multigraphLeg->Draw();
-  
+  multigraphLeg->Draw(); 
   //resultGraphs->Draw("ap");//should be ap have to change marker style
   //get_can()->BuildLegend();
   //resultGraphs->SetMinimum(0.9);
   //if(imposeDistri)drawDistri(0);
-  if(legend_bool)get_can()->BuildLegend(0.15, 0.1, 0.9, 0.4);
+  if(legend_bool)get_can()->BuildLegend(0.15, 0.15, 0.8, 0.5);
   if(single_plots){
     get_can()->Print(create_resultfilename(summary_number,true));
   }
@@ -226,22 +224,30 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
 
   if(scalefactor.size()>0){
     TList * graphlist = (TList*)resultGraphs->GetListOfGraphs ();
+    TMultiGraph* scale_ratios = new TMultiGraph();
+    TLegend* multiratioLeg = new TLegend(0.2,0.2,0.7,0.4);
+    multiratioLeg->SetBorderSize(0); 
+    int counter =-1;
     for(auto tuple : scalefactor){
+      counter++;
       TH1F* num_h = (TH1F*) histos[tuple.first].numerator->Clone();
       num_h->Divide(histos[tuple.first].denominator);
       TH1F* den_h = (TH1F*) histos[tuple.second].numerator->Clone();
       den_h->Divide(histos[tuple.second].denominator);
       
       TGraphAsymmErrors* scaleresult = compute_scalefactorerrors(num_h,den_h, (TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.first),(TGraphAsymmErrors*) resultGraphs->GetListOfGraphs()->At(tuple.second));
-
+      TGraphAsymmErrors* helper_graph = (TGraphAsymmErrors*)scaleresult->Clone();
+      helper_graph->SetLineColor(counter+1);
+      multiratioLeg->AddEntry(helper_graph,(std::string(resultGraphs->GetListOfGraphs()->At(tuple.first)->GetTitle())+"/"+string(resultGraphs->GetListOfGraphs()->At(tuple.second)->GetTitle())).c_str(),"lp");
+      scale_ratios->Add(helper_graph);
       //scaleresult->GetXaxis()->SetRangeUser(45,800);
       scaleresult->SetTitle("");
       scaleresult->GetXaxis()->SetTitle(x_axis.c_str());
-      scaleresult->GetYaxis()->SetRangeUser(.85,1.04);
+      //scaleresult->GetYaxis()->SetRangeUser(.85,1.04);
       scaleresult->Draw("P");
       TH1F* hist = (TH1F*) scaleresult->GetHistogram();
-      hist->SetMaximum(1.04);
-      hist->SetMinimum(0.95);
+      //hist->SetMaximum(1.04);
+      hist->SetMinimum(0.8);
       hist->Draw();
       scaleresult->Draw("P");
       get_can()->Update();
@@ -250,7 +256,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
       }
       else
 	get_can()->Print(get_resultFile());
-
+      
       // Calculate pull between two
       TGraphAsymmErrors* first = (TGraphAsymmErrors*) graphlist->At(tuple.first);
       TGraphAsymmErrors* second = (TGraphAsymmErrors*) graphlist->At(tuple.second);
@@ -272,7 +278,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
 	result->SetBinContent(i,bin_result);
 	cout<<"pull "<<bin_result<<" first bin "<<i<<" second bin "<<m<< " x "<< x_f<<" y first "<<y_f<<" y second "<<y_s <<endl;
 	
-      }  
+      }
       result->Draw();
       if(single_plots){
 	get_can()->Print(create_resultfilename(summary_number,true));
@@ -280,6 +286,19 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
       else
 	get_can()->Print(get_resultFile());
     }
+    get_can()->Update();
+    //scale_ratios->GetHistogram()->Draw();
+    scale_ratios->SetMinimum(0.7);
+    scale_ratios->Draw("AP");
+    scale_ratios->GetXaxis()->SetTitle(x_axis.c_str());
+    multiratioLeg->Draw();
+    get_can()->Update();
+    if(single_plots){
+        get_can()->Print(create_resultfilename(summary_number,true));
+    }
+    else
+       get_can()->Print(get_resultFile());
+
     //delete resultGraphs;
     //multigraphLeg->Close(); 
   }
@@ -336,13 +355,18 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
     double den_con = den_h->GetBinContent(i+1);
     if(den_con == 0 || num_con == 0) continue;
     if(scalenum->GetErrorYhigh(i)!=scalenum->GetErrorYhigh(i) ||  scalenum->GetErrorYlow(i)!=scalenum->GetErrorYlow(i)|| scaledenom->GetErrorYhigh(i)!=scaledenom->GetErrorYhigh(i) ||  scaledenom->GetErrorYlow(i)!=scaledenom->GetErrorYlow(i))continue;
-    //cout<<"numerator "<<num_con<<" + "<<scalenum->GetErrorYhigh(i)<<" - "<<scalenum->GetErrorYlow(i) <<" denominator "<<den_con<<" + "<< scaledenom->GetErrorYhigh(i) <<" - "<< scaledenom->GetErrorYlow(i)<<endl;    
+    cout<<"numerator "<<num_con<<" + "<<scalenum->GetErrorYhigh(i)<<" - "<<scalenum->GetErrorYlow(i) <<" denominator "<<den_con<<" + "<< scaledenom->GetErrorYhigh(i) <<" - "<< scaledenom->GetErrorYlow(i)<<endl;    
     x[i]= xaxis->GetBinCenter(i+1);    
     y[i]= scalehist->GetBinContent(i+1);
-    ylow[i]  = sqrt(pow((1/den_con)*scalenum->GetErrorYlow(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYhigh(graphcount),2));
-    yhigh[i] = sqrt(pow(1/den_con*scalenum->GetErrorYhigh(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYlow(graphcount),2));
-    xlow[i]= fabs(scalehist->GetBinLowEdge(i+1)-xaxis->GetBinCenter(i+1));
-    xhigh[i]= fabs(scalehist->GetBinLowEdge(i+1) +scalehist->GetBinWidth(i+1)-xaxis->GetBinCenter(i+1));
+    ylow[i]  = sqrt(pow(1/den_con*scalenum->GetErrorYlow(graphcount) ,2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYhigh(graphcount),2));
+    yhigh[i] = sqrt(pow(1/den_con*scalenum->GetErrorYhigh(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYlow(graphcount) ,2));
+    //ylow[i]  = fabs(num_con/den_con - (num_con+scalenum->GetErrorYhigh(graphcount)/(den_con-scaledenom->GetErrorYlow(graphcount))));
+    //yhigh[i] = fabs(num_con/den_con - (num_con-scalenum->GetErrorYlow(graphcount)/(den_con+scaledenom->GetErrorYhigh(graphcount))));
+    //ylow[i]  += sqrt(pow(1/den_con*scalenum->GetErrorYhigh(graphcount),2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYlow(graphcount) ,2));
+    //yhigh[i] += sqrt(pow(1/den_con*scalenum->GetErrorYlow(graphcount) ,2)+pow(num_con/(den_con*den_con)*scaledenom->GetErrorYhigh(graphcount),2));
+    graphcount++;
+    xlow[i]  = fabs(scalehist->GetBinLowEdge(i+1)-xaxis->GetBinCenter(i+1));
+    xhigh[i] = fabs(scalehist->GetBinLowEdge(i+1) +scalehist->GetBinWidth(i+1)-xaxis->GetBinCenter(i+1));
     /*/
     double graph_x=0,graph_y=0;
     scalenum->GetPoint(i+1,graph_x,graph_y);
@@ -374,11 +398,7 @@ TGraphAsymmErrors* effiPlots::compute_scalefactorerrors(TH1F* num_h, TH1F* den_h
   }
   nominal = "("+nominal+")";
   up_var= "("+up_var+")";
-  down_var= "("+down_var+")";
-
-
-  
-  
+  down_var= "("+down_var+")"; 
   
   //nominal= nominal.substr(1);
   //up_var=up_var.substr(1);

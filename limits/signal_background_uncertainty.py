@@ -7,187 +7,181 @@ ROOT.gStyle.SetOptTitle(0)
 
 import time, array
 
+from  injection_merge import *
+
 from ROOT import TFile, TH1, TObject, TF1
 
 # merge all the histograms to one
-def add_signal_background_uncer(background,signal_region_mc, background_region_mc,output_fname, store_other_histos =False, debug = None):
+def add_signal_background_uncer(background,signal_region_mc, background_region_mc,output_fname="", store_other_histos =False, debug = None):
     TH1.AddDirectory(ROOT.kFALSE);
+
+    if not output_fname: output_fname = background.replace('.root','_unc.root')
+    correction = output_fname.replace('.root','_correction.root')
+    
     print '='*10
     print 'Adding the uncertainty of the signal to background region'
     print 'background',background
     print 'signal region',signal_region_mc,'background region',background_region_mc
     print 'output file',output_fname
-    
+    print 'correction file' ,correction
+
+    correction_file = TFile(correction,'RECREATE')
+
     signal_mc_file = TFile(signal_region_mc)
     background_mc_file = TFile(background_region_mc)
     back = TFile(background)
 
     keys = back.GetListOfKeys()
- 
+
     hist_names =[]
     histos = []
     cloned = []
     other_histos =[]
     debug_histos=[]
     
-    
+    scale = False 
+        
     for key in keys:
         key = str(key.GetName())
+        if len(key.split('__')) >2:continue
         #print key
         if not 'Background' in key:
             if(store_other_histos): other_histos.append(back.Get(key).Clone())
             continue
 	print 'going to use',key,'and',key.replace('Background','DATA'),'to create signal/background mc uncertainty'
-        histos.append(back.Get(key).Clone())
 
-        binning=[]
-        for i in xrange(1,histos[-1].GetNcells()-1):
-            binning.append(histos[-1].GetBinLowEdge(i))
-            if i+1==histos[-1].GetNcells()-1: binning.append(histos[-1].GetBinLowEdge(i)+histos[-1].GetBinWidth(i))
+        data_back = back.Get(key).Clone()
+        data_norm = data_back.GetSumOfWeights()
+        
+        binning =  get_binning(data_back)
 
  	print binning
         binning_arr = array.array('d',binning)
 	max_val = -99999999
-
 	for i in binning_arr:
 	  if i>max_val: max_val=i
 	  else: print i
-
-        histos[-1] = histos[-1].Rebin(len(binning)-1,key,binning_arr)           
-        signal_region = signal_mc_file.Get(key.replace('Background','DATA')).Clone("signalregion")
+          
+        signal_mc_h = signal_mc_file.Get(key.replace('Background','DATA')).Clone("signalregion")
         back_mc_h = background_mc_file.Get(key).Clone("background")
 
-	signal_region = signal_region.Rebin(len(binning)-1,"signal_region_final_binning", binning_arr)	
-	back_mc_h = back_mc_h.Rebin(len(binning)-1,"background_final_binning", binning_arr)
+	signal_mc_h = signal_mc_h.Rebin(len(binning)-1,key+"_signal_region_final_binning", binning_arr)	
+	back_mc_h = back_mc_h.Rebin(len(binning)-1,key+"_background_final_binning", binning_arr)
 
-        diff_hist =  signal_region.Clone(key+"diff")
+        sr_binning =binning
+        #sr_binning = update(signal_mc_h,0.05)
+        #print sr_binning     
 
-        #signal_region = signal_mc_file.Get(key.replace('Background','DATA')).Rebin(len(binning)-1,"signalregion",binning_arr)
-        #diff_hist =  signal_mc_file.Get(key.replace('Background','DATA')).Rebin(len(binning)-1,key+"diff",binning_arr)
-        #back_mc_h = background_mc_file.Get(key).Rebin(len(binning)-1,"",binning_arr)
-        
-        sig_norm = diff_hist.GetSumOfWeights()
+        #signal_mc_h = signal_mc_h.Rebin(len(sr_binning)-1,signal_mc_h.GetName(),array.array('d',sr_binning))
+	#back_mc_h = back_mc_h.Rebin(len(sr_binning)-1,back_mc_h.GetName(),array.array('d',sr_binning))
+
+        diff_hist  =  back_mc_h.Clone(key+"diff")
+        #diff_hist  =  diff_hist.Rebin(len(sr_binning)-1,diff_hist.GetName(),array.array('d',sr_binning))
+        ratio_hist =  signal_mc_h.Clone(key+"ratio")
+
+        sig_norm = signal_mc_h.GetSumOfWeights()
         back_norm = back_mc_h.GetSumOfWeights()    
-        
-	diff_hist.Scale(1/sig_norm)
+   
+	#exit(0)
+    
+        signal_mc_h.Scale(1/sig_norm)
+        diff_hist.Scale(1/back_norm)
+        ratio_hist.Scale(1/sig_norm)
+        ratio_hist.Divide(diff_hist)
+        diff_hist.Add(signal_mc_h,-1)
+        sr_stat_unc = signal_mc_h.Clone(key+"_sr_stat")
+        cr_stat_unc = back_mc_h.Clone(key+"_cr_stat")
+        #diff_hist.Scale(data_norm/back_norm)
+        correction_file.cd()
+        correction_hist = diff_hist.Clone()
+
+        correction_hist.Write()
         back_mc_h.Scale(1/back_norm)
-
-        #print key,diff_hist.Chi2TestX(back_mc_h,"WW")
-        """	
-        if diff_hist.Chi2Test(back_mc_h)<0.1:            
-            diff_hist.DrawNormalized()
-            back_mc_h.DrawNormalized("same")
-            for i in xrange(diff_hist.GetNcells()):
-	       print 'bin', i, 'pull', (diff_hist.GetBinContent(i)-back_mc_h.GetBinContent(i))/math.sqrt(diff_hist.GetBinContent(i)+back_mc_h.GetBinContent(i))
-            #time.sleep(5)
-        """
-        
-        #diff_hist.Divide(back_mc_h)
-        diff_hist.Add(back_mc_h,-1)       
-        
-        #diff_hist.Add(back_mc_h,-1)
-        #diff_hist.Scale(-1)
-        diff_minus = diff_hist.Clone("diff_minus")
-        diff_plus  = diff_hist.Clone("diff_plus")
-
-        histo_up = histos[-1].Clone(key+"__mcSup__plus")
-	histo_down = histos[-1].Clone(key+"__mcSup__minus")
-
-	
-        statD_up = histos[-1].Clone(key+"__mcSdown__plus")
-	statD_down = histos[-1].Clone(key+"__mcSdown__minus")
-
-        #diff_hist.Scale(back_norm/sig_norm)
-        diff_hist.Scale(histos[-1].GetSumOfWeights())
-       
-	histos[-1].Add(diff_hist,1)
-
- 
-        bin_sum=0
-        for i in xrange(diff_hist.GetNcells()):
-	    #histos[-1].SetBinError(i, 100*math.sqrt(math.fabs(histos[-1].GetBinError(i)) + diff_hist.GetBinError(i)))
-            #bin_sum+=diff_hist.GetBinContent(i)
-	    #diff_hist.SetBinError(i,math.sqrt(math.fabs(diff_hist.GetBinContent(i))))
-	    diff_minus.SetBinContent(i,diff_minus.GetBinContent(i)+diff_minus.GetBinError(i))   
-	    diff_plus.SetBinContent(i,diff_plus.GetBinContent(i)-diff_plus.GetBinError(i))   
-            #diff_hist.SetBinContent(i,math.fabs(diff_hist.GetBinContent(i)))
-            #print 'bin',i,'content',histos[-1].GetBinContent(i),'+-',histos[-1].GetBinError(i)
-            #back_mc_h.SetBinError(i,math.sqrt(back_mc_h.GetBinError(i)*back_mc_h.GetBinError(i)+diff_hist.GetBinContent(i)*diff_hist.GetBinContent(i)))
-            #if histos[-1].GetBinContent(i)<0:print 'bin',i,'smaler 0 content',histos[-1].GetBinContent(i)
-            #histos[-1].SetBinError(i,math.sqrt(math.fabs(histos[-1].GetBinContent(i))))
-            #histos[-1].SetBinError(i,math.sqrt(histos[-1].GetBinError(i)*histos[-1].GetBinError(i)+diff_hist.GetBinContent(i)*diff_hist.GetBinContent(i)))
-            #histos[-1].SetBinContent(i,histos[-1].GetBinError(i)+diff_hist.GetBinContent(i)*diff_hist.GetBinContent(i)))
-            #plus.SetBinContent (i,histos[-1].GetBinContent(i)+math.sqrt(histos[-1].GetBinError(i)*histos[-1].GetBinError(i)+diff_hist.GetBinContent(i)*diff_hist.GetBinContent(i)))
-            #minus.SetBinContent(i,histos[-1].GetBinContent(i)-math.sqrt(histos[-1].GetBinError(i)*histos[-1].GetBinError(i)+diff_hist.GetBinContent(i)*diff_hist.GetBinContent(i)))
-
-	plus  = histos[-1].Clone(key+"__mcR_"+key.split("__")[0]+"__plus") #back.Get(key).Clone(key+"__mcregion__plus")
-	minus = histos[-1].Clone(key+"__mcR_"+key.split("__")[0]+"__minus") #back.Get(key).Clone(key+"__mcregion__minus")
-
-            
-        if bin_sum >=0:
-            #histos[-1].Add(diff_hist)
-            plus.Add(diff_hist,1)
-            minus.Add(diff_hist,-1)
-	    histo_up.Add(diff_plus)
-	    histo_down.Add(diff_plus,-1) 
-	    statD_up.Add(diff_minus)
-	    statD_down.Add(diff_minus,-1)
-        else:
-            #histos[-1].Add(diff_hist,-1)
-            plus.Add(diff_hist,-1)
-            minus.Add(diff_hist,1) 
-	    histo_up.Add(diff_plus,-1)
-	    histo_down.Add(diff_plus)       
-            statD_up.Add(diff_minus,-1)
-	    statD_down.Add(diff_minus)
-
+        back_mc_h.Write()
         back_mc_h.Scale(back_norm)
-        diff_hist.Scale(back_norm/histos[-1].GetSumOfWeights())
-        back_mc_h.Add(diff_hist)
-        print 'Chi2 hist fit probability', signal_region.Chi2Test(back_mc_h,'WW')
-        #print 'Chi2 hist fit prob ', signal_region.Chi2Test(histos[-1],'WW')
+        signal_mc_h.Write()
+        ratio_hist.Write()
+        sr_stat_unc.Write()
+        cr_stat_unc.Write()
+
+        diff_hist.Scale(data_norm)
+        data_back.Add(diff_hist,-1)
+	#plus  = data_back.Clone(key+"__mcR_"+key.split("__")[0]+"__plus") #back.Get(key).Clone(key+"__mcregion__plus")
+	#minus = data_back.Clone(key+"__mcR_"+key.split("__")[0]+"__minus") #back.Get(key).Clone(key+"__mcregion__minus")
+        name = "__mcR_"+key.split("__")[0]
+	name = name.replace('Mu','')
+	name = name.replace('Ele','')
+
+	plus  = data_back.Clone(key+name+"__plus") #back.Get(key).Clone(key+"__mcregion__plus")
+	minus = data_back.Clone(key+name+"__minus") #back.Get(key).Clone(key+"__mcregion__minus")
+        #plus  = data_back.Clone(key+"__mcR__plus") #back.Get(key).Clone(key+"__mcregion__plus")
+	#minus = data_back.Clone(key+"__mcR__minus") #back.Get(key).Clone(key+"__mcregion__minus")
         
-        histos.append(plus);histos.append(minus)
- 	#histos.append(histo_up);histos.append(histo_down)    
-	#histos.append(statD_up);histos.append(statD_down)   
-        continue
+        sr_error = signal_mc_h.Clone(key+'_sr_error')
+        cr_error = back_mc_h.Rebin(len(sr_binning)-1,key+'_cr_error',array.array('d',sr_binning)) 
+        for i in xrange(1,sr_error.GetNcells()-1):
+            sr_error.SetBinContent(i,sr_error.GetBinContent(i)-sr_error.GetBinError(i))
+            cr_error.SetBinContent(i,cr_error.GetBinContent(i)+cr_error.GetBinError(i))
+
+        cr_error.Scale(1/back_norm)
+        #sr_error.Scale(1/sig_norm)
+
+        sr_error.Divide(cr_error)
+        #sr_error.Add(ratio_hist,-1)
+        #sr_error.Scale(back_norm)
+        sr_error.Write()
+
         
-
-	#diff_hist.Divide(back_mc_h)
-	diff_hist.Add(back_mc_h,-1)
-
-        #fit_function = TF1("linear","1+[0]*x")
-        #diff_hist.Fit(fit_function)
-	#print fit_function.GetParameter(0)
         
-	plus  = histos[-1].Clone(key+"__mcregion__plus") #back.Get(key).Clone(key+"__mcregion__plus")
-	minus = histos[-1].Clone(key+"__mcregion__minus") #back.Get(key).Clone(key+"__mcregion__minus")
-
-	binsum = 0
-        for i in xrange(1,histos[-1].GetNcells()-1):
-          #factor = 1.0/fit_function.Eval(histos[-1].GetXaxis().GetBinCenter(i))
-	  #histos[-1].SetBinContent(i,histos[-1].GetBinContent(i)*factor)     
-	  #if factor > 1: plus.SetBinContent(i,plus.GetBinContent(i)*factor*factor)
-          #else:  minus.SetBinContent(i,minus.GetBinContent(i)*factor*factor)
-          binsum +=diff_hist.GetBinContent(i)
-          #diff_hist.SetBinContent(i, math.fabs(diff_hist.GetBinContent(i)))
-          diff_hist.SetBinContent(i, diff_hist.GetBinContent(i))
-   	  
-
-        diff_hist.Scale(histos[-1].GetSumOfWeights())
-
-	if binsum>=0:
-	   plus.Add(diff_hist,1)
-           minus.Add(diff_hist,-1)
-        else:
-	   plus.Add(diff_hist,-1)
-	   minus.Add(diff_hist,1)
-
-
-	histos.append(plus);histos.append(minus)
+        back_mc_h_corrected = background_mc_file.Get(key).Clone(key+"_back_corrected")
+        signal_mc_h_original = signal_mc_file.Get(key.replace('Background','DATA')).Clone(key+"signalregion")
+        
+        for i in xrange(1,data_back.GetNcells()-1):
+            if back_mc_h_corrected.GetBinError(i)<1: back_mc_h_corrected.SetBinError(i,1)
+            ratio_bin   = ratio_hist.GetBinContent(ratio_hist.FindBin(back_mc_h_corrected.GetBinCenter(i)))
+            ratio_error = math.fabs(ratio_hist.GetBinContent(ratio_hist.FindBin(back_mc_h_corrected.GetBinCenter(i)))-sr_error.GetBinContent(ratio_hist.FindBin(back_mc_h_corrected.GetBinCenter(i))))
+            print 'bin center',data_back.GetBinCenter(i), 'bin ratio',ratio_bin,'+-',ratio_error,'back',back_mc_h_corrected.GetBinContent(i),'+-',back_mc_h_corrected.GetBinError(i)
+            
+	    #data_back.SetBinContent(i,data_back.GetBinContent(i)*ratio_bin)
+            back_mc_h_corrected.SetBinError(i,math.sqrt((back_mc_h_corrected.GetBinError(i)*ratio_bin)**2+ (back_mc_h_corrected.GetBinContent(i)*(1-ratio_bin)*ratio_error)**2))
+            #back_mc_h_corrected.SetBinError(i,back_mc_h_corrected.GetBinError(i)*(ratio_bin+ratio_error))
+	    back_mc_h_corrected.SetBinContent(i,back_mc_h_corrected.GetBinContent(i)*ratio_bin)
+	    #data_back.SetBinError(i,data_back.GetBinError(i)*ratio_bin)
+            #plus.SetBinContent(i,data_back.GetBinContent(i)*ratio_bin*ratio_bin)
 
 
 
+        for i in xrange(1,data_back.GetNcells()-1):
+            diff_hist.SetBinContent(i,math.fabs(diff_hist.GetBinContent(i)))
+            
+        plus.Add(diff_hist,-1)
+        minus.Add(diff_hist,1)
+        
+        #plus.Add(ratio_hist,1)
+        #minus.Add(ratio_hist,-1)
+        
+        #plus.Add(scale_up,1)
+        #minus.Add(scale_down,-1)
+
+        back_mc_h_corrected.Scale(1/back_mc_h_corrected.GetSumOfWeights())
+        signal_mc_h_original.Scale(1/sig_norm)
+        back_mc_h_corrected.Write()
+        signal_mc_h_original.Write()
+        
+        
+        #Test the method
+        #back_mc_h_corrected = back_mc_h.Clone("test_diff")
+        #diff_hist.Scale(back_norm/data_norm)
+        #back_mc_h_corrected.Add(diff_hist,-1)
+        #back_mc_h_corrected.Scale(sig_norm/back_norm)
+        print 'Chi2 mc fit probability',  signal_mc_h_original.Chi2Test(back_mc_h_corrected,'WW')
+        
+        
+        
+        #exit(0) 
+        # method with shape uncertainties
+        histos.append(data_back);#histos.append(diff_hist)
+        histos.append(plus);histos.append(minus);
  
     out_file =TFile(output_fname,"RECREATE")
     out_file.cd()
@@ -211,3 +205,4 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
         
     print 'done with uncertainty'
     print '='*10
+    return output_fname

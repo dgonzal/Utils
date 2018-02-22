@@ -8,13 +8,13 @@
 #include "mutrkfactors.h"
 
 int main(int argc, char** argv){
-  string version = "new";
+  string version = "recoptcuts_v2"; //"new";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;
   bool electron = false;
-  bool errors = true;
-  string resultfile = "plots/MuRecoPlots/";
-  bool single = true;
+  bool errors = false;
+  string resultfile = "plots/MuRecoPlots.ps";
+  bool single = false;
   if(argc>1){
     std::string channel(argv[1]);
     if(channel == "electron")
@@ -31,6 +31,8 @@ int main(int argc, char** argv){
     resultfile = "plots/EleRecoPlots/";
     folder = "EleSel_new";
   }
+
+  bool blind = true;
 
   //std::cout<<"going to print "<<resultfile<<" from "<< electron ? "electron" : "muon"<<" channel " <<errors ? " with sys errors":" without sys errors"<<endl; 
 
@@ -89,12 +91,13 @@ int main(int argc, char** argv){
   cms_text->SetY(.95);
   treehists.addText(cms_text);
 
-  string eta = "2.0";
-  string energy = "0.";
-  string chi2_central_string = "TopTagDis.mass==-1 &&((abs(Chi2Dis.forwardJet.eta()) <" +eta+") || Chi2Dis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
-  string chi2_forward_string = "TopTagDis.mass==-1 && (abs(Chi2Dis.forwardJet.eta()) >="+eta+") && Chi2Dis.forwardJet.E()>="+energy;
-  string toptag_central_string = "TopTagDis.mass>-1 &&((abs(TopTagDis.forwardJet.eta()) <" +eta+") || TopTagDis.forwardJet.E()<" +energy+")"; //"||Chi2Dis.jetiso >="+jetiso+
-  string toptag_forward_string = "TopTagDis.mass>-1 && (abs(TopTagDis.forwardJet.eta()) >="+eta+") && TopTagDis.forwardJet.E()>="+energy;
+  string eta = "2.4";
+  string chi2_central_string = "(TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && abs(Chi2Dis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
+  string chi2_forward_string = "(TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && abs(Chi2Dis.forwardJet.eta()) >="+eta;
+  string toptag_central_string = "TopTagDis.mass>-1 &&  TopTagDis.topHad.pt()>400 && abs(TopTagDis.forwardJet.eta()) <" +eta; //"||Chi2Dis.jetiso >="+jetiso+
+  string toptag_forward_string = "TopTagDis.mass>-1 &&  TopTagDis.topHad.pt()>400 && abs(TopTagDis.forwardJet.eta()) >="+eta;
+  string toptag_scalefactor = "1.01";
+
 
   string chi2cut ="Chi2Dis.chi<500000";
   
@@ -104,6 +107,31 @@ int main(int argc, char** argv){
   if(!electron) muontrkfactors = "("+muon_trk_factors()+"*(1-isRealData)+isRealData)*";
   string factors = muontrkfactors+eletriggerfactors;//+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
 
+
+  //VLQ mass central
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) < 2.4 )","50,500,3000","B mass [GeV]","Events");
+  treehists.Draw("TopTagDis.mass",factors+"weight*("+toptag_central_string+")","30,500,3000","B mass [GeV]");
+
+  if(blind){
+    treehists.removeFile(0);
+    treehists.mcratio_only();
+    //treehists.switch_ratio(false);
+  }
+
+  //treehists.switch_logy(true);
+  //VLQ mass forward/total
+  treehists.Draw("Chi2Dis.mass",factors+"weight*(TopTagDis.mass==-1)","30,500,3000","B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) >= 2.4 && Chi2Dis.btagEventNumber> 0)","50,500,3000","B mass","Events");
+
+  treehists.Draw("TopTagDis.mass",factors+toptag_scalefactor+"*weight*("+toptag_forward_string+")","30,500,3000","B mass [GeV]"); 
+  
+  return 0; 
 
   //X2 reco masses
   treehists.Draw("Chi2Dis.topHad.M()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.recoTyp==12 &&"+chi2cut+")","70,0,300","X^{2} top_{had} mass [GeV]");

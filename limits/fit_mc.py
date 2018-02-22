@@ -10,6 +10,7 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     
     print 'signal',particle+'*'+Chirality+'*','for particle',particle
     print 'using file', fname, 'to build the model'
+    print 'injected mass',mass
     model.set_signal_processes(particle+'*'+Chirality+'*')
     for p in model.processes:
         model.add_lognormal_uncertainty('lumi', math.log(1.026), p)
@@ -19,15 +20,21 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
         model.add_lognormal_uncertainty('ele_scale_rate', math.log(1.04), p, obsname='*')
     if channel =="Mu" or not channel:
         model.add_lognormal_uncertainty('muon_scale_rate', math.log(1.02), p, obsname='*')
-    
-    model.add_lognormal_uncertainty('ZJets_rate', math.log(1.20), 'ZJets')
-    model.add_lognormal_uncertainty('WJets_rate', math.log(1.20), 'WJets')
+        
+    model.add_lognormal_uncertainty('QCD_rate', math.log(3.00), 'QCD')
+    model.add_lognormal_uncertainty('ZJets_rate', math.log(1.50), 'ZJets')
+    model.add_lognormal_uncertainty('WJets_rate', math.log(1.50), 'WJets')
     model.add_lognormal_uncertainty('SingleT_rate', math.log(1.50), 'SingleT')
-    model.add_lognormal_uncertainty('TTbar_rate', math.log(1.20), 'TTbar') 
+    model.add_lognormal_uncertainty('TTbar_rate', math.log(1.50), 'TTbar')
+    
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
+    options.set('main', 'n_threads', '15')
     #options.set('main', 'n_threads', '4')
-     
+
+
+    #discovery_options =  Options()
+    #discovery_options.set('main', 'n_threads', '10')
     #mle_output = mle(model, input='data', n=100, options=options,signal_process_groups ={"background_only":[]},chi2=True,with_covariance=True) #,signal_process_groups ={"background_only":[]}
 
     exp = None
@@ -35,9 +42,14 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     zvalue = None
 
    
-    exp, obs = bayesian_limits(model, 'all', n_toy = 200, n_data = 100, options=options)
-    zvalue =  zvalue_approx(model, input='data', n=1, options=options)
+    exp, obs = bayesian_limits(model, 'all', n_toy = 500, n_data = 200, options=options)
 
+    discovery_val = []
+    for i, signal in enumerate(model.signal_processes):
+        if mass and '_'+mass+'_' in signal: 
+            discovery_val.append(discovery(model, spid=signal , Z_error_max=0.2, maxit=20, n=200, n_expected=200, input_expected='toys:1.0', options=options))
+    #discovery_val = pvalue(model, input='data', n=1, options=options, bkgtoys_n_runs=5, bkgtoys_n=200, bkgtoys_seed_min=1)
+    #discovery_val = p_to_Z(discovery_val)
     #exp, obs = asymptotic_cls_limits(model, use_data=False, beta_signal_expected=beta_sig, bootstrap_model=True, n=1, options=options)
 
     print 'Limits based on MC!'
@@ -45,9 +57,12 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     print exp
     print "observed limit "+Chirality+' '+channel +":"
     print obs
-    print 'z value'
-    print zvalue
-    #return exp,obs,zvalue
+    print 'discovery'
+    print discovery_val
+    #for item in discovery_val: 
+    #    print item
+                             
+    return exp,obs,discovery_val
 
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     
@@ -64,7 +79,7 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     print "observed limit "+Chirality+' '+channel +":"
     print obs
 
-    return exp,obs,zvalue
+    return exp,obs,discovery_val
 
 
 

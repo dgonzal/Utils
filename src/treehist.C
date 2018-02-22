@@ -5,7 +5,7 @@
 #include "simplePlots.h"
 
 #include <boost/algorithm/string/replace.hpp>
-
+#include "boost/algorithm/string.hpp"
 
 #include "TArrayD.h"
 
@@ -46,18 +46,20 @@ public:
 
 
 int main(){
-  string version ="new";// "wtag_topjetcorr";
+  string version ="new";// "wtag_topjetcorr";MuSel_recoptcuts_v2
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
   bool electron = false;
   if (electron)folder = "EleSel_new";
   bool single = true;
-  string output = "plots/"+folder+".ps";
+  string output = "plots/"+folder+"_lowprob.ps";
   bool sqrt_back = false;
   
   //if(single) output = plots/treehists/ 
+  string loose = "0.5426";
+
   
-  TreeHists treehists(output);
+  TreeHists treehists(output); 
   if(!electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuData.root","PE",1,20,false,"Data");
   if(electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleEleData.root","PE",1,20,false,"Data");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",4,-1,false,"B+b M(800) RH");
@@ -66,79 +68,105 @@ int main(){
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root","hist",10,-1,false,"B+t M(1000) RH");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",11,-1,false,"B+b M(1500) RH");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",12,-1,false,"B+t M(1500) RH");
-
+ 
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.QCD*.root","",4,-1,true,"QCD");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.SingleT*.root","",41,-1,true,"Single Top");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets*.root","",5,-1,true,"Z+Jets");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Tune.root","",2,-1,true,"t#bar{t}");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt700to1000.root","",2,-1,true,"t#bar{t}");
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt1000toInf.root","",2,-1,true,"t#bar{t}");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_*.root","",2,-1,true,"t#bar{t}");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt*.root","",3,-1,true,"W+Jets");
- 
+  
   treehists.SetTree("AnalysisTree");
+  treehists.mcratio_only();
+  string eta = "2.4";
+  string binning = "30,500,3000";
 
-  string eta = "1.8";
-  string binning = "40,500,3000";
-
-  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta+" && Chi2Dis.num_forward > 2";
-  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta+" || Chi2Dis.num_forward <= 2";
+  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta+" && Chi2Dis.chi<0.1";
+  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta+" && Chi2Dis.chi<0.1";
 
   string eletriggerfactors = "";
   if(electron)  eletriggerfactors ="("+eletriggerscale()+"*(1-isRealData)+isRealData)*";
   string muontrkfactors =""; 
   if(!electron) muontrkfactors = "("+muon_trk_factors()+"*(1-isRealData)+isRealData)*";
   string factors = muontrkfactors+eletriggerfactors;//+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
-  factors += "(Chi2Dis.forwardJet.pt()>0)*";
-
+  //factors += "(Chi2Dis.forwardJet.pt()>0)*";
+  
 
   cout<<"applying factors: "<<factors<<endl;
 
-   cout<<"Added all files. Ready to start working"<<endl; 
-  //W-tag cat. X2
-   
-  std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && "+forward_chi2+")",binning,"Mass B [GeV]");
-  std::vector<TH1F*> wtag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && "+central_chi2+")",binning,"Mass B [GeV]");
+  cout<<"Added all files. Ready to start working"<<endl; 
+  /*/
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && "+forward_chi2+")",binning,"Mass B [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && "+central_chi2+")",binning,"Mass B [GeV]");
+ 
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
+  
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
+  treehists.Draw("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && "+forward_chi2+")",binning,"Mass B [GeV]");
+  treehists.Draw("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && "+central_chi2+")",binning,"Mass B [GeV]");
+  /*/
+
+  string exclude_toptag = "TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400"; // || TopTagDis.btag_discriminand < "+loose;
+  
+  //std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass>0 && "+forward_chi2+")",binning,"Mass B [GeV]");
+  std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass>0 && "+forward_chi2+" && Chi2Dis.btagEventNumber>0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> wtag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass>0 && "+central_chi2+")",binning,"Mass B [GeV]");
   
   /*/
   //W-tag cat. WTag
-  std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("WTagDis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta()) >="+eta+")",binning,"Mass B [GeV]");
-  std::vector<TH1F*> wtag_central_hist = treehists.return_hists("WTagDis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta())  <"+eta+")",binning,"Mass B [GeV]");
+  std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("WTagDis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta()) >="+eta+")",binning,"Mass B [GeV]");
+  std::vector<TH1F*> wtag_central_hist = treehists.return_hists("WTagDis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta())  <"+eta+")",binning,"Mass B [GeV]");
   /*/
   //Chi2 categories
-  std::vector<TH1F*> chi2_0btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
-  std::vector<TH1F*> chi2_1btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
-  std::vector<TH1F*> chi2_2btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_0btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_1btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_2btag_forward_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+forward_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
   
-  std::vector<TH1F*> chi2_0btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
-  std::vector<TH1F*> chi2_1btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
-  std::vector<TH1F*> chi2_2btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_0btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_1btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber==1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_2btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight*(("+exclude_toptag+") && WTagDis.mass==-1 && "+central_chi2+" && Chi2Dis.btagEventNumber> 1)",binning,"Mass B [GeV]");
 
   /*/
-  //t-tag cat.
-  std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && abs(TopTagDis.forwardJet.eta())>="+eta+")",binning,"Mass B [GeV]");
-  std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && abs(TopTagDis.forwardJet.eta())< "+eta+")",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_0btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight/weight_btag*weight_btag_loose*(("+exclude_toptag+" ) && WTagDis.mass==-1 && "+central_chi2+" && numberofloosebjets==0)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_1btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight/weight_btag*weight_btag_loose*(("+exclude_toptag+") && WTagDis.mass==-1 && "+central_chi2+" && numberofloosebjets==1)",binning,"Mass B [GeV]");
+  std::vector<TH1F*> chi2_2btag_central_hist = treehists.return_hists("Chi2Dis.mass",factors+"weight/weight_btag*weight_btag_loose*(("+exclude_toptag+") && WTagDis.mass==-1 && "+central_chi2+" && numberofloosebjets> 1)",binning,"Mass B [GeV]");
   /*/
   //t-tag cat.
   std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && "+forward_chi2+")",binning,"Mass B [GeV]");
+  //std::vector<TH1F*> toptag_forward_hist = treehists.return_hists("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && TopTagDis.btag_discriminand > "+loose +" && "+ forward_chi2+")",binning,"Mass B [GeV]");
   std::vector<TH1F*> toptag_central_hist = treehists.return_hists("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 && "+central_chi2+")",binning,"Mass B [GeV]");
 
   cout<<"Done with the histogram production starting to add and check stuff"<<endl;
 
   string fitoption = "UUNORM P";
 
-
   //vector<string> sample_nick ={"Data","B+b M(800)","B+t M(800)","B+b M(1000)","B+t M(1000)","B+b M(1500)","B+t M(1500)","QCD","Singel Top","Z+Jets","ttbar","ttbar mid","ttbar high","W+Jets"};//"Data",
   //vector<string> sample_nick ={"Data","B+b M(800)","B+t M(800)","B+b M(1000)","B+t M(1000)","B+b M(1500)","B+t M(1500)","QCD","Singel Top","Z+Jets","ttbar","ttbar mid","ttbar high","W+Jets"};//"Data",
   vector<string> sample_nick = treehists.get_nicknames();
   cout<<"sample: ";
+  int start_add_backgrounds = 0;
+  bool found_start = false;
+  vector<unsigned int> sample_switch ={};
   for(unsigned int i=0; i<sample_nick.size();i++){
-    if(sample_nick[i].empty()) sample_nick[i]= sample_nick[i-1]+"_1"; 
+    if(sample_nick[i].empty()) sample_nick[i]= sample_nick[i-1];
+    else sample_switch.push_back(i);
+    if(!found_start && !boost::algorithm::contains(sample_nick[i], "B+") && !boost::algorithm::contains(sample_nick[i], "Data")){
+      start_add_backgrounds = i;
+      found_start = true;
+    }
+   
     cout<<sample_nick[i]<<", ";
   }
   cout<<endl;
-
+  sample_switch.push_back(sample_nick.size());
+  for(auto item : sample_switch){
+    cout<<item<<endl;
+  }
+  cout<<"start adding background at "<<start_add_backgrounds<<endl;
   
-
   vector<string> category = {"Anti-b-tag","1 b-tag","2 b-tags","t-tag","W-tag"};
   vector<vector<TH1F*>> central_hists = {chi2_0btag_central_hist,chi2_1btag_central_hist,chi2_2btag_central_hist,toptag_central_hist,wtag_central_hist};
   vector<vector<TH1F*>> forward_hists = {chi2_0btag_forward_hist,chi2_1btag_forward_hist,chi2_2btag_forward_hist,toptag_forward_hist,wtag_forward_hist};
@@ -162,54 +190,63 @@ int main(){
   comparison.set_histYTitle("normalized to area");
   comparison.set_XTitle("B mass [GeV]");
   comparison.normToArea(true,0.4);
+  comparison.set_ratioLimtis(0.4,1.9);
+  TH1F* background_sum_all_categories;
+  
   for(unsigned int i =0; i<central_hists.size();i++){
+    unsigned int sample_counter = 0;
     string recotype = " X^2";
     if(i==3 || i==4) recotype = "";
+    TH1F* sample_sum_forward, *sample_sum_central;
     for(unsigned int m=0;m<central_hists.at(i).size();m++){
       if(central_hists.at(i).at(m)->GetSumw2N()==0)central_hists.at(i).at(m)->Sumw2();
       if(forward_hists.at(i).at(m)->GetSumw2N()==0)forward_hists.at(i).at(m)->Sumw2();
-      if(m==7){
+      if(i==0 && m==start_add_backgrounds){
+	background_sum_all_categories = (TH1F*)central_hists.at(i).at(m)->Clone(("Sum Central"+category[i]).c_str());
+	background_sum_all_categories->SetTitle("Sum all categories");
+      }
+      else if(i!=3 && m>start_add_backgrounds) background_sum_all_categories->Add((TH1F*)central_hists.at(i).at(m)->Clone(("Sum Central"+category[i]).c_str()));
+      
+      if(m==start_add_backgrounds){
 	sum_forward.push_back((TH1F*)forward_hists.at(i).at(m)->Clone(("Sum Forward"+category[i]).c_str()));
 	sum_central.push_back((TH1F*)central_hists.at(i).at(m)->Clone(("Sum Central"+category[i]).c_str()));
       }
-      else if(m>7){
+      else if(m>start_add_backgrounds){
 	sum_central[sum_central.size()-1]->Add(central_hists.at(i).at(m));
 	sum_forward[sum_forward.size()-1]->Add(forward_hists.at(i).at(m));
       }
-      string histTitel = sample_nick[m]+" "+category[i]+recotype;
-      cout<<histTitel<<" ratio "<<forward_hists.at(i).at(m)->GetSumOfWeights()<< " / "<<central_hists.at(i).at(m)->GetSumOfWeights()<<" = " <<forward_hists.at(i).at(m)->GetSumOfWeights()/central_hists.at(i).at(m)->GetSumOfWeights()<<endl;
-      //central_hists.at(i).at(m)->Chi2Test(forward_hists.at(i).at(m),fitoption.c_str());
-      central_hists.at(i).at(m)->SetTitle(histTitel.c_str());
-      central_hists.at(i).at(m)->SetMarkerStyle(20);
-      //central_hists.at(i).at(m)->Scale(forward_hists.at(i).at(m)->GetSumOfWeights()/central_hists.at(i).at(m)->GetSumOfWeights());
-      if(central_hists.at(i).at(m)->GetSumOfWeights()==0 || forward_hists.at(i).at(m)==0)continue;
-      comparison.loadHists((TH1F*)central_hists.at(i).at(m)->Clone(),"Central","PE");
-      comparison.loadHists((TH1F*)forward_hists.at(i).at(m)->Clone(),"Forward","PE");
-      comparison.plotHists(2,false);      
-      comparison.clearAll();
+      if(m == sample_switch[sample_counter]){
+	sample_sum_forward = (TH1F*)forward_hists.at(i).at(m)->Clone();
+	sample_sum_central = (TH1F*)central_hists.at(i).at(m)->Clone();
+	string histTitel = sample_nick[m]+" "+category[i]+recotype;
+	sample_sum_central->SetTitle(histTitel.c_str());
+	sample_sum_central->SetMarkerStyle(20);
+      }
+      else if(m> sample_switch[sample_counter]){
+	sample_sum_forward->Add(forward_hists.at(i).at(m));
+	sample_sum_central->Add(central_hists.at(i).at(m));
+      }
+      if(m+1==sample_switch[sample_counter+1]){
+	sample_counter++;
+	if(sample_sum_central->GetSumOfWeights()==0 || sample_sum_forward->GetSumOfWeights()==0)continue;
+	comparison.loadHists((TH1F*) sample_sum_central->Clone(),"Central","PE");
+	comparison.loadHists((TH1F*) sample_sum_forward->Clone(),"Forward","PE");
+        cout<< sample_nick[m]+" "+category[i]+recotype+" central "<<sample_sum_central->GetSumOfWeights()<<" forward "<<sample_sum_forward->GetSumOfWeights()<<endl;
+	comparison.plotHists(2,false);      
+	comparison.clearAll();
+      }
     }
   } 
   
   for(unsigned int i =0; i<sum_central.size();i++){
     sum_central[i]->SetTitle(category[i].c_str());
     sum_forward[i]->SetTitle(category[i].c_str());
-    /*/
-    cout<<"=========================="<<endl;
-    cout<<category[i]<<endl;
-    cout<<"Forward/Central "<<sum_central[i]->GetTitle()<<" ratio "<<sum_forward[i]->GetSumOfWeights() <<" / "<<sum_central[i]->GetSumOfWeights()<<" "<<sum_forward[i]->GetSumOfWeights()/sum_central[i]->GetSumOfWeights()<<endl;
-    cout<<"=========================="<<endl;
-    /*/
     comparison.loadHists((TH1F*)sum_central[i]->Clone(),"Central","PE");
     comparison.loadHists((TH1F*)sum_forward[i]->Clone(),"Forward","PE");      
     comparison.plotHists(2,false);
     comparison.clearAll();
-    /*/
-    cout<<category[i]<<endl;
-    cout<<"Forward/Central "<<sum_central[i]->GetTitle()<<" ratio "<<sum_forward[i]->GetSumOfWeights() <<" / "<<sum_central[i]->GetSumOfWeights()<<" "<<sum_forward[i]->GetSumOfWeights()/sum_central[i]->GetSumOfWeights()<<endl;
-    cout<<"=========================="<<endl;
-    /*/
   }
-
+  
  simplePlots check_add("checksum.ps");
  for(unsigned int i =0; i<sum_central.size();i++){  
     check_add.loadHists((TH1F*)sum_forward[i]->Clone(),"Forward","PE");
@@ -233,8 +270,9 @@ int main(){
     check_add.loadHists(central_integral,"Central Integral","PE");
     check_add.plotHists(2,false);
     check_add.clearAll();
-   }
-  
+  }
+
+  //return 0;
   //do rebining since from ~2000-3000 stats are rather low!
   unsigned int number_bins = chi2_0btag_forward_hist[0]->GetNbinsX();
   double low_edge = chi2_0btag_forward_hist[0]->GetBinLowEdge(1);
@@ -271,7 +309,7 @@ int main(){
     //if(sqrt_back) output += "_sqrt";
     //output +="/";
   }
-  double signalfraction = 0.7;
+  double signalfraction = 0.8;
 
   
   simplePlots signal_contamination(output,single);
@@ -295,7 +333,6 @@ int main(){
     events_mass_windows_file <<endl;
     for(unsigned int i=1;i<7;i++){
       category_container event_cat;
-
       
       forward_hists.at(m).at(i)->SetTitle(("Forward "+category[m]).c_str());
       TH1F* tmp_forward = (TH1F*)forward_hists.at(m).at(i)->Clone();
@@ -454,7 +491,7 @@ int main(){
     signal_contamination.clearAll();
   }
 
-  
+  /*/
   for(unsigned int m=0; m<forward_hists.size();m++)
     for(unsigned int i=1;i<7;i++){
 
@@ -464,8 +501,7 @@ int main(){
       cout<<forward_hists.at(m).at(i)->GetTitle()<<" Signal ratio Central/Forward "<< sample_nick[i]<<": "<<central_hists.at(m).at(i)->GetSumOfWeights()/forward_hists.at(m).at(i)->GetSumOfWeights()<<endl;
       cout<<forward_hists.at(m).at(i)->GetTitle()<<" S/B ratio Central/Forward "<< sample_nick[i]<<": "<<(central_hists.at(m).at(i)->GetSumOfWeights()/sum_central[m]->GetSumOfWeights())/(forward_hists.at(m).at(i)->GetSumOfWeights()/sum_forward[m]->GetSumOfWeights())<<endl;
     }
-
-
+  /*/
   events_mass_windows_file.close();
   
   ofstream events_mass_windows_texfile;
@@ -530,8 +566,6 @@ vector<double> signal_rebin(TH1F* hist, double percent){
   
     
   return vector<double>();
-
-
 }
 
 

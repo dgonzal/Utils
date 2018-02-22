@@ -32,7 +32,7 @@ def pdf_norm(filename, treename="AnalysisTree"):
  
 
 
-def scale_norm( filename, treename="AnalysisTree"):
+def scale_norm(filename, treename="AnalysisTree"):
     work_file = ROOT.TFile(filename)
     tree = work_file.Get(treename)
     
@@ -73,22 +73,23 @@ def multithread_read(filestore, worker=6):
     pool.close()
     pool.join()
     result = result.get()
-    cross_setcion = 0.
+    cross_section = 0.
     scale_up = 0.
     scale_down = 0.
     pdf_sum=0.    
     for i in result:
         #print i 
-        cross_setcion += i[0][0]
+        cross_section += i[0][0]
         scale_up += i[0][1] 
         scale_down += i[0][2] 
         pdf_sum += i[1][1]    
 
-    print 'cross section', cross_setcion, 'scale up', scale_up, 'scale down', scale_down, 'PDF', pdf_sum
-    return  [cross_setcion,scale_up,scale_down,pdf_sum]
+    print 'cross section', cross_section, 'scale up', scale_up, 'scale down', scale_down, 'PDF', pdf_sum
+    return  [cross_section,scale_up,scale_down,pdf_sum]
 
 
 def find_xmlfile(directory, signal, chirality, width =''):
+    print 'find xml in',directory,'for',signal,chirality,width
     mass_width = ''
     if width:
         mass_width = width
@@ -106,14 +107,16 @@ def find_xmlfile(directory, signal, chirality, width =''):
 
 
 def scale_pdf_reweight(root_dir,xml_dir, signal, chirality, width =''):
-    xmlfiles = find_xmlfile(xml_dir, signal, chirality, width ='')
+    xmlfiles = find_xmlfile(xml_dir, signal, chirality, width)
     work_file = ROOT.TFile(root_dir,'UPDATE')
     keys = work_file.GetListOfKeys()
     
     for xmlfile in xmlfiles:
         digit_search = xmlfile.split('/')[-1]
-        digit_search = digit_search.replace(width,'')
+        print digit_search
+        digit_search = digit_search.replace(width+'p','')
         mass = str(filter(str.isdigit, digit_search))
+        #print xmlfile, 'mass',mass
         filestore = read_xml(xmlfile)
         result = multithread_read(filestore)
         nominal =      result[0]

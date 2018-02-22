@@ -9,13 +9,13 @@
 
 
 int main(int argc, char** argv){
-  string version = "_new";//"_wtag_topjetcorr";//"w2jet";//"wtag_topjetcorr";
+  string version = "_new";//"_new";//"_wtag_topjetcorr";//"w2jet";//"wtag_topjetcorr";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel"+version;
-  bool electron = true;
+  bool electron = false;
   bool errors = true;
   bool blind = true;
-  string resultfile = "MET_eta_plots.ps";//"moneyplots.pdf";
+  string resultfile = "loose_btag_background_plots.ps";//"moneyplots.pdf";
   bool single = true; 
   
   if(argc>1){
@@ -175,7 +175,30 @@ int main(int argc, char** argv){
   string toptag_scalefactor = "1.01";
   //string wtag_scalefactor = "";
 
-    
+
+
+/*/
+  if(blind){
+    treehists.removeFile(0);
+    treehists.mcratio_only();
+    //treehists.switch_ratio(false);
+  }
+  
+  //VLQ mass central
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) < 2 )","50,500,3000","central W-tag B mass","Events");
+
+
+  //treehists.switch_logy(true);
+  //VLQ mass forward/total
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) >= 2 && numberofloosebjets>0)","50,500,3000","forward W-tag B mass","Events");
+  
+ 
+  return 0;
+ 
+
+  /*/  
+
+
   treehists.Draw("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_eta",factors+"weight","70,-5,5","ak4 #eta","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_phi",factors+"weight","50,-3.14,3.14","ak4 #phi","Events");
@@ -217,6 +240,7 @@ int main(int argc, char** argv){
     treehists.Draw("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","30,250,1000","H_{T,lep} [GeV]","Events");
     treehists.Draw("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt + HT",factors+"weight","30,250,2000","S_{T} [GeV]","Events");
   }
+  
   /*/
   treehists.Draw("slimmedMETs.eta()","weight","70,-5,5","MET [GeV]","Events");
   treehists.Draw("slimmedMETs.eta()","weight*(fabs(Chi2Dis.forwardJet.eta())<2.4)","70,-5,5","MET [GeV]","Events");
@@ -230,55 +254,57 @@ int main(int argc, char** argv){
 
   return 0;
   /*/
+  
   treehists.Draw("Chi2Dis.btagEventNumber",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.btagEventNumber>-0.1)","6,-.5,5.5"," Number of b-tags");
   
   //forward jet
   //X2
-  treehists.Draw("Chi2Dis.forwardJet.pt()>0",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1)","6,-.5,5.5"," X^{2} forward ak4");
+  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())>=2.4",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1)","6,-.5,5.5"," X^{2} forward ak4");
   treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && (isRealData==0 || fabs(Chi2Dis.forwardJet.eta())<2))","50,-5,5","X^{2} forward ak4 #eta","Events");
-  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,-5,5","X^{2} forward ak4 #eta","Events");
-  treehists.Draw("Chi2Dis.forwardJet.energy()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,100,1200","X^{2} forward ak4 E","Events");
-  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,30,200","X^{2} forward ak4 p_{T}","Events");
+  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,-5,5","forward ak4 #eta","Events");
+  treehists.Draw("Chi2Dis.forwardJet.energy()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,100,1200","forward ak4 E","Events");
+  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 )","50,30,200","forward ak4 p_{T}","Events");
 
   //toptag
-  treehists.Draw("TopTagDis.forwardJet.pt()>0",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1)","6,-.5,5.5","toptag forward ak4");
-  treehists.Draw("TopTagDis.forwardJet.eta()" ,factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0 && (isRealData==0 || fabs(TopTagDis.forwardJet.eta())<2))","20,-5,5","toptag forward ak4 #eta","Events");
-  treehists.Draw("TopTagDis.forwardJet.eta()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","20,-5,5","toptag forward ak4 #eta","Events");
-  treehists.Draw("TopTagDis.forwardJet.energy()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,100,1200","toptag forward ak4 E","Events");
-  treehists.Draw("TopTagDis.forwardJet.pt()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,30,200","toptag forward ak4 p_{T}","Events");
+  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())>=2.4",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1)","6,-.5,5.5","toptag forward ak4");
+  treehists.Draw("TopTagDis.forwardJet.eta()" ,factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0 && (isRealData==0 || fabs(TopTagDis.forwardJet.eta())<2))","20,-5,5","forward ak4 #eta","Events");
+  treehists.Draw("TopTagDis.forwardJet.eta()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","20,-5,5","forward ak4 #eta","Events");
+  treehists.Draw("TopTagDis.forwardJet.energy()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,100,1200","forward ak4 E","Events");
+  treehists.Draw("TopTagDis.forwardJet.pt()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt() > 0)","50,30,200","forward ak4 p_{T}","Events");
   //W-tag
-  treehists.Draw("Chi2Dis.forwardJet.pt()>0",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass>0)","6,-.5,5.5","W-tag forward ak4");
-  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && (isRealData==0 || fabs(WTagDis.forwardJet.eta())<2))","20,-5,5","W-tag forward ak4 #eta","Events");
-  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","20,-5,5","W-tag forward ak4 #eta","Events");
-  treehists.Draw("Chi2Dis.forwardJet.energy()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","50,100,1200","W-tag forward ak4 E","Events");
-  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","50,30,200","W-tag ak4 p_{T}","Events");
-  
+  treehists.Draw("fabs(Chi2Dis.forwardJet.eta())>=2.4",factors+"weight*(TopTagDis.mass==-1 && WTagDis.mass>0)","6,-.5,5.5","W-tag forward ak4");
+  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && (isRealData==0 || fabs(WTagDis.forwardJet.eta())<2))","20,-5,5","forward ak4 #eta","Events");
+  treehists.Draw("Chi2Dis.forwardJet.eta()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","20,-5,5","forward ak4 #eta","Events");
+  treehists.Draw("Chi2Dis.forwardJet.energy()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","50,100,1200","forward ak4 E","Events");
+  treehists.Draw("Chi2Dis.forwardJet.pt()",factors+"weight*(TopTagDis.mass==-1 && Chi2Dis.forwardJet.pt() > 0 && WTagDis.mass>0)","50,30,200","ak4 p_{T}","Events");
+ 
  
   //X2 reco masses
-  treehists.Draw("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==12)","50,120,300","X^{2} top_{had} mass [GeV]");
-  treehists.Draw("Chi2Dis.topLep.M()",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==11)","50,120,300","X^{2} top_{lep} mass [GeV]");
-  treehists.Draw("Chi2Dis.topHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==12)","50,0,1000","X^{2} top_{had} p_{T} [GeV]");
-  treehists.Draw("Chi2Dis.topLep.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==11)","50,0,1000","X^{2} top_{lep} p_{T} [GeV]");
-  treehists.Draw("Chi2Dis.wHad.M()",factors+"weight*(TopTagDis.mass==-1    || TopTagDis.topHad.pt()<400)","50,60,120","X^{2} W_{had} mass [GeV]","Events");
-  treehists.Draw("Chi2Dis.wHad.pt()",factors+"weight*(TopTagDis.mass==-1   || TopTagDis.topHad.pt()<400)","50,0,1000","X^{2} W_{had} p_{T} [GeV]","Events");
-  treehists.Draw("Chi2Dis.wLep.M()",factors+"weight*(TopTagDis.mass==-1    || TopTagDis.topHad.pt()<400)","50,60,120","X^{2} W_{lep} mass [GeV]");
+  treehists.Draw("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==12)","50,120,300","top_{had} mass [GeV]");
+  treehists.Draw("Chi2Dis.topLep.M()",factors+"weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==11)","50,120,300","top_{lep} mass [GeV]");
+  treehists.Draw("Chi2Dis.topHad.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==12)","50,0,1000","top_{had} p_{T} [GeV]");
+  treehists.Draw("Chi2Dis.topLep.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp==11)","50,0,1000","top_{lep} p_{T} [GeV]");
+  treehists.Draw("Chi2Dis.wHad.M()",factors+"weight*(TopTagDis.mass==-1    || TopTagDis.topHad.pt()<400)","50,60,120","W_{had} mass [GeV]","Events");
+  treehists.Draw("Chi2Dis.wHad.pt()",factors+"weight*(TopTagDis.mass==-1   || TopTagDis.topHad.pt()<400)","50,0,1000","W_{had} p_{T} [GeV]","Events");
+  treehists.Draw("Chi2Dis.wLep.M()",factors+"weight*(TopTagDis.mass==-1    || TopTagDis.topHad.pt()<400)","50,60,120","W_{lep} mass [GeV]");
 
 
 
   //toptag mass
-  treehists.Draw("TopTagDis.topHad.M()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.topHad.pt()>=400)","30,105,300","toptag top_{had} mass [GeV]");
-  treehists.Draw("TopTagDis.topHad.pt()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1&& TopTagDis.topHad.pt()>=400)","30,350,1000","toptag top_{had} p_{T} [GeV]");
+  treehists.Draw("TopTagDis.topHad.M()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.topHad.pt()>=400)","30,105,300","top_{had} mass [GeV]");
+  treehists.Draw("TopTagDis.topHad.pt()",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1&& TopTagDis.topHad.pt()>=400)","30,350,1000","top_{had} p_{T} [GeV]");
 
 
   //VLQ mass central
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","central X^{2} 0 b-tags B mass [GeV]");
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","central X^{2} 1 b-tag B mass [GeV]" );
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","central X^{2} 2 b-tag B mass [GeV]" );
-  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) < 2 )","50,500,3000","central W-tag B mass","Events");
-  treehists.Draw("TopTagDis.mass",factors+"weight*("+toptag_central_string+")","30,500,3000","central toptag B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","B mass [GeV]");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_central_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) < 2.4 )","50,500,3000","B mass [GeV]","Events");
+  treehists.Draw("TopTagDis.mass",factors+"weight*("+toptag_central_string+")","30,500,3000","B mass [GeV]");
 
   if(blind){
     treehists.removeFile(0);
+    if(electron) treehists.removeFile(0);   
     treehists.mcratio_only();
     //treehists.switch_ratio(false);
   }
@@ -287,14 +313,14 @@ int main(int argc, char** argv){
   //treehists.switch_logy(true);
   //VLQ mass forward/total
   treehists.Draw("Chi2Dis.mass",factors+"weight*(TopTagDis.mass==-1)","30,500,3000","B mass [GeV]");
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","forward X^{2} 0 b-tags B mass [GeV]");	    
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","forward X^{2} 1 b-tag B mass [GeV]" );	    
-  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","forward X^{2} 2 b-tag B mass [GeV]" );
-  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) >= 2)","30,0,3000","forward W-tag B mass","Events");
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==0)","30,500,3000","B mass [GeV]");	    
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber==1)","30,500,3000","B mass [GeV]" );	    
+  treehists.Draw("Chi2Dis.mass",factors+"weight*("+chi2_forward_string+"&& Chi2Dis.btagEventNumber> 1)","30,500,3000","B mass [GeV]" );
+  treehists.Draw("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) >= 2 && Chi2Dis.btagEventNumber> 0)","50,500,3000","B mass","Events");
   
   //treehists.switch_logy(false);
   treehists.Draw("TopTagDis.mass",factors+toptag_scalefactor+"*weight*(TopTagDis.mass>-1 && TopTagDis.topHad.pt()>=400)","30,500,3000","B mass [GeV]");
-  treehists.Draw("TopTagDis.mass",factors+toptag_scalefactor+"*weight*("+toptag_forward_string+")","30,500,3000","forward toptag B mass [GeV]");
+  treehists.Draw("TopTagDis.mass",factors+toptag_scalefactor+"*weight*("+toptag_forward_string+")","30,500,3000","B mass [GeV]");
  
  
   return 0;
