@@ -49,7 +49,7 @@ int main(){
   string version ="new";// "wtag_topjetcorr";MuSel_recoptcuts_v2
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  bool electron = false;
+  bool electron = true;
   if (electron)folder = "EleSel_new";
   bool single = true;
   string output = "plots/"+folder+"_lowprob.ps";
@@ -60,8 +60,7 @@ int main(){
 
   
   TreeHists treehists(output); 
-  if(!electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuData.root","PE",1,20,false,"Data");
-  if(electron)treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SingleEleData.root","PE",1,20,false,"Data");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/Merge_Data.root","PE",1,20,false,"Data");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",4,-1,false,"B+b M(800) RH");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root","hist",8,-1,false,"B+t M(800) RH");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_RH.root","hist",9,-1,false,"B+b M(1000) RH");
@@ -78,10 +77,10 @@ int main(){
   treehists.SetTree("AnalysisTree");
   treehists.mcratio_only();
   string eta = "2.4";
-  string binning = "30,500,3000";
+  string binning = "50,0,3500";
 
-  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta+" && Chi2Dis.chi<0.1";
-  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta+" && Chi2Dis.chi<0.1";
+  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta;//+" && Chi2Dis.chi<0.1";
+  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta;//+" && Chi2Dis.chi<0.1";
 
   string eletriggerfactors = "";
   if(electron)  eletriggerfactors ="("+eletriggerscale()+"*(1-isRealData)+isRealData)*";
@@ -188,7 +187,7 @@ int main(){
   simplePlots comparison(output,single);
   comparison.set_ratioYTitle("Cen./For.");
   comparison.set_histYTitle("normalized to area");
-  comparison.set_XTitle("B mass [GeV]");
+  comparison.set_XTitle("m_{reco} [GeV]");
   comparison.normToArea(true,0.4);
   comparison.set_ratioLimtis(0.4,1.9);
   TH1F* background_sum_all_categories;
@@ -315,7 +314,7 @@ int main(){
   simplePlots signal_contamination(output,single);
   signal_contamination.set_histYTitle("S/B");
   if(sqrt_back) signal_contamination.set_histYTitle("S/#sqrt{B}");
-  signal_contamination.set_XTitle("B mass [GeV]");
+  signal_contamination.set_XTitle("m_{reco} [GeV]");
   signal_contamination.switch_ratio(false);
 
 
@@ -387,7 +386,7 @@ int main(){
 	tmp_sum->SetBinContent(np,back_sum);
 	tmp_sum->SetBinError(np,back_error);
       }
-      tmp_forward->GetXaxis()->SetTitle("B mass [GeV]");
+      tmp_forward->GetXaxis()->SetTitle("m_{reco} [GeV]");
       tmp_forward->GetXaxis()->SetTitleOffset(1.2);
       if(sqrt_back){
       for(int b=0; b< tmp_sum->GetNcells();++b)
@@ -465,7 +464,7 @@ int main(){
       }
 
       
-      tmp_central->GetXaxis()->SetTitle("B mass [GeV]");
+      tmp_central->GetXaxis()->SetTitle("m_{reco} [GeV]");
       tmp_central->GetXaxis()->SetTitleOffset(1.2);
       tmp_central->GetYaxis()->SetTitleOffset(1.2);
       tmp_central->GetYaxis()->SetTitle("S/B");

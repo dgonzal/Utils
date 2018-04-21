@@ -80,17 +80,18 @@ void HistsBase::addFolder(const string dir, const string contains, const string 
 
 }
 
-void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname, double uncer, double scalefactor){
+void HistsBase::addFile(string filedir, string hist_draw_option, int color, int marker, bool stack, string nickname, double uncer, double scalefactor, pair<string,string> replace){
   if(!boost::filesystem::exists(filedir) && !boost::algorithm::contains(filedir,"*")){
     cout<<"File does not exist "<<filedir<<endl;
     cout<<"Skipping File"<<endl;
+    return;
   }
   else{
     if(boost::algorithm::contains(filedir,"*")){
       cout<<"File dir with * wildcard "<<filedir<<endl;
       bool first = true;
       for(auto f : matching(filedir)){
-	cout<<"adding "<<f<<" to list of files"<<endl;
+	if(debug)cout<<"adding "<<f<<" to list of files"<<endl;
 	filedirs.push_back(f);
 	hist_draw_options.push_back(hist_draw_option);
 	hist_colors.push_back(color);
@@ -101,6 +102,7 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
 	uncertainties.push_back(uncer);
 	scale.push_back(scalefactor);
 	first =false;
+	replace_strings.push_back(replace);
       }
     }
     else{
@@ -112,8 +114,19 @@ void HistsBase::addFile(string filedir, string hist_draw_option, int color, int 
       nicknames.push_back(nickname);
       uncertainties.push_back(uncer);
       scale.push_back(scalefactor);
+      replace_strings.push_back(replace);
     }
   }
+  sample tmp = sample();
+  tmp.dir      = filedir;
+  tmp.nick     = nickname;
+  tmp.rate_unc = uncer;
+  tmp.scale    = scalefactor; 
+  tmp.hist_style.draw_option = hist_draw_option;
+  tmp.hist_style.color       = color;
+  tmp.hist_style.marker      = marker;
+  tmp.hist_style.stack       = stack;
+  samples.push_back(tmp);
 }
 
 void HistsBase::removeFile(unsigned int position){

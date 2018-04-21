@@ -29,9 +29,9 @@ bool check_name_difference(string oldname, string newname){
 
 int main(){
   string CMSSW = "8_0_24_patch1";
-  string folder = "EleSigSel_v1";//"MuSigSel";
+  string folder = "MuSigSel";//"EleSigSel_v1";//"MuSigSel";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
-  string output ="plots/resolutionEle/";
+  string output ="plots/resolutionMu/";
   bool single = true;
   
   //vector<string> filenames ={"BprimeB-800_LH","BprimeB-900_LH","BprimeB-1000_LH","BprimeB-1100_LH","BprimeB-1200_LH","BprimeB-1300_LH","BprimeB-1400_LH","BprimeB-1500_LH","BprimeB-1600_LH","BprimeB-1700_LH","BprimeB-1800_LH","BprimeB-800_RH","BprimeB-900_RH","BprimeB-1000_RH","BprimeB-1100_RH","BprimeB-1200_RH","BprimeB-1300_RH","BprimeB-1400_RH","BprimeB-1500_RH","BprimeB-1600_RH","BprimeB-1700_RH","BprimeB-1800_RH"};
@@ -51,32 +51,19 @@ int main(){
     //cout<<copy<<endl;
     nicks.push_back(copy);
   }
-
+  
   TreeHists treehists("plots/dummy.ps");
   treehists.SetTree("AnalysisTree");
   int i =0;
   for(auto name : filenames){
-    if(i==0)treehists.addFile(dir+name+".root","PE", i+2, -1 ,false, nicks[i]);
+    if(i==0)treehists.addFile(dir+name+".root","Hist", i+2, -1 ,false, nicks[i]);
     else treehists.addFile(dir+name+".root","same",i+2, -1 ,false, nicks[i]);
     i++;
   }
   treehists.switch_ratio(false);
-  /*/
-  treehists.Draw("BestFit.topHad.M()","weight*("+helper_chooser+" BestFit.recoTyp ==22 && fabs(BestFit.topHad.eta())<1.4)","20,100,300"  ,"mass [GeV]");
-  treehists.Draw("BestFit.topHad.eta()","weight*("+helper_chooser+" BestFit.recoTyp ==22 )","50,-4,4"  ,"mass [GeV]");
-  treehists.Draw("BestFit.topLep.M()","weight*("+helper_chooser+" BestFit.recoTyp ==21 )","20,100,300"  ,"mass [GeV]");
-  treehists.Draw(deltaRstring("BestFit.topHad","BprimeGen.topHad"),"weight*("+helper_chooser+" BestFit.recoTyp ==22 )","50,0,2"  ,"");
-  
-  treehists.Draw(deltaRstring("BestFit.topHad","BprimeGen.topHad"),"weight*("+helper_chooser+" BestFit.recoTyp ==22 && BestFit.topHad.M()<150)","50,0,2"  ,"");
-  treehists.Draw("BestFit.mass"          ,"weight*("+helper_chooser+" BestFit.recoTyp ==22 && BestFit.topHad.M()<150)","50,500,3000"  ,"");
-  treehists.Draw("BestFit.topHad.phi()"  ,"weight*("+helper_chooser+" BestFit.recoTyp ==22 && BestFit.topHad.M()<150)","50,-4,4"  ,"");
-  treehists.Draw("BestFit.topHad.eta()","weight*("+helper_chooser+" BestFit.recoTyp ==22 && BestFit.topHad.M()<150)","50,-4,4"  ,"");
- 
-  treehists.Draw("sqrt("+deltaRstring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
-  treehists.Draw("sqrt("+deltaPhistring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
-  treehists.Draw("sqrt("+deltaEtastring("BestFit.wHad","BestFit.topLep")+")","weight*("+helper_chooser+" BestFit.recoTyp ==21)","30,0,4"   ,"");
-  /*/
 
+  
+  
   string binning = "70,-1,4";
   string sel_string = "TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400";
 

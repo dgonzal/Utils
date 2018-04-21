@@ -8,8 +8,8 @@ int main(int argc, char** argv){
   string version = "new";
   string CMSSW = "8_0_24_patch1";
   string folder = "MuSel_"+version;
-  bool electron = true;
-  bool errors = false;
+  bool electron = false;
+  bool errors = true;
   bool blind = true;
   string resultfile = "quick.ps";
 

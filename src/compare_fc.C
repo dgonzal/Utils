@@ -38,8 +38,6 @@ int main(){
   string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta;
   string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta;
 
-
-  
   //W-tag cat.
   std::vector<TH1F*> wtag_forward_hist = treehists.return_hists("Chi2Dis.mass","weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta()) >="+eta+")",binning,"Mass B [GeV]");
   std::vector<TH1F*> wtag_central_hist = treehists.return_hists("Chi2Dis.mass","weight*((TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400) && WTagDis.mass>0 && abs(Chi2Dis.forwardJet.eta())  <"+eta+")",binning,"Mass B [GeV]");

@@ -4,7 +4,7 @@ import ROOT
 ROOT.gROOT.SetStyle("Plain")
 ROOT.gStyle.SetOptStat(000000000)
 ROOT.gStyle.SetOptTitle(0)
-
+ROOT.TH1.AddDirectory(0)
 
 
 from ROOT import TFile, TH1, TObject
@@ -33,29 +33,26 @@ def create_merged_hists(input_fname, output_fname,postfix,region =['','']):
     print 'doing the merging'
     print 'input file',input_fname
     print 'output file',output_fname
-    
     in_file = TFile(input_fname)
     keys = in_file.GetListOfKeys()
-    
     hist_names =[]
     histos = []
     cloned = []
-    
     
     for key in keys:
         key = str(key.GetName())
         #print key
         category = key.split("__")[0]
         systematic = False
-	if len(key.split("__"))>2 and not 'scaleWeight' in key:
-            continue
-        if 'scaleWeight' in key:
-            systematic = True
+	if len(key.split("__"))>3: continue # and not 'scaleWeight' in key:
+            #continue
+        #if 'scaleWeight' in key:
+        #    systematic = True
         new_name = category+'__'+postfix
-        if systematic:
-                new_name +='__scaleWeight__'
-                if 'plus' in key: new_name+='plus'
-                else: new_name+='minus'
+        #if systematic:
+        #        new_name +='__scaleWeight__'
+        #        if 'plus' in key: new_name+='plus'
+        #        else: new_name+='minus'
         if region[0]:
                 new_name = new_name.replace(region[0],region[1])
         if not new_name in hist_names:
@@ -129,21 +126,27 @@ def add_signal(fname, process, signal_file, signal, scale):
             if signal.replace('-','_') not in signal_key.split("__")[1].replace('-','_'):continue
 	    #print category, sig_cat
             if category == sig_cat:
-                print 'adding to',signal_key,'to',key 
-                sig_hist = signal_file.Get(signal_key).Clone(key)
-                original.append(work_file.Get(key))
-                binning = get_binning(original[-1])
+                print 'adding',signal_key,'to',key 
+                sig_hist = signal_file.Get(signal_key).Clone()
+                #original.append(work_file.Get(key).Clone(key))
+                #binning = get_binning(original[-1])
+                hist = work_file.Get(key).Clone(key)
+		work_file.Delete(key+';*')
+                binning = get_binning(hist)
+		#print binning
                 if binning:
 		   sig_hist = sig_hist.Rebin(len(binning)-1,key,array.array('d',binning))
                 sig_hist.Scale(scale)
 		#print 'adding',sig_hist.GetIntegral(), 'to', original[-1].GetIntegral() 
-                original[-1].Add(sig_hist)
+                #original[-1].Add(sig_hist)
+		hist.Add(sig_hist)
+		original.append(hist) #.Write('',TObject.kOverwrite)
                 break
 
     signal_file.Close()
     work_file.cd()
     for item in original:
-        item.Write('',TObject.kOverwrite);
+        item.Write('')#,TObject.kOverwrite);
     work_file.Close()
 
     
@@ -486,7 +489,22 @@ def signal_rebin(rebin_file, signal = "Bprime", process='DATA'):
         item.Write('',TObject.kOverwrite);    
     work_file.Close()
     del hist_list            
- 
+
+
+def hist_title(filename, histtitel):
+    print 'rename hist titel in',filename,'to',histtitel
+    work_file = TFile(filename,"UPDATE")
+    keys = work_file.GetListOfKeys()
+    hist_list=[]
+    for key in keys:
+        key = str(key.GetName())
+        hist = work_file.Get(key).Clone()
+        work_file.Delete(key+';*')
+        hist.SetTitle(histtitel)
+        hist_list.append(hist)
+    for item in hist_list:
+        item.Write()
+    work_file.Close()
 
     
 def rename_hists(filename, from_s, to_s):

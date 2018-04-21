@@ -2,6 +2,9 @@
 from scipy.stats import chisqprob
 import time
 import copy
+import ROOT
+ROOT.TH1.AddDirectory(0)
+
 execfile("PostFitUncertainties.py")
 execfile("ThetaPostFitPlot.py")
 
@@ -13,7 +16,7 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
     print 'building model from',fname,'for mle fit'
     model = build_model_from_rootfile(fname,include_mc_uncertainties=True)
     model.fill_histogram_zerobins()
-    uncer = 15
+    uncer = 5
     #if not channel:
     #	uncer = 1.10
 
@@ -21,18 +24,19 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
 
     names_tup =[('Anti-b-tag_rate','Chi2_AntiBTag'),('1-b-tag_rate','Chi2_1_BTag'),('2-b-tag_rate','Chi2_2_BTag'),('W-tag_rate','Chi2_WTag'),('top-tag_rate','TopTag')]
 
-    for unc in names_tup:
+    for unc in names_tup:       
         if channel =="Mu" or not channel:         
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Background',obsname=unc[1]+'Mu')
+            #model.add_lognormal_uncertainty('norm_rate', math.log(uncer), procname='Background',obsname=unc[1]+'Mu')
         if channel =="Ele" or not channel:
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Background',obsname=unc[1]+'Ele') 
-       
+            #model.add_lognormal_uncertainty('norm_rate', math.log(uncer), procname='Background',obsname=unc[1]+'Ele')
     
     if signal:
         model.add_lognormal_uncertainty('signal_cross',math.log(uncer),procname=signal,obsname='*')
 
     #for p in model.processes:
-    #    model.add_lognormal_uncertainty('lumi', math.log(1.048), p)
+    #    model.add_lognormal_uncertainty('lumi', math.log(1.025), p)
     #    model.add_lognormal_uncertainty('Wtag_unc', math.log(1.05), p, obsname='WTag*')
     #    model.add_asymmetric_lognormal_uncertainty('toptag_unc', math.log(1.04), math.log(1.07), p, obsname='TopTag*')
 
@@ -41,12 +45,14 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
     #options.set('minimizer', 'strategy', 'robust')
     #model.restrict_to_observables(['TopTag'+channel,'Chi2_WTag'+channel,'Chi2_2_BTag'+channel,'Chi2_1_BTag'+channel])
     #model_summary(model, create_plots=True, shape_templates=True)
-    mle_output = mle(model, input='data', n=4000, options=options,signal_process_groups ={"background_only":[]},chi2=True,with_covariance=True) #,signal_process_groups ={"background_only":[]}
+    mle_output = mle(model, input='data', n=4000, options=options,signal_process_groups ={"background_only":[]},chi2=True,with_covariance=True) #,signal_process_groups ={"background_only":[]}chi2=True
     mle_background = copy.deepcopy(mle_output)
     
     resultfile = fname.replace('.root','_fit_out.root')
     writeOutputFile(fname, resultfile, mle_output['background_only'], model, pdf = False)
-
+    write_covariance_matrices(mle_output["background_only"],fname.replace('.root','_covariance.root'))
+    print fname.replace('.root','_covariance.root')
+    #exit(0)
     #write_histograms_to_rootfile(histos, channel+'_histos_mle.root')
     #write_histograms_to_rootfile(data_histos,'histos-mle.root')
     
@@ -148,13 +154,9 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
                model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='Chi2_2_BTagMu')    
                model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagMu')         
 
-            
-        #elif 'Signal' in p:
-        #model.add_lognormal_uncertainty('beta_signal', math.log(5.), procname='Signal',obsname='*') 
-            #model.add_lognormal_uncertainty('beta_signal', math.log(2.), procname='Background_X*',obsname='*')
-
+       
     #400% on the normalization
-    uncer = 2.
+    uncer = 5.
     names_tup =[('Anti-b-tag_rate','Chi2_AntiBTag'),('1-b-tag_rate','Chi2_1_BTag'),('2-b-tag_rate','Chi2_2_BTag'),('W-tag_rate','Chi2_WTag'),('top-tag_rate','TopTag')]
 
     for unc in names_tup:
@@ -163,12 +165,7 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
            
         if channel =="Ele" or not channel:
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Background',obsname=unc[1]+'Ele') 
-        #if mass:
-        #    model.add_lognormal_uncertainty(unc[0], math.log(5.), procname='Signal_central_'+mass,obsname='*')
-
-    #if mass:
-    #    model.add_asymmetric_lognormal_uncertainty('beta_signal', math.log(1.), math.log(1.), procname='Signal_central_'+mass, obsname='*')
-            #model.add_lognormal_uncertainty(, math.log(5.), procname='Signal_central_'+mass,obsname='*') 
+       
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
     #options.set('main', 'n_threads', '5')
@@ -183,18 +180,9 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
         exp, obs = bayesian_limits(model, 'all', n_toy = 200, n_data = 100, options=options)
 
     if mass:
-       discovery_val= discovery(model, Z_error_max=0.2, maxit=10, n=5000, n_expected=5000, input_expected='data', options=options)
-    """
-    #options.set('main', 'n_threads', '20')
-    discovery_val = []
-    for i, signal in enumerate(model.signal_processes):
-        if mass and '_'+mass+'_' in signal: 
-            discovery_val.append(discovery(model, spid=signal , Z_error_max=0.2, maxit=1, n=5000, n_expected=400, input_expected='data', options=options))
-    """
-            
-    #zvalue =  zvalue_approx(model, input='data', n=1, options=options)
-    #exp, obs = asymptotic_cls_limits(model, use_data=True, beta_signal_expected=beta_sig, bootstrap_model=True, n=1, options=options)
-
+       discovery_val= discovery(model, Z_error_max=0.2, maxit=10, n=500, n_expected=500, input_expected='data', options=options)
+   
+    
     print 'Limits based on MC!'
     print "expected limit "+Chirality+' '+channel +":"
     print exp
@@ -269,10 +257,10 @@ def best_signalfit(fname,mass):
     names_tup =[('Anti-b-tag_rate','Chi2_AntiBTag'),('1-b-tag_rate','Chi2_1_BTag'),('2-b-tag_rate','Chi2_2_BTag'),('W-tag_rate','Chi2_WTag'),('top-tag_rate','TopTag')]
     
     for unc in names_tup:
-        if channel =="Mu":         
+        #if channel =="Mu"  or not channel:         
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Background',obsname=unc[1]+'Mu')
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Signal_central_'+mass,obsname=unc[1]+'Mu')
-        if channel =="Ele":
+        #if channel =="Ele" or not channel:
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Background',obsname=unc[1]+'Ele') 
             model.add_lognormal_uncertainty(unc[0], math.log(uncer), procname='Signal_central_'+mass,obsname=unc[1]+'Ele')
     
@@ -284,7 +272,7 @@ def best_signalfit(fname,mass):
 
     #model.restrict_to_observables(['TopTag'+channel,'Chi2_WTag'+channel,'Chi2_2_BTag'+channel,'Chi2_1_BTag'+channel])
     #model_summary(model, create_plots=True, shape_templates=True)
-    mle_output = mle(model, input='data', n=5000, options=options,signal_process_groups ={"background_only":[]},with_error=True,chi2=True,with_covariance=False) #,signal_process_groups ={"background_only":[]}
+    mle_output = mle(model, input='data', n=1000, options=options,signal_process_groups ={"background_only":[]},with_error=True,chi2=True,with_covariance=False) #,signal_process_groups ={"background_only":[]}
 
     resultfile = fname.replace('.root','_bestfit_out.root')
     writeOutputFile(fname, resultfile, mle_output['background_only'], model, pdf = False)

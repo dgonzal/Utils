@@ -22,12 +22,13 @@ sourcedirs = ['/MuSel_new/','/EleSel_new/'] #'/MuSel_wtag_topjetcorr/'
 #sourcedirs = ['/EleSel_new/']
 
 
-rootDir = 'ROOT_60_0_3500/'
+rootDir = 'ROOT_DataSideband_04/' #ROOT_DataSideband_04/' # ROOT_DataSideband_04/' #ROOT_50_0_3500/' #'60_0_3500/'DataSideband_04/
 prefix =''
+postfix='diff'
 
 #MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt.root,QCD.root"
 #MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets*.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt*.root,QCD*.root"
-MC = "MC.TTbar_*.root,WJets_Pt*.root,ZJets*.root,SingleT*.root"#,QCD*.root"
+MC = "MC.TTbar_*.root,WJets_Pt*.root,ZJets*.root,SingleT*.root,QCD*.root"
 Signal = "BprimeB-1100_LH.root,BprimeB-1700_LH.root"
 background = 'Merge_Data.root' #"SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar.root,WJets_Pt.root,QCD.root"
 
@@ -73,8 +74,7 @@ for i,channel in enumerate(prod_channels):
     
     print rootfile
     if create:
-        #call(['./../bin/rootfilecreator', background, data_rootfile,dirstring,channel,"","","DATA_central"])
-        call(['./../bin/rootfilecreator', background, data_rootfile,dirstring,channel,"","",""])    
+        call(['./../bin/rootfilecreator', background, data_rootfile,dirstring,channel,"","",""])
         call(['./../bin/rootfilecreator', MC, central_mc_rootfile,dirstring,channel,"","","central"])
         call(['./../bin/rootfilecreator', MC, forward_mc_rootfile,dirstring,channel,"","","forward"])
         call(['./../bin/rootfilecreator', Signal, signal_file,dirstring,channel,"","","DATA_forward"])
@@ -107,21 +107,22 @@ for i,channel in enumerate(prod_channels):
     
     call(['hadd -f '+data_rootfile.replace('.root','_work.root')+' '+data_rootfile],shell=True)
     data_rootfile=data_rootfile.replace('.root','_work.root')
-    antibtag_binning = [300.0, 370.0, 440.0, 510.0, 580.0, 650.0, 720.0, 790.0, 860.0, 930.0, 1000.0, 1070.0, 1140.0, 1210.0, 1280.0, 1350.0, 1420.0, 1490.0, 1560.0, 1630.0, 1700.0, 1770.0, 1840.0, 1910.0, 1980.0, 2050.0, 2190.0, 2540.0, 4500.0]
+    #antibtag_binning = [300.0, 370.0, 440.0, 510.0, 580.0, 650.0, 720.0, 790.0, 860.0, 930.0, 1000.0, 1070.0, 1140.0, 1210.0, 1280.0, 1350.0, 1420.0, 1490.0, 1560.0, 1630.0, 1700.0, 1770.0, 1840.0, 1910.0, 1980.0, 2050.0, 2190.0, 2540.0, 4500.0]
     
     #fixed_rebin(data_rootfile,2)#,'AntiBTag')
     
     rebinned_data = simpleRebin(data_rootfile,stat_uncer,['Background'],data_unc.replace('.root','_rebinned.root'),['Background'])
-    #rebinned_data = simpleRebin(rebinned_data,stat_uncer,['DATA'],rebinned_data.replace('.root','_final.root'),['Background'])    
+    rebinned_data = simpleRebin(rebinned_data,0.4,['DATA'],rebinned_data.replace('.root','_final.root'),['Background'])    
     rebinned_unc_data = add_signal_background_uncer(rebinned_data, forward_merged, central_merged,"",True )
     rebinned_unc_data = simpleRebin(rebinned_unc_data,stat_uncer,['Background'],'',['Background'])
+
     #if i ==0:
     #    continue
     #else:
     #    exit(0)
     
     print 'final anti b-tag rebinning'
-    #rebinned_unc_data = simpleRebin(rebinned_unc_data,0.11,['Background'],'',['Background'],'Anti')
+    #rebinned_unc_data = simpleRebin(rebinned_unc_data,0.09,['Background'],'',['Background'],'Anti')
     plotting_files += rebinned_unc_data+" "
     
     
@@ -130,7 +131,7 @@ for i,channel in enumerate(prod_channels):
     print "nominal results"
     #scale_hists(rebinned_unc_data,'Background',0.25)
     nominal_results, fitted = background_fit(rebinned_unc_data, channel, False, "")
-    #nominal_results = background_fit(rebinned_data, channel, False, "")
+    #nominal_results,fitted = background_fit(rebinned_data, channel, False, "")
     
     print nominal_results    
     print '*'*10
@@ -139,8 +140,7 @@ for i,channel in enumerate(prod_channels):
     #continue
     print '+'*10
 
-    #scale_hists(rootfileData.replace('.root','_unc_rebinned.root'), 'Background', nominal_results)
-    scale_hists(rebinned_unc_data,'Background',nominal_results) 
+    #scale_hists(rebinned_unc_data,'Background',nominal_results) 
 
 combined_fit = rootDir+'background.root'
 call(['hadd -f '+combined_fit+' '+plotting_files],shell=True)
@@ -152,70 +152,38 @@ call(['hadd -f '+combined_fit+' '+plotting_files],shell=True)
 #ele_binning = [0.0, 300.0, 375.0, 450.0, 525.0, 600.0, 675.0, 750.0, 825.0, 900.0, 975.0, 1050.0, 1125.0, 1200.0, 1275.0, 1350.0, 1425.0, 1500.0, 1575.0, 1725.0, 1875.0, 2250.0, 4500.0] 
 #fixed_rebin(combined_fit,ele_binning,'AntiBTagEle')
 
+combined_fit = rescale_on_count(combined_fit,'DATA','Background')
+
 combined_results, fitted = background_fit(combined_fit, '', False, "")
 #scale_hists(combined_fit, 'Background', nominal_results)
 
 prefit_plot  = rootDir+'background_prefit.root'
 postfit_plot = rootDir+'background_postfit.root'
 
-call(['hadd -f '+prefit_plot +' '+combined_fit+' '+signal_files],shell=True)
+call(['hadd -f '+prefit_plot +' '+combined_fit],shell=True)  #+' '+signal_files
 call(['hadd -f '+postfit_plot+' '+combined_fit.replace('.root','_fit_out.root')+' '+signal_files],shell=True)
+
+
+#hist_title(postfit_plot,'m_{reco}')
+#hist_title(prefit_plot,'m_{reco}')
 
 signal_rebin(prefit_plot , "Bprime", 'DATA')
 signal_rebin(postfit_plot, "Bprime", 'DATA')
 
 
+print 'prefit chi2'
+chi2_calc(prefit_plot,'DATA','Background')
+print 'postfif chi2'
 chi2_calc(postfit_plot,'DATA','Background')
-
+#exit(0)
 print events_per_width(prefit_plot)
 print events_per_width(postfit_plot)
 
-blind_final(postfit_plot,'DATA','Background')
-
+#blind_final(postfit_plot,'DATA','Background')
+sort_hists(prefit_plot)
+#sort_hists(postfit_plot)
 
 call(['Plots -f ../../../SFramePlotter/BackgroundTheta.steer'],shell=True)
 call(['Plots -f ../../../SFramePlotter/BackgroundTheta_postfit.steer'],shell=True)
 #print rootDir+'background.root'
 
-exit(0)
-
-mc_channel_merged_f = rootDir+prefix+'merged_channel_mc_forward.root'
-mc_channel_merged_c = rootDir+prefix+'merged_channel_mc_central.root'
-data_channel_merged = rootDir+prefix+'merged_channel_data.root'
-
-mc_channel_merged_hadd_f ='hadd '+mc_channel_merged_f
-mc_channel_merged_hadd_c ='hadd '+mc_channel_merged_c
-data_channel_merged_hadd = 'hadd '+data_channel_merged
-
-for item in mc_channel_f:
-    mc_channel_merged_hadd_f+=' '+item
-for item in mc_channel_c:
-    mc_channel_merged_hadd_c+=' '+item
-for item in data_channel:
-    data_channel_merged_hadd+=' '+item
-
-call(['rm '+mc_channel_merged_f],shell=True)
-call(['rm '+mc_channel_merged_c],shell=True)
-call(['rm '+data_channel_merged],shell=True) 
-call([mc_channel_merged_hadd_f],shell=True)
-call([mc_channel_merged_hadd_c],shell=True)
-call([data_channel_merged_hadd],shell=True)
-    
-mc_channel_merged_f  =  merge_channel(mc_channel_merged_f,['Mu','Ele'])
-mc_channel_merged_c  =  merge_channel(mc_channel_merged_c,['Mu','Ele'])
-data_channel_merged=  merge_channel(data_channel_merged,['Mu','Ele'])
-
-stat_uncer = 0.8
-       
-rebinned_data = simpleRebin(data_channel_merged,stat_uncer,['Background'],data_channel_merged.replace('.root','_rebinned.root'),['Background'])
-rebinned_data = simpleRebin(rebinned_data,stat_uncer+1,['DATA'],rootDir+'merged_channel_result.root',['Background'])
-rebinned_unc_data = add_signal_background_uncer(rebinned_data, mc_channel_merged_f, mc_channel_merged_c,"",True )
-    
-nominal_results, fitted = background_fit(rebinned_unc_data, '', False, "")
-
-
-"""
-call(['cd ../../../SFramePlotter/'],shell=True)
-call(['Plots -f BackgroundTheta.steer'],shell=True)
-call(['cd -'],shell=True)
-"""

@@ -207,11 +207,12 @@ void simplePlots::plotHists(int options, bool logy){
       
       if(histos[m]->GetMaximum()<0.09)TGaxis::SetMaxDigits(2);
       else TGaxis::SetMaxDigits(5);
-      histos[m]->SetMinimum(hist_minimum);    
+      //histos[m]->SetMinimum(hist_minimum);    
+      histos[m]->SetMinimum(0.0001);    
       histos[m]->GetYaxis()->SetTitle(hist_ytitle.c_str());
       //histos[m]->GetYaxis()->SetLabelSize(0.04/bottomSize); 
-      histos[m]->GetYaxis()->SetTitleSize(0.08);
-      histos[m]->GetYaxis()->SetTitleOffset(0.6);
+      histos[m]->GetYaxis()->SetTitleSize(0.06);
+      histos[m]->GetYaxis()->SetTitleOffset(0.8);
       //cout<<histos[m]->GetYaxis()->GetXmin()<<endl;
       
       if(!draw_ratio||histos.size()==1){

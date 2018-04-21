@@ -1,10 +1,12 @@
 #! /usr/bin/env python
+import ROOT
 
 ROOT.gROOT.SetStyle("Plain")
 ROOT.gStyle.SetOptStat(000000000)
 ROOT.gStyle.SetOptTitle(0)
 
 from ROOT import TFile, TH1, TObject
+ROOT.TH1.AddDirectory(0)
 execfile('injection_merge.py')
 
 
@@ -54,7 +56,7 @@ def add_substraction_unc(filename,signal_file,signal,values):
         category = key.split('__')[0]
         hist_up   =  work_file.Get(key).Clone(key+'__signalSub__plus')
         hist_down =  work_file.Get(key).Clone(key+'__signalSub__minus')
-        signal_hist = signal_file.Get(category+'__'+signal)
+        signal_hist = signal_file.Get(category+'__'+signal).Clone()
         binning = get_binning(hist_up)
         if binning:
 	    signal_hist = signal_hist.Rebin(len(binning)-1,key,array.array('d',binning))
@@ -63,11 +65,11 @@ def add_substraction_unc(filename,signal_file,signal,values):
         hist_up.Add(signal_hist)
         hist_down.Add(signal_hist,-1)
         hist_list.append(hist_up); hist_list.append(hist_down)
-    signal_file.Close()
     work_file.cd()
     for item in hist_list:
         item.Write('',TObject.kOverwrite);
     work_file.Close()
+    signal_file.Close()
     print 'added signal substraction uncertainty to', filename
 
         

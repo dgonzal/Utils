@@ -69,7 +69,7 @@ vector<TH1F*> TreeHists::return_hists(string variable, string draw_option, strin
 }
 
 
-bool TreeHists::Draw(string variable, string draw_option, string binning, std::string x_axis, std::string y_axis, bool legend, std::string data_draw_option){
+bool TreeHists::Draw(string variable, string draw_option, string binning, std::string x_axis, std::string y_axis, bool legend, std::string data_draw_option, std::string plot_name){
   /*
   ** draw_option is in this case for the TTreeDraw command
   ** hist_draw_options governs how the histograms are drawn!!
@@ -81,7 +81,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   //error_folder_histos = std::vector<std::vector<TH1F*>>();
     
   histos = std::vector<TH1F*>();
-
+  TFile* plot_file;
   
   if(treeName.empty()){
       cerr<<"There is no name for the Tree given"<<endl;
@@ -91,6 +91,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     cerr<<"There is no name for the variable given, which should be plotted"<<endl;
     return false;
   }
+  string input_var = variable;
   std::vector<std::string> hist_draw_options = get_draw_options();
   std::vector<bool> stackInfo = get_stackInfo();
   std::vector<int> histColors = get_histColors();
@@ -100,6 +101,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   std::vector<double> uncertainties_stack;
   std::vector<double> scale = get_scalefactors();
   bool single_plots = get_single();
+  std::vector<std::pair<std::string,std::string>> replace_sample = get_replace_strings();
   get_can()->cd();
 
   
@@ -125,6 +127,10 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     boost::replace_all(filestring,"$","");
     */
     singlefile_result = get_resultFile()+filestring;
+    if(!plot_name.empty()){
+      singlefile_result = get_resultFile()+plot_name+".pdf";
+      plot_file = new TFile(get_resultFile()+(plot_name+".root").c_str(),"RECREATE");
+    }
     cout<<"Single File name "<<singlefile_result<<endl;
     //get_can()->Print(singlefile_result+"[");
   }
@@ -148,6 +154,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     
   }
   for(const auto & fileDir : get_filedirs()){
+    variable = input_var;
     if(treeload_once == true && treeloaded ==true)
 	break;
     //cout<<"var: "<<variable<<endl;
@@ -197,7 +204,9 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     if(debug)cout<<"main draw options "<< modified_draw_option<< " binning "<<binning<<" draw options "<<modified_draw_option <<endl;
     if(boost::algorithm::contains(fileDir,".DATA.") &&  !data_draw_option.empty())
       modified_draw_option = data_draw_option;
-    histos.push_back(make_hist(mytree, variable, binning, modified_draw_option));
+    if(boost::algorithm::contains(variable,replace_sample[counter].first))
+      boost::replace_all(variable,replace_sample[counter].first,replace_sample[counter].second);
+    histos.push_back(make_hist(mytree, variable, binning, modified_draw_option,nicknames[counter]));
     if(debug)cout<<"main entries "<<histos[histos.size()-1]->GetEntries()<<endl;
     if(!stackInfo.at(counter) || mcratio) continue;
     //int count_per_error =0;
@@ -207,13 +216,13 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	string error = error_weights[i];
 	if(boost::algorithm::contains(error,"REPLACE"))
 	  boost::replace_all(error,"REPLACE",number);
-	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option);
+	myTmpHist = make_hist(mytree, variable, binning, error+"*"+draw_option,nicknames[counter]+error_weights_name[i]);
 	if(debug)cout<<variable<<" "<< binning<<" "<< error+"*"+modified_draw_option<<" "<<myTmpHist->GetSumOfWeights()<<endl;
 	if(myTmpHist->GetSumOfWeights()<=0 || myTmpHist->GetSumOfWeights()!=myTmpHist->GetSumOfWeights()){
 	  if(methods_forerrors[i]==rms) 
-	    myTmpHist = make_hist(mytree, variable, binning, draw_option+"* 0");
+	    myTmpHist = make_hist(mytree, variable, binning, draw_option+"* 0",nicknames[counter]+error_weights_name[i]);
 	  else
-	    myTmpHist = make_hist(mytree, variable, binning, draw_option);
+	    myTmpHist = make_hist(mytree, variable, binning, draw_option,nicknames[counter]+error_weights_name[i]);
 
 	}
 	error_histos[i].push_back(myTmpHist);
@@ -234,7 +243,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	cout<<" variable: "<<h_var<<endl;
 	cout<<" selection: "<<h_option<<endl;
       }
-      tmp_container.histos.push_back(make_hist(tmp_container.error_trees[m], h_var, binning, h_option));
+      tmp_container.histos.push_back(make_hist(tmp_container.error_trees[m], h_var, binning, h_option)); //,nicknames[m]+
     }
   }
   for(unsigned int i=0; i<error_trees_info.size();++i){
@@ -272,10 +281,16 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   }
   
 
-
-
-
-  
+  if(!plot_name.empty()){
+    plot_file->cd();
+    for(auto hist : histos){
+      hist->SetTitle(x_axis.c_str());
+      hist->Write();
+      
+    }
+    std::cout<<"RECREATED root file "<<get_resultFile()<<plot_name<<".root"<<std::endl;
+    plot_file->Close();
+  }
   //cout<<"============"<<endl;
   //cout<<"created the histograms"<<endl; 
 
@@ -454,7 +469,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   //cout<<"start plotting"<<endl;
   for(unsigned int i =0; i<histos.size(); i++){
     TH1F* hist = histos[i];
-    hist->SetLineWidth(3);
+    hist->SetLineWidth(2.5);
     string h_draw_option = hist_draw_options[i];
     if(draw_ratio && !first_draw){ 
       hist->GetXaxis()->SetLabelOffset(999);
@@ -462,7 +477,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     }
     if(!draw_ratio && !first_draw){
       hist->GetYaxis()->SetTitleSize(0.13);;
-    }
+    }      
     if(!stackInfo.at(i)){
       if(!first_draw){
 	hist->SetTitle("");
@@ -499,7 +514,11 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
 	ratio->SetBinError(i,0);
 	ratio->SetBinContent(i,-2);
       }
-    }    
+    }
+    if(hs->GetNhists()==0){
+      hs->Add((TH1F*)(TH1F*)histos[0]->Clone("first_histo"));
+    }
+   
     TH1F* mc_stat = calc_MCstat(hs);
     if(error_weights.size()>0 || error_trees_info.size() >0){
       total_error->Divide(zero_error);//total_error);
@@ -546,6 +565,18 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
     else{
       ratio_makeup(mc_stat,x_axis);
       mc_stat->Draw("e2");
+    }
+    if(single_ratios){
+      TH1F* nom = (TH1F*)histos[0]->Clone("draw_clone");
+      nom->SetLabelSize();
+      
+      for(int m = 0; m<nom->GetNcells();m++)
+	nom->SetBinError(m,0);
+      for(unsigned int i =1; i<histos.size(); i++){
+	TH1F* hist = (TH1F*)histos[i]->Clone(("ratio_"+to_string(i)).c_str());
+	hist->Divide(nom);
+	hist->Draw("same hist");	
+      }
     }
     if(!stackInfo.at(0))ratio->Draw("same e0");
     pad2->RedrawAxis();  
@@ -615,7 +646,7 @@ void TreeHists::ratio_makeup(TH1F* hist, string x_axis){
   //hist->GetXaxis()->SetTitleOffset();
   //hist->GetXaxis()->SetLabelSize();
 
-  hist->GetYaxis()->SetTitle("Data/MC");
+  hist->GetYaxis()->SetTitle(ratio_title.c_str());
   hist->GetYaxis()->SetLabelSize(0.03/bottomSize); 
   hist->GetYaxis()->SetNdivisions(505);
   hist->GetYaxis()->SetTitleSize( 0.13);
@@ -647,6 +678,7 @@ TH1F* TreeHists::calc_ratio(TH1F* stack_hist, TH1F* hist){
 }
 
 TH1F* TreeHists::calc_MCstat(THStack* stack){
+  if(stack->GetNhists()==0) return NULL;
   TH1F* ratio = (TH1F*)(stack->GetStack()->Last())->Clone("ratio");
   if(ratio->GetSumw2N()==0)ratio->Sumw2();
   ratio->SetTitle("");
@@ -728,9 +760,10 @@ void TreeHists::calc_weightErr(unsigned int i_error, error_method method, TH1F* 
   histo_sum = vector<TH1F*>();
 }
 
-void TreeHists::AddErrorWeight(string error_string, error_method method, string replace){
+void TreeHists::AddErrorWeight(string error_string, error_method method, string replace, string name){
   error_weights.push_back(error_string);
   methods_forerrors.push_back(method);
+  error_weights_name.push_back(name);
   if(boost::algorithm::contains(replace, ",")){ 
     vector<string> splitted_string;
     boost::split(splitted_string,replace,boost::is_any_of(","));
@@ -750,8 +783,9 @@ void TreeHists::AddErrorWeight(string error_string, error_method method, string 
   }
 }
 
-void TreeHists::AddErrorWeight(std::string error_up, std::string error_down, error_method method){
+void TreeHists::AddErrorWeight(std::string error_up, std::string error_down, error_method method, std::string name){
   methods_forerrors.push_back(method);
+  error_weights_name.push_back(name);
   error_weights.push_back("REPLACE");
   replace_strings.push_back({error_up,error_down});
 }
@@ -777,15 +811,24 @@ void TreeHists::calc_fixedErr(const std::vector<double> & uncertainties, const s
   }
 }
 
-TH1F* TreeHists::make_hist(TTree* mytree, std::string variable, std::string binning, std::string draw_option){
+TH1F* TreeHists::make_hist(TTree* mytree, std::string variable, std::string binning, std::string draw_option, std::string plot_name){
+  std::string name = "myTmpHist";
+  if(!plot_name.empty()){
+    name = plot_name;
+    boost::replace_all(name, "(", "_");
+    boost::replace_all(name, ")", "_");
+    boost::replace_all(name, " ", "_");
+    boost::replace_all(name, "+", "_");
+    boost::replace_all(name, "#", "_");
+    boost::replace_all(name, "__", "_");
+  }
   if(binning.empty()){
-    mytree->Draw((variable+">>myTmpHist").c_str(),draw_option.c_str());
+    mytree->Draw((variable+">>"+name).c_str(),draw_option.c_str());
   }
   else{
-    mytree->Draw((variable+">>myTmpHist("+binning+")").c_str(),draw_option.c_str());
-    //mytree->Scan(variable.c_str(),draw_option.c_str());
+    mytree->Draw((variable+">>"+name+"("+binning+")").c_str(),draw_option.c_str());
   }
-  return (TH1F*)gPad->GetPrimitive("myTmpHist");
+  return (TH1F*)gPad->GetPrimitive(name.c_str());
 }
 
 void TreeHists::calc_errorfolder(error_folder_rep & folder, TH1F* result, TH1F* nominal){
@@ -828,7 +871,7 @@ void TreeHists::calc_errorfolder(tree_folderinfo &  folder, TH1F* result, TH1F* 
 }
 
 
-void TreeHists::AddErrorFolderAlias(std::string var, std::string new_name, std::string condition){
+void TreeHists::AddErrorFolderAlias(std::string var, std::string new_name, std::string condition, string name){
   if(var.empty() || new_name.empty()){
     cout<<"ErrorFolderAlias variable is empty. something went wrong. Aborting";
     assert(1==0);

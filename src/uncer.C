@@ -17,13 +17,13 @@
 
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/regex.hpp"
-
+#include <boost/filesystem.hpp>
 
 namespace fs = std::experimental::filesystem;
 using namespace std;
 
 
-int fill_histograms(string file_dir_, string file_prefix=""){
+int fill_histograms(string file_dir_, string file_prefix="", string output_prefix=""){
   string file_dir = file_dir_;//"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/ROOTDataShape/Bay_BprimeB_Ele_RH.root";
 
   TFile* file = new TFile(file_dir.c_str(),"READ");
@@ -46,11 +46,17 @@ int fill_histograms(string file_dir_, string file_prefix=""){
     }
   }
   
-  for(auto uncer : uncer_names){ 
-    simplePlots uncerPlots("plots/"+file_prefix+uncer+"_plots.ps");
+  for(auto uncer : uncer_names){
+    string _filePath = "plots/"+output_prefix+file_prefix+uncer+"_plots/";
+    const char* path = _filePath.c_str();
+    boost::filesystem::path dir(path);
+    if(boost::filesystem::create_directory(dir)){
+	std::cerr<< "Directory Created: "<<_filePath<<std::endl;
+    }
+    simplePlots uncerPlots("plots/"+output_prefix+file_prefix+uncer+"_plots/", true);
     uncerPlots.addLegendEntry("nominal");
-    uncerPlots.addLegendEntry(uncer+" up");	
-    uncerPlots.addLegendEntry(uncer+" down");
+    uncerPlots.addLegendEntry("up");	
+    uncerPlots.addLegendEntry("down");
     uncerPlots.set_ratiodrawoption("e2","Hist same");
     uncerPlots.set_zerobinsratio(true);
     uncerPlots.set_ratioYTitle("Unc. ratio");			    
@@ -62,11 +68,25 @@ int fill_histograms(string file_dir_, string file_prefix=""){
       TString histnameCheck(key->GetName());
       if(histnameCheck.Contains("DATA") || histnameCheck.Contains("Data") )
 	continue;
+      //if(histnameCheck.Contains("_700_")){}
+      //else
+      //  continue;
+      
       if(histnameCheck.Contains(uncer+"__plus")){
 	histnameCheck.ReplaceAll("__"+uncer+"__plus","");
 	string name (histnameCheck.Data());
+	string title = name;
+	boost::replace_all(title,"Chi2","");
+	boost::replace_all(title,"Background","");
+	boost::replace_all(title,"_"," ");
+	boost::replace_all(title,"BT","b-t");
+	boost::replace_all(title,"WT","W-t");
+	boost::replace_all(title,"TopT","t-t");
+	boost::replace_all(title,"Ele"," e channel");
+	boost::replace_all(title,"Mu"," #mu channel");
+		
 	//cout<<histnameCheck<<endl;
-	uncerPlots.loadHists(name,name);
+	uncerPlots.loadHists(name,title);
 	uncerPlots.loadHists(name+"__"+uncer+"__plus");
 	uncerPlots.loadHists(name+"__"+uncer+"__minus");
 		
@@ -84,8 +104,15 @@ int fill_histograms(string file_dir_, string file_prefix=""){
 
 
 int main(){
-  std::string path = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/ROOTDataShape/";
-  fill_histograms(path+"Bay_BprimeB_Ele_RH_rebinned.root");
+  std::string path = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/";
+  fill_histograms(path+"ROOTDataShape_50_0_3500/Bay_BprimeB_LH_rebinned.root","","BprimeB_LH_");
+
+  /*/
+  fill_histograms(path+"ROOT_50_0_3500/background_postfit.root","","background");
+  fill_histograms(path+"ROOTDataShape_50_0_3500/Bay_BprimeB_RH_rebinned.root","","BprimeB_RH_");
+  fill_histograms(path+"ROOTDataShape_50_0_3500/Bay_BprimeT_RH_rebinned.root","","BprimeT_RH_");
+  /*/
+  
   return 0;
 
   for (auto & p : fs::directory_iterator(path)){

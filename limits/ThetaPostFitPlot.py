@@ -8,16 +8,25 @@ class ThetaPostFitPlot():
     def prepare_post_fit_items(post_fit_dict):
 	#print post_fit_dict
 	#print " "
+
+        best_fit = 0 
+        best_chi = float('inf')
+        if '__chi2' in post_fit_dict:
+            for i, chival in enumerate(post_fit_dict['__chi2']):
+                #print chival
+                if chival < best_chi:
+                    best_chi = chival
+                    best_fit = i
 	result = []
 	for entry in post_fit_dict:
-	  if entry in "__nll": continue
+	  if "__nll" in entry or '__chi2' in entry or '__cov'  in entry:continue 
 	  #print entry, post_fit_dict[entry][0]
-	  result.append((entry,post_fit_dict[entry][0]))
+	  result.append((entry,post_fit_dict[entry][best_fit]))
 	return result
 
         mylist =list((name, val_err)
                      for name, (val_err,) in sorted(post_fit_dict.iteritems())
-                     if name not in ('__nll'))
+                     if name not in ('__nll') or '__chi2' not in name)
         print mylist
         #for k, v in sorted(post_fit_dict.iteritems()):
             
@@ -75,7 +84,7 @@ class ThetaPostFitPlot():
         ax_2 = prim_hist.GetXaxis()
 
         prim_graph.SetTitle('')
-        ax_2.SetTitle('post-fit nuisance parameters values')
+        ax_2.SetTitle('post-fit nuisance parameter values')
         #ax_2.SetTitle('deviation in units of #sigma')
         ax_1.SetTitleSize(0.050)
         ax_2.SetTitleSize(0.050)

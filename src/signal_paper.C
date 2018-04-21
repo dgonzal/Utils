@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "TreeHists.h"
+#include "TreeRootHist.h"
 #include "simplePlots.h"
 
 #include <boost/filesystem.hpp>
@@ -98,9 +98,9 @@ int main(){
   toptag_text->SetTextFont(42);
   toptag_text->SetTextSize(0.05);
   
-  TreeHists treehists(resultfile,true);
-  treehists.switch_ratio();
-  treehists.SetTree("AnalysisTree");
+  TreeRootHist treehists(resultfile,true);
+  //treehists.switch_ratio();
+  //treehists.SetTree("AnalysisTree");
   treehists.SetLegend(0.5, 0.3, 0.8, 0.86);
 
   for(unsigned int m=0; m<container.size();++m){
@@ -118,21 +118,24 @@ int main(){
 
     //treehists.Draw("Chi2Dis.mass","weight*("+chi2_forward_string+")","30,500,3000","forward X^{2} B mass [GeV]");	    
     //treehists.Draw("TopTagDis.mass","weight*("+toptag_forward_string+")","30,500,3000","forward toptag B mass [GeV]");
-
+    /*/
     treehists.clearText();
     treehists.addText(cms_text);
     treehists.addText(preliminary_text);
     treehists.addText(chi2_text);
+    /*/
     // Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="", std::string plot_name="");
-    treehists.Draw("Chi2Dis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_chi2_mass");	    
-    
+    treehists.Draw_ROOT("Chi2Dis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_chi2_mass__");	    
+    /*/
     treehists.clearText();
     treehists.addText(cms_text);
     treehists.addText(preliminary_text);
     treehists.addText(toptag_text);
-    treehists.Draw("TopTagDis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_ttag_mass");
+    /*/
+    treehists.Draw_ROOT("TopTagDis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_ttag_mass__");
 
-    treehists.clearFiles();
+    //treehists.clearFiles();
+    
   }
   return 0;
 }

@@ -89,7 +89,7 @@ class simplePlots: public HistsBase{
   vector<string> legend, stack_legend, func_leg, graph_leg;
   std::vector<std::string> plotting_styles, func_plotting,graph_plotting;
   vector<bool> plotInratio;
-  string ratio_ytitle = "Data/MC", hist_ytitle = "Events", xtitle="", hist_title="";
+  string ratio_ytitle = "Data/MC", hist_ytitle = "events", xtitle="", hist_title="";
   string ratio_drawopt_nom = "e2", ratio_drawopt_next="same E0";
   double ratio_min = 0.1, ratio_max = 2.9;
   double errorband_max = 2, errorband_min = 0;

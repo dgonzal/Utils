@@ -331,19 +331,15 @@ std::vector<std::string> TreeDrawMain::find_matches(std::string dir,std::string 
 }
 
 
-int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/Selection_v31/", string channel = "", string signal_injection ="", string signal_weight="", string mode=""){
+int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.root", string dirnames="/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_7_6_3/src/UHH2/VLQToTopAndLepton/config/", string channel = "", string signal_injection ="", string signal_weight="", string mode=""){
   TH1::AddDirectory(kFALSE);
-  //std::vector<std::string> directories = {dirname+"/Selection_v31/",dirname+"/EleSelection_v6_tree/"};//,dirname+"/EleSelection_v5_tree/"
   std::vector<std::string> directories; 
   boost::split(directories,dirnames,boost::is_any_of(","));
-  //std::vector<std::string> samples = {"SingleT_s.root","SingleT_t.root","SingleTWAntitop.root","SingleTWtop.root","ZJets.root","TTbar.root","WJets_Pt.root","QCD.root","DATA.root",signal};
   std::vector<std::string> samples = {signal};
   if(boost::algorithm::contains(signal,",")){
     boost::algorithm::trim(signal);
     boost::split(samples,signal,boost::is_any_of(","));
   }
-  //std::vector<std::string> samples = {"SingleT_s.root","SingleTWAntitop.root","SingleTWtop.root","ZJets.root","TTbar.root","WJets_Pt.root","QCD.root","DATA.root",signal};
-  //std::vector<std::string> samples = {"Data.root",signal};  //Options DATA.root MC.root; For 2016: Data.root  
   cout<<"Starting histogram production"<<endl;
   
   std::cout<<"Directories"<<std::endl;
@@ -371,7 +367,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
   }
 
 
-  string binning ="60,0,3500";
+  string binning ="50,0,3500";
   TreeDrawMain mainClass(binning,"AnalysisTree");
   mainClass.AddFileDir(directories);
   mainClass.AddSamples(samples);
@@ -379,10 +375,10 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 
   string eta = "2.4";
  
-  string chiprob_chi2_f = "";//"&& Chi2Dis.chi<0.05";
-  string chiprob_toptag_f = "";//"&& TopTagDis.chi<0.05";
-  string chiprob_chi2_c = "";//"&& Chi2Dis.chi<0.05";
-  string chiprob_toptag_c = "";//"&& TopTagDis.chi<0.05";
+  string chiprob_chi2_f = "";//"&& Chi2Dis.chi<0.04";
+  string chiprob_toptag_f = "";//"&& TopTagDis.chi<0.04";
+  string chiprob_chi2_c = "";//"&& Chi2Dis.chi<0.04";
+  string chiprob_toptag_c = "";//"&& TopTagDis.chi<0.04";
   
   string factor_forwardjet = forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
   string factors = "";

@@ -2,6 +2,7 @@
 
 import math, multiprocessing, glob
 import ROOT
+from ROOT import TObject
 
 def read_xml(xmlFileDir):
     #try:
@@ -115,8 +116,9 @@ def scale_pdf_reweight(root_dir,xml_dir, signal, chirality, width =''):
         digit_search = xmlfile.split('/')[-1]
         print digit_search
         digit_search = digit_search.replace(width+'p','')
+        digit_search = digit_search.replace('X53','X')
         mass = str(filter(str.isdigit, digit_search))
-        #print xmlfile, 'mass',mass
+        print xmlfile, 'mass',mass
         filestore = read_xml(xmlfile)
         result = multithread_read(filestore)
         nominal =      result[0]
@@ -127,28 +129,36 @@ def scale_pdf_reweight(root_dir,xml_dir, signal, chirality, width =''):
         hist_list =[]
         for key in keys:  
             key = str(key.GetName())
-            if mass not in key: continue
+            if '_'+mass+'_' not in key: continue
             split_key = key.split('__')
             #print split_key
             if len(split_key) !=4: continue
             if 'PDF' in key:
                 hist = work_file.Get(key).Clone()
-                if 'plus'  in key: hist.Scale(nominal/(nominal+pdf))
-                if 'minus' in key: hist.Scale(nominal/(nominal-pdf))
+                if 'plus'  in key:
+                    print 'scaling',key,'by',nominal/(nominal+pdf)
+                    hist.Scale(nominal/(nominal+pdf))
+                if 'minus' in key:
+                    hist.Scale(nominal/(nominal-pdf))
+                    print 'scaling',key,'by',nominal/(nominal-pdf)
                 hist_list.append(hist)
             if 'scale' in key:
                 hist = work_file.Get(key).Clone()
-                if 'plus'  in key: hist.Scale(nominal/scale_up)
-                if 'minus' in key: hist.Scale(nominal/scale_down)
+                if 'plus'  in key:
+                    hist.Scale(nominal/scale_up)
+                    print 'scaling',key,'by',nominal/(scale_up)
+                if 'minus' in key:
+                    hist.Scale(nominal/scale_down)
+                    print 'scaling',key,'by',nominal/(scale_down)
                 hist_list.append(hist)
         for hist in hist_list:
-    	    hist.Write()
+    	    hist.Write('',TObject.kOverwrite)
     work_file.Close()
 
 
 if __name__ == "__main__":
     print 'using the pdf and scale reweighting script' 
-    """ 
+    
     masses = ['800','1000','1200','1400','1600','1800'] 
     
     for mass in masses:
@@ -168,4 +178,4 @@ if __name__ == "__main__":
         for filename in file_store: 
             scale_norm(filename)
             #pdf_norm(filename)
-     """
+     

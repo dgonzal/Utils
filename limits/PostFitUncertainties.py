@@ -1,5 +1,9 @@
 import ROOT
 from copy import deepcopy
+from numpy import linalg
+import numpy as np
+
+
 execfile("distribution.py")
 
 
@@ -71,11 +75,78 @@ def writeOutputFile(InputFileName, OutputFileName, InputDict, model, pdf = True)
         
             #write to file
             distr.writeToFile(OutputFile)    
-            
-
-
-          
-   
-
           
 
+def write_covariance_matrices(parVals,output_name):
+    if not output_name: output_name = 'mle_covcorr_noQ2.root'
+    theta_res = parVals
+    param_list = []
+    for k, res in theta_res.iteritems():
+        #print k,',',res
+        if any(k == i for i in ['__nll','__cov','__chi2']): continue
+        err_sq = res[0][1]*res[0][1]
+        param_list.append((k, err_sq))
+    
+    for i in xrange(len(param_list)):
+        helper = list(param_list[i])
+        helper[0] = helper[0].replace('Anti-','0 ')
+        helper[0] = helper[0].replace('Anti','0 ')
+        helper[0] = helper[0].replace('Chi2_','')
+        helper[0] = helper[0].replace('_',' ')
+        helper[0] = helper[0].replace('WT','W-t')
+        helper[0] = helper[0].replace('BT','b-t')
+        helper[0] = helper[0].replace('top','t')
+        helper[0] = helper[0].replace('TopT','t-t')
+
+        param_list[i] = tuple(helper)    
+        #    print proc, val
+    
+
+    cov_matrix = theta_res['__cov'][0]
+    ind_dict = {}
+    for i in xrange(cov_matrix.shape[0]):
+        for ii in xrange(cov_matrix.shape[1]):
+            entry = cov_matrix[i,ii]
+            for proc, val in param_list:
+                #print proc, abs(val-entry)
+                if abs(val-entry) < 1e-6:
+                    if i != ii:
+                        self.message("WARNING row and column index don't match")
+                    print 'found match for',proc
+                    ind_dict[i] = proc
+                if i not in ind_dict.keys():
+                    ind_dict[i] = 'beta_signal'
+
+    
+    #exit(0)
+    
+    cov_matrix = np.matrix(cov_matrix)
+    diag_matrix = np.matrix(np.sqrt(np.diag(np.diag(cov_matrix))))
+    #try:
+    inv_matrix = diag_matrix.I
+    corr_matrix = inv_matrix * cov_matrix * inv_matrix
+
+    corr_hist = ROOT.TH2D("correlation_matrix","",len(param_list),0,len(param_list),len(param_list),0,len(param_list))
+    cov_hist = ROOT.TH2D("covariance_matrix","",len(param_list),0,len(param_list),len(param_list),0,len(param_list))
+    
+    for i in xrange(corr_matrix.shape[0]):
+        if i not in ind_dict.keys(): continue
+        corr_hist.GetXaxis().SetBinLabel(i+1, ind_dict.get(i,'unknown'))
+        corr_hist.GetYaxis().SetBinLabel(i+1, ind_dict.get(i,'unknown'))
+        cov_hist.GetXaxis().SetBinLabel(i+1, ind_dict.get(i,'unknown'))
+        cov_hist.GetYaxis().SetBinLabel(i+1, ind_dict.get(i,'unknown'))
+        corr_hist.SetLabelSize(0.03,'x')
+        cov_hist.SetLabelSize(0.03,'x')
+        corr_hist.GetZaxis().SetRangeUser(-1,1)
+        for ii in xrange(corr_matrix.shape[1]):
+            #if i<ii :continue
+            entry_corr = corr_matrix[i,ii]
+            entry_cov = cov_matrix[i,ii]
+            corr_hist.Fill(i,ii,entry_corr)
+            cov_hist.Fill(i,ii,entry_cov)
+
+    matrices = ROOT.TFile(output_name,'RECREATE')
+    
+    cov_hist.Write()
+    corr_hist.Write()
+    matrices.Close()
