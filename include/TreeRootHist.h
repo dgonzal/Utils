@@ -17,6 +17,11 @@ struct uncer_info{
   std::string nick;
 };
 
+struct folder_alias{
+  std::string old_v;
+  std::string new_v;
+  std::string condition;
+}
 
 class TreeRootHist: public  HistsBase{
  public:
@@ -25,6 +30,7 @@ class TreeRootHist: public  HistsBase{
   //bool Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="", std::string plot_name="");
   bool Draw_ROOT(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="", std::string plot_name="");
   void addUnc(std::string error_up, std::string error_down, std::string method="", std::string name = "");
+  void addFolderAlias(std::string old_v, std::string new_v, std::string condition);
   
   void SetTree(std::string treeName_){treeName = treeName_;}  
   std::vector<TH1F*> return_hists(string variable, string draw_option, string binning, std::string x_axis, std::string y_axis="events");

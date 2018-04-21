@@ -73,6 +73,13 @@ void TreeRootHist::addUnc(std::string weight_up, std::string weight_down, std::s
   unc_info.push_back(tmp);
 }
 
+void TreeRootHist::addFolderAlias(std::string old_v, std::string new_v, std::string condition){
+  folder_alias tmp = folder_alias();
+  tmp.old_v = old_v;
+  tmp.new_v = new_v;
+  tmp.condition = condition;
+  alias.push_back(tmp);
+}
 
 void TreeRootHist::envelopmodule(sample &proc, uncer_info info, std::string variable, std::string binning, std::string modified_draw_option, std::string plot_name, std::string x_axis){
   TH1F* up, *down;
@@ -103,7 +110,6 @@ void TreeRootHist::envelopmodule(sample &proc, uncer_info info, std::string vari
   tmp.down = down; tmp.down->SetTitle(x_axis.c_str());
   tmp.unc_nick = info.nick;
   proc.uncertainties.push_back(tmp);
-
 }
 
 void TreeRootHist::rmsmodule(sample &proc, uncer_info info, std::string variable, std::string binning, std::string modified_draw_option, std::string plot_name, std::string x_axis){
@@ -175,8 +181,6 @@ bool TreeRootHist::load_trees_for_samples(){
 }
 
 
-
-
 bool TreeRootHist::fill_histograms(std::string variable, std::string draw_option, std::string binning, std::string x_axis, std::string y_axis, bool legend, std::string data_draw_option, std::string plot_name){
   //fill histograms
   for(auto & proc : work_samples){
@@ -207,23 +211,39 @@ bool TreeRootHist::fill_histograms(std::string variable, std::string draw_option
     }
     for(auto &unc: proc.folder_uncertainties){
       bool created = false;
+      std::string mod = modified_draw_option;
+      std::string var = variable;
+      for(auto & item : alias){
+	if(boost::algorithm::contains(item.condition,unc.nick)){
+	  boost::replace_all(mod,item.old_v, item.new_v);
+	  boost::replace_all(var,item.old_v, item.new_v);
+	}
+      }
       for(const auto & uptree : unc.trees_up){
 	if(created)
-	  unc.up->Add(make_hist(uptree, variable, binning, modified_draw_option));
+	  unc.up->Add(make_hist(uptree, var, binning, mod));
 	else{
 	  std::cout<<"initializing hist for "<<proc.nick<<" with "<<plot_name+proc.nick<<std::endl;
-	  unc.up= make_hist(uptree, variable, binning, modified_draw_option,plot_name+proc.nick);
+	  unc.up= make_hist(uptree, var, binning, mod,plot_name+proc.nick+"__"+unc.nick+"__plus");
 	  unc.up->SetTitle(x_axis.c_str());
 	  created =   true;
 	}
       }
       created = false;
+      std::string mod = modified_draw_option;
+      std::string var = variable;
+      for(auto & item : alias){
+	if(boost::algorithm::contains(item.condition,unc.nick)){
+	  boost::replace_all(mod,item.old_v, item.new_v);
+	  boost::replace_all(var,item.old_v, item.new_v);
+	}
+      }
       for(const auto & downtree : unc.trees_down){
 	if(created)
 	  unc.down->Add(make_hist(downtree, variable, binning, modified_draw_option));
 	else{
 	  std::cout<<"initializing hist for "<<proc.nick<<" with "<<plot_name+proc.nick<<std::endl;
-	  unc.down= make_hist(downtree, variable, binning, modified_draw_option,plot_name+proc.nick);
+	  unc.down= make_hist(downtree, var, binning, mod,plot_name+proc.nick+"__"+unc.nick+"__minus");
 	  unc.down->SetTitle(x_axis.c_str());
 	  created =   true;
 	}
