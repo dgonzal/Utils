@@ -82,6 +82,27 @@ int main(int argc, char** argv){
   string toptag_forward_string = "(TopTagDis.mass>-1&& TopTagDis.topHad.pt()>=400) && abs(TopTagDis.forwardJet.eta()) >="+eta;
   string toptag_scalefactor = "1.01";
   //string wtag_scalefactor = "";
+
+  //Ak4 jets
+  treehists.Draw_ROOT("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events", true, "", channel+"_ak4_pt__");
+  treehists.Draw_ROOT("Sum$(slimmedJets.slimmedJets.m_pt)",factors+"weight","11,-0.5,10.5","Number of ak4","Events", true, "", channel+"_ak4_num__");
+  //AK8 Jets
+  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt",factors+"weight","50,170,1200","ak8 p_{T} [GeV]","Events", true, "", channel+"_ak8_pt__");
+  treehists.Draw_ROOT("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)",factors+"weight","11,-0.5,10.5","Number of ak8","Events", true, "", channel+"_ak8_num__");
+  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau3/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2",factors+"weight","50,0.,1.","#tau_{3}/#tau_{2}","Events", true, "", channel+"_tau32__");
+ 
+  //electron
+  if(electron){
+    treehists.Draw_ROOT("slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","70,118,800"," electron p_{T} [GeV]","Events", true, "", channel+"_e_pt__");
+    treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","35,290,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_e_htlep__");
+
+  }
+  //muon
+  else{
+    treehists.Draw_ROOT("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","70,55,800"," muon p_{T} [GeV]","Events", true, "", channel+"_mu_pt__");
+    treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","30,250,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_mu_htlep__");
+  }
+
   
   treehists.Draw_ROOT("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12)","40,100,350","Mass [GeV]","Events", true, "", channel+"_chi2_topHad_mass__");
   treehists.Draw_ROOT("Chi2Dis.topLep.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11)","40,100,350","Mass [GeV]","Events", true, "", channel+"_chi2_topLep_mass__");
