@@ -22,14 +22,14 @@ sourcedirs = ['/MuSel_new/','/EleSel_new/'] #'/MuSel_wtag_topjetcorr/'
 #sourcedirs = ['/EleSel_new/']
 
 
-rootDir = 'ROOT_DataSideband_04/' #ROOT_DataSideband_04/' # ROOT_DataSideband_04/' #ROOT_50_0_3500/' #'60_0_3500/'DataSideband_04/
+rootDir = 'ROOT_50_0_3500_recotyp12/' #ROOT_50_0_3500_eta4/' #ROOT_DataSideband_04/' # ROOT_DataSideband_04/' #ROOT_50_0_3500/' #'60_0_3500/'DataSideband_04/
 prefix =''
-postfix='diff'
+postfix=''
 
 #MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt.root,QCD.root"
 #MC = "SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets*.root,TTbar_Tune.root,TTbar_Mtt700to1000.root,TTbar_Mtt1000toInf.root,WJets_Pt*.root,QCD*.root"
 MC = "MC.TTbar_*.root,WJets_Pt*.root,ZJets*.root,SingleT*.root,QCD*.root"
-Signal = "BprimeB-1100_LH.root,BprimeB-1700_LH.root"
+Signal = "BprimeB-1100_RH.root,BprimeB-1700_RH.root"
 background = 'Merge_Data.root' #"SingleT_s.root,SingleT_t.root,SingleTWAntitop.root,SingleTWtop.root,ZJets.root,TTbar.root,WJets_Pt.root,QCD.root"
 
 if not os.path.exists(rootDir):
@@ -45,7 +45,7 @@ mc_channel_f= []
 mc_channel_c= []
 data_channel =[]
 
-create = False
+create = True
 
 signal_files = ""
 
@@ -101,7 +101,7 @@ for i,channel in enumerate(prod_channels):
     #call(['hadd '+mc_merged_unc+' '+mc_merged],shell=True)
     
 
-    stat_uncer = .18
+    stat_uncer = 5.5
     #rebinned_unc_data = simpleRebin(data_unc,stat_uncer,['DATA'],data_unc.replace('.root','_rebinned.root'),['Background'])
     #rebinned_data = simpleRebin(data_rootfile,stat_uncer,['Background'],data_rootfile.replace('.root','_rebinned.root'),['Background'])
     
@@ -133,7 +133,7 @@ for i,channel in enumerate(prod_channels):
     nominal_results, fitted = background_fit(rebinned_unc_data, channel, False, "")
     #nominal_results,fitted = background_fit(rebinned_data, channel, False, "")
     
-    print nominal_results    
+    #print nominal_results    
     print '*'*10
     print '*'*10
     #sys.exit(0)
@@ -144,7 +144,6 @@ for i,channel in enumerate(prod_channels):
 
 combined_fit = rootDir+'background.root'
 call(['hadd -f '+combined_fit+' '+plotting_files],shell=True)
-
 
 #mu_binning = [0.0, 225.0, 450.0, 525.0, 600.0, 675.0, 750.0, 825.0, 900.0, 975.0, 1050.0, 1125.0, 1200.0, 1275.0, 1425.0, 1500.0, 1650.0, 1725.0, 1875.0, 2475.0, 4500.0]
 #fixed_rebin(combined_fit,mu_binning,'AntiBTagMu')
@@ -185,5 +184,6 @@ sort_hists(prefit_plot)
 
 call(['Plots -f ../../../SFramePlotter/BackgroundTheta.steer'],shell=True)
 call(['Plots -f ../../../SFramePlotter/BackgroundTheta_postfit.steer'],shell=True)
+if 'sideband' in rootDir:call(['Plots -f ../../../SFramePlotter/BackgroundTheta_sideband.steer'],shell=True)
 #print rootDir+'background.root'
 

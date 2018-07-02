@@ -11,19 +11,20 @@ witdths =['','10','20','30']
 signal_prefixes = ['Bprime']
 #signal_prefixes = ['X53']
 channels = ['']
-productions = ['T']
-chiralities = ['RH']
-witdths =['30']
+#channels = ['']
+productions = ['B']
+chiralities = ['LH']
+witdths =['10']
 
 xmldir = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/datasets/RunII_80X_v3/Bprime/'
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/config/'
-sourcedirs = ['/MuSigSel/','/EleSigSel_v1']
+sourcedirs = ['/MuSigSel_v1/','/EleSigSel_v1']
 #sourcedirs =['/EleSigSel_v1','/MuSigSel/']
-rootDir = 'ROOTDataShape_50_0_3500/'
-prefix = 'Bay_'
-createfiles = True 
+rootDir = 'ROOTDataShape_50_0_3500_eta4/'
+prefix = 'Eta4_'
+createfiles = False 
 limits = True
-do_discovery = False 
+do_discovery = False  
 single_cat = False 
 
 if not os.path.exists(rootDir):
@@ -87,7 +88,8 @@ for source_num,channel in enumerate(channels):
                         print dirstring+'/*'+signal_pre+production+'*'+chirality+'*.root'
                         for name in glob.glob(dirstring+'/*'+signal_pre+production+'*'+chirality+'.root'):
                             #print width, name
-			    #if '1600' in name: continue 
+			    #if '1600' in name: continue
+			    #if signal: continue 
                             name = (name.split('/')[-1]).split('.')[-2]
                             if not width:
                                 if not 'Width' in name:
@@ -115,6 +117,7 @@ for source_num,channel in enumerate(channels):
                             pass
                             print "going to create signal file with",'./../bin/rootfilecreator',signal,rootfile+'_Signal',dirstring,channel 
 			    call(['./../bin/rootfilecreator',signal,rootfile+'_Signal',dirstring,channel,"","",""])
+			    #exit(0)
                             call(['rm '+rootfile+'_rebinned.root'],shell=True)
                             call(['hadd '+rootfile+'_rebinned.root '+rootfile+'_Signal'+'.root '+rootDir+'/'+channel+'_background_mc_uncer.root'],shell=True)
                             #For the discovery calculation with signal in the background

@@ -27,6 +27,7 @@ int main(){
 				    {"BprimeB-800_RH","BprimeB-1000_RH","BprimeB-1200_RH","BprimeB-1400_RH","BprimeB-1600_RH"},
 				    
                                     {"BprimeT-800_LH","BprimeT-800_Width-10p_LH","BprimeT-800_Width-20p_LH","BprimeT-800_Width-30p_LH"},
+                                    {"BprimeT-800_RH","BprimeT-800_Width-10p_RH","BprimeT-800_Width-20p_RH","BprimeT-800_Width-30p_RH"},
 				    {"BprimeT-1000_LH","BprimeT-1000_Width-10p_LH","BprimeT-1000_Width-20p_LH","BprimeT-1000_Width-30p_LH"},
 				    {"BprimeT-1200_LH","BprimeT-1200_Width-10p_LH","BprimeT-1200_Width-20p_LH","BprimeT-1200_Width-30p_LH"},
 				    {"BprimeT-1400_LH","BprimeT-1400_Width-10p_LH","BprimeT-1400_Width-20p_LH","BprimeT-1400_Width-30p_LH"},
@@ -52,11 +53,12 @@ int main(){
 				    {"B+b M(800) LH","B+b M(1000) LH","B+b M(1200) LH","B+b M(1400) LH","B+b M(1600) LH"},
 				    {"B+b M(800) RH","B+b M(1000) RH","B+b M(1200) RH","B+b M(1400) RH","B+b M(1600) RH"},
 				    
-				    {"B+t M(800)","10%","20%","30%"},
-				    {"B+t M(1000)","10%","20%","30%"},
-				    {"B+t M(1200)","10%","20%","30%"},
-				    {"B+t M(1400)","10%","20%","30%"},
-				    {"B+t M(1600)","10%","20%","30%"},
+				    {"B+t M(800) LH","10%","20%","30%"},
+				    {"B+t M(800) RH","10%","20%","30%"},
+				    {"B+t M(1000) LH","10%","20%","30%"},
+				    {"B+t M(1200) LH","10%","20%","30%"},
+				    {"B+t M(1400) LH","10%","20%","30%"},
+				    {"B+t M(1600) LH","10%","20%","30%"},
 
 				    {"B+b M(800)","10%","20%","30%"},
 				    {"B+b M(1000)","10%","20%","30%"},
@@ -104,7 +106,7 @@ int main(){
   treehists.SetLegend(0.5, 0.3, 0.8, 0.86);
 
   for(unsigned int m=0; m<container.size();++m){
-    if(m>1)continue;
+    //if(m>2)continue;
     if(m==10)treehists.SetLegend(0.5, 0.3, 0.8, 0.8);
     vector<string> samples= container[m];
     vector<string> names = names_con[m];
@@ -124,14 +126,31 @@ int main(){
     treehists.addText(preliminary_text);
     treehists.addText(chi2_text);
     // Draw(std::string variable, std::string draw_option="", std::string binning="", std::string x_axis="", std::string y_axis="Events", bool legend=true, std::string data_draw_option="", std::string plot_name="");
-    treehists.Draw("Chi2Dis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_chi2_mass");	    
     
+    
+    
+    treehists.Draw("Chi2Dis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_chi2_mass");	    
+    /*/
+    treehists.Draw(deltaPhistring("Chi2Dis.wHad","Chi2Dis.topLep"),"weight*(Chi2Dis.recoTyp==11)","40,0,3.5","#Delta #phi(W_{had},t_{lep})", "Events", true, "");	    
+    treehists.Draw(deltaPhistring("Chi2Dis.wLep","Chi2Dis.topHad"),"weight*(Chi2Dis.recoTyp==12)","40,0,3.5","#Delta #phi(W_{lep},t_{had})", "Events", true, "");
+    
+    treehists.Draw(deltaEtastring("Chi2Dis.wHad","Chi2Dis.topLep"),"weight*(Chi2Dis.recoTyp==11)","40,0,3.5","#Delta #eta(W_{had},t_{lep})", "Events", true, "");	    
+    treehists.Draw(deltaEtastring("Chi2Dis.wLep","Chi2Dis.topHad"),"weight*(Chi2Dis.recoTyp==12)","40,0,3.5","#Delta #eta(W_{lep},t_{had})", "Events", true, "");
+
+    treehists.Draw("cos("+deltaPhistring("Chi2Dis.wHad","Chi2Dis.topLep")+")","weight*(Chi2Dis.recoTyp==11)","40,-1,1","cos(#Delta #phi(W_{had},t_{lep}))", "Events", true, "");	    
+    treehists.Draw("cos("+deltaPhistring("Chi2Dis.wLep","Chi2Dis.topHad")+")","weight*(Chi2Dis.recoTyp==12)","40,-1,1","cos(#Delta #phi(W_{lep},t_{had}))", "Events", true, "");
+
+    
+    treehists.Draw(deltaRstring("Chi2Dis.wHad","Chi2Dis.topLep"),"weight*(Chi2Dis.recoTyp==11)","40,0,3.5","#Delta R(W_{had},t_{lep})", "Events", true, "");	    
+    treehists.Draw(deltaRstring("Chi2Dis.wLep","Chi2Dis.topHad"),"weight*(Chi2Dis.recoTyp==12)","40,0,3.5","#Delta R(W_{lep},t_{had})", "Events", true, "");
+    /*/ 
+  
     treehists.clearText();
     treehists.addText(cms_text);
     treehists.addText(preliminary_text);
     treehists.addText(toptag_text);
     treehists.Draw("TopTagDis.mass","weight","40,300,3500","m_{reco} [GeV]", "Events", true, "", "signal_ttag_mass");
-
+    //treehists.Draw("cos("+deltaPhistring("TopTagDis.wLep","TopTagDis.topHad")+")","weight*(Chi2Dis.recoTyp==12)","40,-1,1","cos(#Delta #phi(W_{lep},t_{had}))", "Events", true, "");
     treehists.clearFiles();
   }
   return 0;

@@ -9,9 +9,8 @@
 
 
 int main(int argc, char** argv){
-  string version = "_new";//"_new";//"_wtag_topjetcorr";//"w2jet";//"wtag_topjetcorr";
   string CMSSW = "8_0_24_patch1";
-  string folder = "MuSel"+version;
+  string folder = "MuSel_new";
   bool electron = false;
   bool errors = true;
   bool blind = false;
@@ -55,7 +54,7 @@ int main(int argc, char** argv){
   else{
     if(resultfile=="moneyplots.ps")
       resultfile = "plots/Mu_"+resultfile;
-    if(single) resultfile= "plots/singleMuMoney_nomsig_reco_noforwardreweight/";
+    if(single) resultfile= "plots/singleMuMoney_nomsig_reco_nolegend/";
   }
   cout<<"Folder: "<<folder<<" end file: "<<resultfile<<endl;
   //std::cout<<"going to print "<<resultfile<<" from "<< electron ? "electron" : "muon"<<" channel " <<errors ? " with sys errors":" without sys errors"<<endl; 
@@ -74,15 +73,11 @@ int main(int argc, char** argv){
   TreeHists treehists(resultfile,single);
   //if(single) treehists.switch_singleplots(true);
   treehists.SetLegend(0.6, 0.3, 0.86, 0.86);
-  treehists.set_ignorePages(42);
+  treehists.set_ignorePages(13);
   
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/Merge_Data.root","PE",1,20,false,"Data");
-  /*/
-  if(electron){
-	treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/Merge_Data.root.root","PE",1,20,false,"Data");
-	//treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.DATA.SinglePhotonData.root","PE",1,20,false,"");
-  }
-  /*/
+  //treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/eletrigger_data.root","PE",1,20,false,"Data");
+   
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt*.root","",3,-1,true,"W+Jets"); 
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Tune.root","",2,-1,true,"t#bar{t}");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt700to1000.root","",2,-1,true,"");
@@ -103,7 +98,6 @@ int main(int argc, char** argv){
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_RH.root","hist",40,-1,false,"B+b M(1.5) RH #times 24",0,5);
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root","hist",800,-1,false,"B+t M(1.5) RH #times 71",0,5);
    /*/  
-
   //
   // Scaled to cross section
   // [4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.248,0.195]*0.5
@@ -113,7 +107,8 @@ int main(int argc, char** argv){
 
   treehists.set_ratiolimits(1.69,0.39);
   treehists.SetTree("AnalysisTree");
- 
+  //treehists.switch_legend(false);
+  
   if(errors){
     treehists.AddErrorWeight("pdfWeight",TreeHists::error_method::rms);
     treehists.AddErrorWeight("scaleWeight_REPLACE",TreeHists::error_method::envelop,"up,down");
@@ -122,26 +117,22 @@ int main(int argc, char** argv){
     if(!electron){
       treehists.AddErrorWeight("weight_sfmu_tight_REPLACE/weight_sfmu_tight",TreeHists::error_method::envelop,"up,down");
       treehists.AddErrorWeight("weight_sfmu_muonTrigger_REPLACE/weight_sfmu_muonTrigger",TreeHists::error_method::envelop,"up,down");
-      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_up_MuSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_down_MuSelUNC/"});
-      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_up_MuSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_down_MuSelUNC/"});
+      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_jer_up_MuSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_jer_down_MuSelUNC/"});
+      //treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_up_MuSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_down_MuSelUNC/"});
     }
     else{
       //ele trigger variations
       treehists.AddErrorWeight("REPLACE",TreeHists::error_method::envelop,eletriggerscale(1)+","+eletriggerscale(2));
 
       treehists.AddErrorWeight("weight_sfelec_eleid_REPLACE/weight_sfelec_eleid",TreeHists::error_method::envelop,"up,down");
-      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_up_EleSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_down_EleSelUNC/"});
-      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_up_EleSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_down_EleSelUNC/"});
+      treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_jer_up_EleSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jec_jer_down_EleSelUNC/"});
+      //treehists.AddErrorFolder({"/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_up_EleSelUNC/","/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/jer_down_EleSelUNC/"});
     }
-    treehists.AddErrorFolderAlias("slimmedJets.","jet_jec_up."  ,"jec_up");
-    treehists.AddErrorFolderAlias("slimmedJets.","jet_jec_down.","jec_down");
-    treehists.AddErrorFolderAlias("slimmedJets.","jet_jer_up."  ,"jer_up");
-    treehists.AddErrorFolderAlias("slimmedJets.","jet_jer_down.","jer_down");
+    treehists.AddErrorFolderAlias("slimmedJets.","jet_jec_jer_up."  ,"jec_jer_up");
+    treehists.AddErrorFolderAlias("slimmedJets.","jet_jec_jer_down.","jec_jer_down");
 
-    treehists.AddErrorFolderAlias("slimmedMETs.","met_jec_up."  ,"jec_up");
-    treehists.AddErrorFolderAlias("slimmedMETs.","met_jec_down.","jec_down");
-    treehists.AddErrorFolderAlias("slimmedMETs.","met_jer_up."  ,"jer_up");
-    treehists.AddErrorFolderAlias("slimmedMETs.","met_jer_down.","jer_down");
+    treehists.AddErrorFolderAlias("slimmedMETs.","met_jec_jer_up."  ,"jec_jer_up");
+    treehists.AddErrorFolderAlias("slimmedMETs.","met_jec_jer_down.","jec_jer_down");
   }
   //treehists.switch_logy(true);
   
@@ -190,7 +181,7 @@ int main(int argc, char** argv){
   string toptag_scalefactor = "1.01";
   //string wtag_scalefactor = "";
 
-
+  
   treehists.Draw("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_eta",factors+"weight","70,-5,5","ak4 #eta","Events");
   treehists.Draw("slimmedJets.slimmedJets.m_phi",factors+"weight","50,-3.14,3.14","ak4 #phi","Events");
@@ -204,8 +195,8 @@ int main(int argc, char** argv){
   treehists.Draw("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_subjets.m_eta)",factors+"weight","9,-0.5,8.5","Number of ak8 subjets","Events");
   treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau3/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2",factors+"weight","50,0.,1.","#tau_{3}/#tau_{2}","Events");
   treehists.Draw("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau1",factors+"weight","50,0.,1.","#tau_{2}/#tau_{1}","Events");
-
-
+  
+  
    //electron
   if(electron){
     treehists.Draw("slimmedElectronsUSER.slimmedElectronsUSER.m_eta",factors+"weight","50,-2.4,2.4","electron #eta","Events");
@@ -218,7 +209,6 @@ int main(int argc, char** argv){
     treehists.Draw("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","70,55,800"," muon p_{T} [GeV]","Events");
     treehists.Draw("slimmedMuonsUSER.slimmedMuonsUSER.m_phi",factors+"weight","50,-3.14,3.14"," muon #phi","Events");
   }
-  
   //event stuff 
   treehists.Draw("HT",factors+"weight","50,100,2000","H_{T} [GeV]","Events");
   if(electron){

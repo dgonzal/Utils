@@ -78,6 +78,8 @@ class HistsBase{
 
   TCanvas* get_can(){return can;}
   //TLegend* get_leg(){return leg;}
+  bool change_resultFile(std::string newfile);
+
   
   std::vector<std::string> get_filedirs(){return filedirs;}
   std::vector<std::string> get_draw_options(){return hist_draw_options;}

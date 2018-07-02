@@ -52,6 +52,7 @@ TH1F* TreeRootHist::make_hist(TTree* mytree, std::string variable, std::string b
     boost::replace_all(name, " ", "");
     boost::replace_all(name, "+", "");
     boost::replace_all(name, "#", "");
+    boost::replace_all(name, "%", "p");
     //boost::replace_all(name, "__", "_");
   }
   if(binning.empty()){
@@ -87,13 +88,19 @@ void TreeRootHist::envelopmodule(sample &proc, uncer_info info, std::string vari
   std::string up_draw   =  modified_draw_option+"*"+info.weight_up;
   std::string down_draw =  modified_draw_option+"*"+info.weight_down;
   for(auto mytree : proc.trees){
+    TH1F* tmp_up =  make_hist(mytree, variable, binning,up_draw,plot_name+proc.nick+"__"+info.nick+"__plus");
+    TH1F* tmp_down =  make_hist(mytree, variable, binning,down_draw,plot_name+proc.nick+"__"+info.nick+"__minus");
+    if(tmp_up->GetSumOfWeights()<=0 || tmp_up->GetSumOfWeights()!=tmp_up->GetSumOfWeights())
+      tmp_up =  make_hist(mytree, variable, binning,modified_draw_option,plot_name+proc.nick+"__"+info.nick+"__plus");
+    if(tmp_down->GetSumOfWeights()<=0 || tmp_down->GetSumOfWeights()!=tmp_down->GetSumOfWeights())
+      tmp_down =  make_hist(mytree, variable, binning,modified_draw_option,plot_name+proc.nick+"__"+info.nick+"__minus");
     if(created){
-      up->Add(make_hist(mytree, variable, binning,up_draw));
-      down->Add(make_hist(mytree, variable, binning, down_draw));
+      up->Add(tmp_up);
+      down->Add(tmp_down);
     }
     else{
-      up  = make_hist(mytree, variable, binning,up_draw,plot_name+proc.nick+"__"+info.nick+"__plus");
-      down= make_hist(mytree, variable, binning, down_draw,plot_name+proc.nick+"__"+info.nick+"__minus");
+      up  = tmp_up;
+      down= tmp_down;
       created = true;
     }
   }
@@ -117,20 +124,25 @@ void TreeRootHist::rmsmodule(sample &proc, uncer_info info, std::string variable
   bool created = false;
   std::string rms_draw   =  modified_draw_option+"*"+info.weight_up;
   for(auto mytree : proc.trees){
+    TH1F* tmp_hist = make_hist(mytree, variable, binning,rms_draw);
+    if(tmp_hist->GetSumOfWeights()<=0 || tmp_hist->GetSumOfWeights()!=tmp_hist->GetSumOfWeights())
+      continue;
     if(created){
-      rms->Add(make_hist(mytree, variable, binning,rms_draw));
+      rms->Add(tmp_hist);
     }
     else{
-      rms = make_hist(mytree, variable, binning,rms_draw);
+      rms = tmp_hist;
       created = true;
     }
   }
-  rms->Scale(0.5);
   uncertainty tmp = uncertainty();
   tmp.up   = (TH1F*)proc.hist->Clone((plot_name+proc.nick+"__"+info.nick+"__plus").c_str());
   tmp.down = (TH1F*)proc.hist->Clone((plot_name+proc.nick+"__"+info.nick+"__minus").c_str());
-  tmp.up->Add(rms);
-  tmp.down->Add(rms,-1);
+  if(created){
+    //rms->Scale(0.5);
+    tmp.up->Add(rms);
+    tmp.down->Add(rms,-1);
+  }
   tmp.up->SetTitle(x_axis.c_str());
   tmp.down->SetTitle(x_axis.c_str());
   tmp.unc_nick = info.nick;
@@ -170,7 +182,8 @@ bool TreeRootHist::load_trees_for_samples(){
     std::string filedir = proc.dir;
     for(const auto &f : autocomplete_filedir(filedir))
       proc.trees.push_back(load_tree(f));
-
+    if(boost::contains(proc.nick,"data") || boost::contains(proc.nick,"Data") || boost::contains(proc.nick,"DATA") ) continue;
+    if(boost::contains(proc.nick,"Bprime") || boost::contains(proc.nick,"X")) continue;
     for(const auto & unc : unc_info){
       if(unc.method.compare("folder")==0)
 	load_folder_trees(proc, filedir, unc);
@@ -200,6 +213,8 @@ bool TreeRootHist::fill_histograms(std::string variable, std::string draw_option
       }
     }
     if(boost::contains(proc.nick,"data") || boost::contains(proc.nick,"Data") || boost::contains(proc.nick,"DATA") ) continue;
+    if(boost::contains(proc.nick,"Bprime") || boost::contains(proc.nick,"X")) continue;
+
     for(auto & i :unc_info){
       if(i.method.compare("envelop")==0)
 	envelopmodule(proc, i, variable, binning, modified_draw_option, plot_name, x_axis);
@@ -209,49 +224,51 @@ bool TreeRootHist::fill_histograms(std::string variable, std::string draw_option
       else
 	std::cerr<<"method not found "<<i.method<<std::endl;
     }
+    
     for(auto &unc: proc.folder_uncertainties){
-      bool created = false;
-      std::string mod = modified_draw_option;
-      std::string var = variable;
+      std::string mod_up = modified_draw_option;
+      std::string var_up = variable;
+      std::string mod_down = modified_draw_option;
+      std::string var_down = variable;
       for(auto & item : alias){
-	if(boost::algorithm::contains(item.condition,unc.nick)){
-	  boost::replace_all(mod,item.old_v, item.new_v);
-	  boost::replace_all(var,item.old_v, item.new_v);
+	if(boost::algorithm::contains(item.condition,unc.unc_nick)){
+	  //cout<<item.condition<<" "<<unc.unc_nick<<endl;
+	  //cout<< item.old_v<<" "<<item.new_v<<endl;
+	  if(boost::algorithm::contains(item.new_v,"up") || boost::algorithm::contains(item.new_v,"plus")){
+	    boost::replace_all(mod_up,item.old_v, item.new_v);
+	    boost::replace_all(var_up,item.old_v, item.new_v);
+	  }
+	  else if (boost::algorithm::contains(item.new_v,"down") || boost::algorithm::contains(item.new_v,"minus")){
+	    boost::replace_all(mod_down,item.old_v, item.new_v);
+	    boost::replace_all(var_down,item.old_v, item.new_v);
+	  }
 	}
       }
-      for(const auto & uptree : unc.trees_up){
-	if(created)
-	  unc.up->Add(make_hist(uptree, var, binning, mod));
-	else{
-	  std::cout<<"initializing hist for "<<proc.nick<<" with "<<plot_name+proc.nick<<std::endl;
-	  unc.up= make_hist(uptree, var, binning, mod,plot_name+proc.nick+"__"+unc.nick+"__plus");
-	  unc.up->SetTitle(x_axis.c_str());
-	  created =   true;
-	}
-      }
-      created = false;
-      std::string mod = modified_draw_option;
-      std::string var = variable;
-      for(auto & item : alias){
-	if(boost::algorithm::contains(item.condition,unc.nick)){
-	  boost::replace_all(mod,item.old_v, item.new_v);
-	  boost::replace_all(var,item.old_v, item.new_v);
-	}
-      }
-      for(const auto & downtree : unc.trees_down){
-	if(created)
-	  unc.down->Add(make_hist(downtree, variable, binning, modified_draw_option));
-	else{
-	  std::cout<<"initializing hist for "<<proc.nick<<" with "<<plot_name+proc.nick<<std::endl;
-	  unc.down= make_hist(downtree, var, binning, mod,plot_name+proc.nick+"__"+unc.nick+"__minus");
-	  unc.down->SetTitle(x_axis.c_str());
-	  created =   true;
-	}
-      }
+      cout<<"working on "<<plot_name+proc.nick+"__"+unc.unc_nick+"__plus"<<endl;
+      unc.up = folder_hist(unc.trees_up, var_up, binning, mod_up, plot_name+proc.nick+"__"+unc.unc_nick+"__plus");
+      cout<<"working on "<<plot_name+proc.nick+"__"+unc.unc_nick+"__minus"<<endl;
+      unc.down = folder_hist(unc.trees_down, var_down, binning, mod_down, plot_name+proc.nick+"__"+unc.unc_nick+"__minus");
+      
     }
   }
   return true;
 }
+
+TH1F* TreeRootHist::folder_hist(std::vector<TTree*> trees, std::string var, std::string binning, std::string mod, std::string plots_name){
+  TH1F* tmp_hist;
+  bool created = false;
+  for(const auto & tree : trees){
+    if(created){
+      tmp_hist->Add(make_hist(tree, var, binning, mod));
+    }
+    else{
+      tmp_hist= make_hist(tree, var, binning, mod,plots_name);
+      created = true;
+    }
+  }
+  return tmp_hist;
+}
+
 
 bool TreeRootHist::histo_cleanup(){
   for(auto & proc : work_samples){
@@ -262,7 +279,7 @@ bool TreeRootHist::histo_cleanup(){
 }
 
 bool TreeRootHist::save_histograms_to_root(std::string file_name){
-  //store in root file
+  //store in root file  
   TFile* plot_file = new TFile((file_name).c_str(),"RECREATE");
   plot_file->cd();
   for(const auto &proc : work_samples){
@@ -270,6 +287,10 @@ bool TreeRootHist::save_histograms_to_root(std::string file_name){
     for(const auto &unc :  proc.uncertainties){
       unc.up->Write();
       unc.down->Write();
+    }
+    for(const auto &unc :  proc.folder_uncertainties){
+      if(unc.up)unc.up->Write();
+      if(unc.down)unc.down->Write();
     }
   }
   plot_file->Close();
@@ -285,6 +306,8 @@ bool TreeRootHist::Draw_ROOT(std::string variable, std::string draw_option, std:
   if(!plot_name.empty()){
     file_name = get_resultFile().Data()+plot_name+".root";
     boost::replace_all(file_name,"__","");
+    if(!boost::filesystem::exists(get_resultFile().Data()))
+      boost::filesystem::create_directory(get_resultFile().Data());
   }
   else
     page_counter++;

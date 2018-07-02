@@ -68,6 +68,21 @@ HistsBase::HistsBase(string saveName, bool single){
   else
     cout<<"No Name to Save the Histograms given"<<endl;
 }
+bool HistsBase::change_resultFile(std::string newfile){
+  if(!singleplots){
+    can->Print(resultFile+"]");
+    if(newfile.empty()){
+      std::cerr<< "new storage file not filled no changing the file"<<std::endl;
+      return false;
+    }
+    resultFile = TString(newfile.c_str());
+    can->Print(resultFile+"[");
+  }
+  else
+    resultFile = TString(newfile.c_str());
+  return true;
+}
+
 
 HistsBase::~HistsBase(){
   if(!resultFile.EqualTo("")&& !singleplots){

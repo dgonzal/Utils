@@ -12,18 +12,15 @@ from subprocess import call
 from matplotlib.backends.backend_pdf import PdfPages
 import os
 
-
-
 from theta_auto import *
 from injection_merge import *
-
-
+from impact import *
 
 def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
-    write_report = True #False        
+    write_report = True        
     if write_report:config.report.reopen_file()
     #exit(0)
-    factor = 2
+    factor = 1#.5 
     fname_rescaled = fname.replace(".root","_sig_scaled.root")
     call(['rm '+fname_rescaled],shell=True)
     call(['hadd '+fname_rescaled+' '+fname],shell=True)
@@ -69,31 +66,32 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
         
 	                  
     #10% on the normalization
-    uncer = 2 
-            
+    uncer = 1.0
+    ttag_unc = 1.1        
     if channel =="Mu" or not channel:
         model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagMu')    
         model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagMu')    
         model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagMu')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagMu')    
+        model.add_lognormal_uncertainty('W-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_WTagMu')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(ttag_unc), procname='Background',obsname='TopTagMu')    
     if channel =="Ele" or not channel:
         model.add_lognormal_uncertainty('Anti-b-tag_rate', math.log(uncer), procname='Background',obsname='Chi2_AntiBTagEle')    
         model.add_lognormal_uncertainty('1-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_1_BTagEle')    
         model.add_lognormal_uncertainty('2-b-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_2_BTagEle')    
-        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(uncer), procname='Background',obsname='TopTagEle')         
+        model.add_lognormal_uncertainty('W-tag_rate'   , math.log(uncer), procname='Background',obsname='Chi2_WTagEle')    
+        model.add_lognormal_uncertainty('top-tag_rate'   , math.log(ttag_unc), procname='Background',obsname='TopTagEle')         
     
 	#model.add_lognormal_uncertainty('electron_scalefactor',math.log(1.01),)
         
-    #model_summary(model)
     model_summary(model, create_plots=True, all_nominal_templates=True, shape_templates=True)
     options = Options()
     options.set('minimizer', 'strategy', 'robust')
-    options.set('main', 'n_threads', '5')
+    options.set('main', 'n_threads', '10')
+   
     exp = None
     obs = None
     exp, obs = bayesian_limits(model, 'all', n_toy = 2000 ,options=options)
-
-
+    
     output_directory =""
     if channel:
        output_directory = './'+glob_prefix+'output_'+particle+'_'+Chirality+'_'+channel+'/'
@@ -113,6 +111,9 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
         postfit = ThetaPostFitPlot(mle_output)
         postfit.make_plots(output_directory)
 
+        for key, value in mle_output.iteritems() :
+            write_covariance_matrices(value,output_directory+"/"+key+"_covariance.root")
+
         
         limit_file = open(output_directory+"limit.txt",'w+')
 
@@ -126,8 +127,16 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
             print >> limit_file, item
         """
         limit_file.close()
+    
+    #exit(0)
+    options.set('main', 'n_threads', '1')
+    #options.set('minimizer', 'minuit_tolerance_factor', '100')
+    #model.scale_predictions(1/factor, procname=particle+'*', obsname='*')
+    try:
+        impact(model, output_directory+"/impact.pdf", options)
+    except:
+	print 'could not calculate the impact'			
         
-
     print "expected limit "+Chirality+' '+channel +":"
     print exp
     print "observed limit "+Chirality+' '+channel +":"
@@ -206,7 +215,7 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
     plt.clf()
     plt.semilogy()
     ax=plt.gca()
-    ax.set_ylim([min(theory13TeV_y)*0.1 ,100])
+    #ax.set_ylim([min(theory13TeV_y)*0.1 ,100])
     ax.set_ylim([0.001 ,1000])
     ax.set_xlim([700,1800])
     if 'X' in particle: ax.set_xlim([700,1600])

@@ -85,7 +85,6 @@ class ThetaPostFitPlot():
 
         prim_graph.SetTitle('')
         ax_2.SetTitle('post-fit nuisance parameter values')
-        #ax_2.SetTitle('deviation in units of #sigma')
         ax_1.SetTitleSize(0.050)
         ax_2.SetTitleSize(0.050)
         ax_1.SetTitleOffset(1.4)
@@ -129,6 +128,8 @@ class ThetaPostFitPlot():
     def make_plots(self,saveDir):
         #print self.input_dicts
         for k,v in self.input_dicts.iteritems():
+            for x in ['__chi2', '__ks', '__cov','__nll']:
+                if k in x:continue
             canvas = self.mk_canvas(k,self.input_dicts[k],saveDir)
             
         

@@ -105,7 +105,7 @@ int fill_histograms(string file_dir_, string file_prefix="", string output_prefi
 
 int main(){
   std::string path = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/";
-  fill_histograms(path+"ROOTDataShape_50_0_3500/Bay_BprimeB_LH_rebinned.root","","BprimeB_LH_");
+  fill_histograms(path+"ROOTDataShape_50_0_3500/Bay_BprimeB_RH_rebinned.root","","BprimeB_RH_");
 
   /*/
   fill_histograms(path+"ROOT_50_0_3500/background_postfit.root","","background");

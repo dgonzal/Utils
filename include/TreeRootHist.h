@@ -7,8 +7,11 @@
 
 #include <vector>
 #include <string>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
 
 struct uncer_info{
   std::string method;
@@ -21,7 +24,7 @@ struct folder_alias{
   std::string old_v;
   std::string new_v;
   std::string condition;
-}
+};
 
 class TreeRootHist: public  HistsBase{
  public:
@@ -39,7 +42,8 @@ class TreeRootHist: public  HistsBase{
   
  private:
   TH1F* make_hist(TTree* mytree, std::string variable, std::string binning, std::string draw_option, std::string plot_name="");
-  
+  TH1F* folder_hist(std::vector<TTree*> trees, std::string var, std::string binning, std::string mod, std::string plots_name);
+
   void envelopmodule(sample &proc, uncer_info info, std::string variable, std::string binning, std::string modified_draw_option, std::string plot_name="", std::string x_axis="");
   void rmsmodule(sample &proc, uncer_info info, std::string variable, std::string binning, std::string modified_draw_option, std::string plot_name="", std::string x_axis="");
 
@@ -53,6 +57,8 @@ class TreeRootHist: public  HistsBase{
     
   std::vector<sample> work_samples;
   std::vector<uncer_info> unc_info;
+  std::vector<folder_alias> alias;
+  
   TLegend* leg;
   double legx1,legx2,legy1,legy2;
   double ratio_up=1.99, ratio_down =0.;

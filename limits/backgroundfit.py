@@ -8,8 +8,8 @@ ROOT.TH1.AddDirectory(0)
 execfile("PostFitUncertainties.py")
 execfile("ThetaPostFitPlot.py")
 
-
 from theta_auto import * 
+from impact import *
 
 def background_fit(fname, channel = "", write_report = True, glob_prefix="",signal=None):
     if write_report:report.reopen_file()
@@ -42,6 +42,9 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
 
             
     options = Options()
+    
+
+    
     #options.set('minimizer', 'strategy', 'robust')
     #model.restrict_to_observables(['TopTag'+channel,'Chi2_WTag'+channel,'Chi2_2_BTag'+channel,'Chi2_1_BTag'+channel])
     #model_summary(model, create_plots=True, shape_templates=True)
@@ -60,6 +63,7 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
     for obs in model.get_observables():
 	bin_sum +=  model.get_range_nbins(obs)[-1]
 
+   
     print 'number of bins',bin_sum
     #print 'critical value 5%',math.sqrt(-0.5*math.log((0.05)/2))/math.sqrt(bin_sum+1)
 
@@ -95,7 +99,7 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
         del pf_vals['__nll']
 
     output_directory = channel+"background_data_fit"
-    
+
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
@@ -106,8 +110,7 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
     print output_directory
     postfit.make_plots(output_directory)
         
-    #report.write_html(output_directory)
-                    
+    #report.write_html(output_directory)    
     return result, resultfile
                     
 def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, glob_prefix="", mass='', beta_sig=0.0):
@@ -181,7 +184,8 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
 
     if mass:
        discovery_val= discovery(model, Z_error_max=0.2, maxit=10, n=500, n_expected=500, input_expected='data', options=options)
-   
+       options.set('minimizer', 'minuit_tolerance_factor', '100')
+       impact(model,"impact_significance_"+mass+".pdf",options,my_group) 
     
     print 'Limits based on MC!'
     print "expected limit "+Chirality+' '+channel +":"
@@ -191,6 +195,11 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     print 'discovery'
     #for item in discovery_val: 
     #    print item
+
+
+    
+
+
 
     return exp,obs,discovery_val    
         

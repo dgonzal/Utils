@@ -76,6 +76,8 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   **
   */  
   
+
+  
   //Free memory and clean containers to fill
   error_histos =  std::vector<std::vector<TH1F*>> ();
   //error_folder_histos = std::vector<std::vector<TH1F*>>();
@@ -586,7 +588,7 @@ bool TreeHists::Draw(string variable, string draw_option, string binning, std::s
   }
 
   pad1->cd();
-  if(legend)leg->Draw();
+  if(legend && general_legend_draw)leg->Draw();
   pad1->Update();
   pad1->RedrawAxis();
   printText();

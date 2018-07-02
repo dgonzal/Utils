@@ -109,10 +109,10 @@ def write_covariance_matrices(parVals,output_name):
             entry = cov_matrix[i,ii]
             for proc, val in param_list:
                 #print proc, abs(val-entry)
-                if abs(val-entry) < 1e-6:
+                if abs(val-entry) < 1e-9:
                     if i != ii:
-                        self.message("WARNING row and column index don't match")
-                    print 'found match for',proc
+                        print "WARNING row and column index don't match"
+                    #print 'found match for',proc
                     ind_dict[i] = proc
                 if i not in ind_dict.keys():
                     ind_dict[i] = 'beta_signal'

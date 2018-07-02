@@ -8,7 +8,7 @@
 #include "boost/algorithm/string.hpp"
 
 #include "TArrayD.h"
-
+#include "TFile.h"
 
 #include "eletriggerresult.h"
 #include "forwardjetfitresult.h"
@@ -46,13 +46,12 @@ public:
 
 
 int main(){
-  string version ="new";// "wtag_topjetcorr";MuSel_recoptcuts_v2
   string CMSSW = "8_0_24_patch1";
-  string folder = "MuSel_"+version;//"jecsmear_direction_up_Sel";//"Selection_"+version;
-  bool electron = true;
+  string folder = "MuSel_new";
+  bool electron = false;
   if (electron)folder = "EleSel_new";
   bool single = true;
-  string output = "plots/"+folder+"_lowprob.ps";
+  string output = "plots/"+folder+".ps";
   bool sqrt_back = false;
   
   //if(single) output = plots/treehists/ 
@@ -77,16 +76,16 @@ int main(){
   treehists.SetTree("AnalysisTree");
   treehists.mcratio_only();
   string eta = "2.4";
-  string binning = "50,0,3500";
+  string binning = "20,0,3500";
 
-  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta;//+" && Chi2Dis.chi<0.1";
-  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta;//+" && Chi2Dis.chi<0.1";
+  string forward_chi2 ="abs(Chi2Dis.forwardJet.eta()) >="+eta;//+" && Chi2Dis.chi<0.08";
+  string central_chi2 ="abs(Chi2Dis.forwardJet.eta()) < "+eta;//+" && Chi2Dis.chi<0.08";
 
   string eletriggerfactors = "";
   if(electron)  eletriggerfactors ="("+eletriggerscale()+"*(1-isRealData)+isRealData)*";
   string muontrkfactors =""; 
   if(!electron) muontrkfactors = "("+muon_trk_factors()+"*(1-isRealData)+isRealData)*";
-  string factors = muontrkfactors+eletriggerfactors;//+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
+  string factors = muontrkfactors+eletriggerfactors+"(abs(Chi2Dis.forwardJet.eta())<=4)*";//+forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
   //factors += "(Chi2Dis.forwardJet.pt()>0)*";
   
 
@@ -166,7 +165,9 @@ int main(){
   }
   cout<<"start adding background at "<<start_add_backgrounds<<endl;
   
-  vector<string> category = {"Anti-b-tag","1 b-tag","2 b-tags","t-tag","W-tag"};
+  //vector<string> category = {"Anti-b-tag","1 b-tag","2 b-tags","t-tag","W-tag"};
+  vector<string> category = {"Anti_btag","1_btag","2_btags","ttag","Wtag"};
+
   vector<vector<TH1F*>> central_hists = {chi2_0btag_central_hist,chi2_1btag_central_hist,chi2_2btag_central_hist,toptag_central_hist,wtag_central_hist};
   vector<vector<TH1F*>> forward_hists = {chi2_0btag_forward_hist,chi2_1btag_forward_hist,chi2_2btag_forward_hist,toptag_forward_hist,wtag_forward_hist};
 
@@ -191,13 +192,26 @@ int main(){
   comparison.normToArea(true,0.4);
   comparison.set_ratioLimtis(0.4,1.9);
   TH1F* background_sum_all_categories;
-  
+
+  string root_file = "muon_hists.root";
+  if(electron) root_file = "electron_hists.root";
+  TFile* file = new TFile(root_file.c_str(),"RECREATE");
+   
   for(unsigned int i =0; i<central_hists.size();i++){
     unsigned int sample_counter = 0;
     string recotype = " X^2";
     if(i==3 || i==4) recotype = "";
     TH1F* sample_sum_forward, *sample_sum_central;
     for(unsigned int m=0;m<central_hists.at(i).size();m++){
+      if(boost::contains(sample_nick[m],"Data")){
+	file->cd();
+	TH1F* my_tmp_central =  (TH1F*)central_hists.at(i).at(m)->Clone((sample_nick[m]+"__"+category[i]+"_central").c_str());
+	TH1F* my_tmp_forward =  (TH1F*)forward_hists.at(i).at(m)->Clone((sample_nick[m]+"__"+category[i]+"_forward").c_str());
+	my_tmp_central->SetTitle("m_{reco} [GeV]");
+	my_tmp_forward->SetTitle("m_{reco} [GeV]");	  
+	my_tmp_central->Write();
+	my_tmp_forward->Write();
+      }
       if(central_hists.at(i).at(m)->GetSumw2N()==0)central_hists.at(i).at(m)->Sumw2();
       if(forward_hists.at(i).at(m)->GetSumw2N()==0)forward_hists.at(i).at(m)->Sumw2();
       if(i==0 && m==start_add_backgrounds){
@@ -238,6 +252,14 @@ int main(){
   } 
   
   for(unsigned int i =0; i<sum_central.size();i++){
+    file->cd();
+    TH1F* my_tmp_central =  (TH1F*)sum_central.at(i)->Clone(("MC_merge__"+category[i]+"_central").c_str());
+    TH1F* my_tmp_forward =  (TH1F*)sum_forward.at(i)->Clone(("MC_merge__"+category[i]+"_forward").c_str());
+    my_tmp_central->SetTitle("m_{reco} [GeV]");
+    my_tmp_forward->SetTitle("m_{reco} [GeV]");	  
+    my_tmp_central->Write();
+    my_tmp_forward->Write();
+    
     sum_central[i]->SetTitle(category[i].c_str());
     sum_forward[i]->SetTitle(category[i].c_str());
     comparison.loadHists((TH1F*)sum_central[i]->Clone(),"Central","PE");
@@ -389,9 +411,9 @@ int main(){
       tmp_forward->GetXaxis()->SetTitle("m_{reco} [GeV]");
       tmp_forward->GetXaxis()->SetTitleOffset(1.2);
       if(sqrt_back){
-      for(int b=0; b< tmp_sum->GetNcells();++b)
-	tmp_sum->SetBinContent(b,sqrt(tmp_sum->GetBin(b)));
-      tmp_forward->GetYaxis()->SetTitle("S/#sqrt{Back}");
+	for(int b=0; b< tmp_sum->GetNcells();++b)
+	  tmp_sum->SetBinContent(b,sqrt(tmp_sum->GetBinContent(b)));
+	tmp_forward->GetYaxis()->SetTitle("S/#sqrt{B}");
       }
       tmp_forward->Divide(tmp_sum);
       string hist_option = "hist same";
@@ -471,8 +493,8 @@ int main(){
 
       if(sqrt_back){
 	for(int b=0; b< tmp_sum->GetNcells();++b)
-	  tmp_sum->SetBinContent(b,sqrt(tmp_sum->GetBin(b)));
-	tmp_central->GetYaxis()->SetTitle("S/#sqrt{Back}");
+	  tmp_sum->SetBinContent(b,sqrt(tmp_sum->GetBinContent(b)+tmp_central->GetBinContent(b) ));
+	tmp_central->GetYaxis()->SetTitle("S/#sqrt{S+B}");
       }
       tmp_central->Divide(tmp_sum);
       string hist_option = "hist same";

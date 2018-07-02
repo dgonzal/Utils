@@ -66,6 +66,7 @@ class TreeHists: public HistsBase{
   void mcratio_only(bool mcratio_=true){mcratio=mcratio_;}
   void switch_ratio(bool rat=false){draw_ratio=rat;}
   void fit_ratio(bool fitrat_=true, string func_string=""){fitrat=fitrat_;ratio_func=new TF1("myfitratiofunc",func_string.c_str());}
+  void switch_legend(bool leg_draw = false){general_legend_draw=leg_draw;}
   
   TF1* get_ratiofunction(){return ratio_func;}  
   
@@ -125,5 +126,7 @@ class TreeHists: public HistsBase{
   //Tpads for pretty print
   TPad *pad1, *pad2;
   bool single_error_ratio=false, single_ratios=false;
+  bool general_legend_draw = true;
   std::string ratio_title = "Data/MC";
+  
 };

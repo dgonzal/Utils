@@ -88,27 +88,11 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
         
         data_back = back.Get(key).Clone()
         data_norm = data_back.GetSumOfWeights()
-        
-        binning =  get_binning(data_back)
-
- 	print binning
-        binning_arr = array.array('d',binning)
-	max_val = -99999999
-	for i in binning_arr:
-	  if i>max_val: max_val=i
-	  else: print i
-          
+                  
         signal_mc_h = signal_mc_file.Get(key.replace('Background','DATA')).Clone("signalregion")
-        back_mc_h = background_mc_file.Get(key).Clone("background")
-        print len(get_binning(signal_mc_h))
-        print get_binning(signal_mc_h)
-        #exit(0)
-
+        back_mc_h = background_mc_file.Get(key).Clone("background")        
         
-        #signal_mc_h = signal_mc_h.Rebin(3)
-        #back_mc_h = back_mc_h.Rebin(3)
-        #exit(0)
-        new_sig_binning = update(signal_mc_h, 0.05)
+        new_sig_binning = update(signal_mc_h, 0.10)
         print new_sig_binning
 	signal_mc_h = signal_mc_h.Rebin(len(new_sig_binning)-1,category+"__SR", array.array('d',new_sig_binning))	
 	back_mc_h = back_mc_h.Rebin(len(new_sig_binning)-1,category+"__CR", array.array('d',new_sig_binning))	
@@ -117,27 +101,12 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
 	back_mc_h = back_mc_h.Rebin(len(new_sig_binning)-1,category+"__CR", array.array('d',new_sig_binning))
         print len(get_binning(signal_mc_h))
         print get_binning(signal_mc_h)
-        #exit(0)
-
-
-        
-        diff_hist  =  back_mc_h.Clone(key+"diff")
-        
+                
         sig_norm = signal_mc_h.GetSumOfWeights()
         back_norm = back_mc_h.GetSumOfWeights()    
 
-         
-        #sig_fit_scale = get_scale(back_mc_h,signal_mc_h, back_norm/sig_norm)
-        #print sig_fit_scale
-	#exit(0)
-        #signal_mc_h.Scale(sig_fit_scale)
-        #signal_mc_h.Scale(1/sig_norm)
-        #back_mc_h.Scale(1/back_norm)
-        diff_hist.Scale(1/back_norm)
         sig_fit_scale = get_scale(back_mc_h,signal_mc_h, back_norm/sig_norm,700)
         signal_mc_h.Scale(sig_fit_scale)
-        diff_hist.Add(signal_mc_h,-1)
-        diff_hist.Write()
         correction_file.cd()
 
         
@@ -153,16 +122,14 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
             factor = a/b
             error = ((1/b*a_err)**2 + (a/(b*b) * b_err)**2)
             correction_hist.SetBinContent(mc_bin,factor)
-            correction_hist.SetBinError(mc_bin,error)
+            correction_hist.SetBinError(mc_bin,math.sqrt(error))
             
+        scaling = (correction_hist.GetNcells()-2)/correction_hist.GetSumOfWeights()
+        correction_hist.Scale(scaling)
         correction_hist.Write()
-
         draw_error_hist(correction_hist,output_fname.split('/')[0]+'/'+key+'_correction.eps',key)
-        
-        diff_hist.Add(signal_mc_h,-1)
-        diff_hist.Scale(data_norm/back_norm)
+    
 
-        #data_back.Add(diff_hist,-1)        
         name = "__mcR_"+key.split("__")[0]
     
 	name = name.replace('Mu','')
@@ -171,10 +138,8 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
 	plus  = data_back.Clone(key+name+"__plus") #back.Get(key).Clone(key+"__mcregion__plus")
 	minus = data_back.Clone(key+name+"__minus") #back.Get(key).Clone(key+"__mcregion__minus")
 
-        #plus.Add(diff_hist,-1)
-        #minus.Add(diff_hist,1)
 
-        
+        scaling =1
         for i in xrange(1,data_back.GetNcells()-1):
             content = data_back.GetBinContent(i)
             error   = data_back.GetBinError(i)**2
@@ -186,33 +151,21 @@ def add_signal_background_uncer(background,signal_region_mc, background_region_m
             b_err = back_mc_h.GetBinError(mc_bin)
             a_err = signal_mc_h.GetBinError(mc_bin)
 
-            print 'a',a,'+-',a_err,'b',b,'+-',b_err
-            factor = a/b
-            bin_err = (1/b*a_err)**2 + (a/(b*b)*b_err)**2
+            #print 'a',a,'+-',a_err,'b',b,'+-',b_err
+            factor = a/b*scaling
+            bin_err = ((1/b*a_err)**2 + (a/(b*b)*b_err)**2)*scaling**2
             #factor = 1/factor
-            print 'bin',i,'center', bin_center,'content', content, 'new content', content*factor, 'correction factor', factor,'+-', math.sqrt(bin_err)
-            print 'stat  unc',math.sqrt(error)        
+            #print 'bin',i,'center', bin_center,'content', content, 'new content', content*factor, 'correction factor', factor,'+-', math.sqrt(bin_err)
+            #print 'stat  unc',math.sqrt(error)        
             error = error + content**2*bin_err
-            print 'stat + sys',math.sqrt(error)
-
+            #print 'stat + sys',math.sqrt(error)
             
             data_back.SetBinContent(i,content*factor)
             data_back.SetBinError(i,math.sqrt(error))
-            plus.SetBinContent(i,content*factor*factor)
-            #minus.SetBinContent(i,content/factor)
-        #exit(0)
-        #plus  = data_back.Clone(key+"__mcR__plus") #back.Get(key).Clone(key+"__mcregion__plus")
-	#minus = data_back.Clone(key+"__mcR__minus") #back.Get(key).Clone(key+"__mcregion__minus")
+            minus.SetBinContent(i,content*factor*factor)
 
-        """
-        back_mc_h_corrected = background_mc_file.Get(key).Clone(key+"_back_corrected")
-        back_mc_h_corrected.Add(diff_hist,-1)
-        signal_mc_h_original = signal_mc_file.Get(key.replace('Background','DATA')).Clone(key+"signalregion")
-        print 'Chi2 mc fit probability',  signal_mc_h_original.Chi2Test(back_mc_h_corrected,'WW')
-        """
-        
         # method with shape uncertainties
-        histos.append(data_back);#histos.append(diff_hist)
+        histos.append(data_back);
         histos.append(plus);histos.append(minus);
  
     out_file =TFile(output_fname,"RECREATE")
@@ -254,7 +207,7 @@ def draw_error_hist(histogram,hist_file, text):
     
     can = ROOT.gROOT.MakeDefCanvas();
     root_style()
-    histogram.SetAxisRange(0.49, 1.79,"Y");
+    histogram.SetAxisRange(0.0, 1.79,"Y");
     histogram.GetXaxis().SetTitle("m_{reco} [GeV]");
     histogram.GetYaxis().SetTitle("SR/CR ratio");
     leg = TLegend(0.5,0.7,0.8,0.8)

@@ -3,7 +3,7 @@
 CXX      = g++ -std=c++11 -O3
 LINKER   = g++ -O3 -o
 
-TARGETS = jec_jer_plots signal_paper paper_plotsv2 pu_reweight mc_background single_errors resolution cutflow trigger triggerSel treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer eletriggerscale compare_fc different_recocomp wtag_comp muonscalefactors wtag_unc quickAndDirty signalReco reader #scan_forwardJet fastsim uncer matchingPlots regionsratio run
+TARGETS = doktor_analysis jec_jer_plots signal_paper paper_plotsv2 pu_reweight mc_background single_errors resolution cutflow trigger triggerSel treehist rootfilecreator moneyplots matching recofit forwardjetfit wjets width_comp recoplots uncer eletriggerscale compare_fc different_recocomp wtag_comp muonscalefactors wtag_unc quickAndDirty signalReco reader #scan_forwardJet fastsim uncer matchingPlots regionsratio run
 
 
 SRCDIR  = src

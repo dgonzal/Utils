@@ -40,7 +40,7 @@ public:
 
   void AddHistCategory(std::string draw_command_, std::string selection_, std::string hist_name_, std::string hist_binning_="",double scale=-1.0){infoVec.push_back(TreeDrawInfo(draw_command_,selection_,hist_name_, hist_binning_.empty() ? binning: hist_binning_,scale));}
   void AddWeightError(std::string weight_option, std::string error_name, error_method method=envelop, std::string replace_what="", std::string replace_with="", std::string replace_w_what="", std::string replace_w_with="" ){error_weight.push_back(weight_option);error_methods_container.push_back(method);error_names.push_back(error_name); error_replace_draw.push_back(make_pair(replace_what,replace_with)); error_replace_weight.push_back(make_pair(replace_w_what,replace_w_with));}
-  void AddDirError(std::string dir_error, std::string nick){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick);}
+  void AddDirError(std::string dir_error, std::string nick, std::string old_command="", std::string new_command="", std::string ignore=""){dir_errors.push_back(dir_error); dir_errors_nick.push_back(nick); dir_errors_replace.push_back(make_pair(old_command,new_command));dir_errors_ignore.push_back(ignore);}
 
   void inject_signal(std::string signal, std::string signal_weight_){signal_name = signal; signal_weight = signal_weight_;}
   
@@ -62,6 +62,8 @@ private:
   std::vector<std::string> error_names;
   std::vector<std::string> dir_errors;
   std::vector<std::string> dir_errors_nick;
+  std::vector<std::pair<std::string,std::string>> dir_errors_replace;
+  std::vector<std::string> dir_errors_ignore;
   std::vector<TreeDrawInfo> infoVec;
   std::vector<std::string> FileDir;
   std::vector<std::string> Sample;
@@ -101,7 +103,9 @@ TH1F* TreeDrawMain::make_hist(TTree* mytree, std::string variable, std::string d
     mytree->Draw((variable+">>myTmpHist("+hist_binning+")").c_str(),draw_option.c_str());
     //std::cout<<"Hist drawn "<<std::endl; 
   }
-  return (TH1F*)gPad->GetPrimitive("myTmpHist");
+  TH1F* result =  (TH1F*)gPad->GetPrimitive("myTmpHist");
+  result->SetTitle("m_{reco} [GeV]");
+  return  result;
 }
 
 bool TreeDrawMain::create_file(std::string fileName){
@@ -257,11 +261,30 @@ bool TreeDrawMain::create_file(std::string fileName){
       if(debug)cout<<"rick "<< nick <<" nick number "<<nick_number<<" of "<< nicks.size()<<" error nick "<< error_nick <<" of "<<dir_errors_nick.size() <<endl;
      
       TTree* mytree = load_tree(dir+"/"+process);
+      std::cout<<"creating hists for error dir "<<dir<<" "<<process<<std::endl;
       for(auto & hist : infoVec){ 
 	if(debug)cout<<hist.draw_command<<" "<<hist.selection<<endl;
 	if(boost::algorithm::contains(hist.hist_name,"background")) continue;
-	string tmp_name = hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick];
-	TH1F* tmp_hist = make_hist(mytree,hist.draw_command,hist.selection,hist.binning);
+	std::string tmp_name = hist.hist_name+channel+"__"+nick+"__"+dir_errors_nick[error_nick];
+	std::string tmp_command = hist.draw_command;
+	std::string tmp_sel = hist.selection;
+	if(!dir_errors_ignore[error_nick].empty() &&  boost::algorithm::contains(tmp_sel,dir_errors_ignore[error_nick])){
+	  if(debug) std::cout<<"found ignore case "<< tmp_command << " "<< dir_errors_ignore[error_nick]<<std::endl;
+	  continue;
+	}
+	if(!dir_errors_replace[error_nick].first.empty()){	     
+	  string old_com = dir_errors_replace[error_nick].first;
+	  string new_com = dir_errors_replace[error_nick].second;
+	  if(!boost::algorithm::contains(tmp_command,old_com) &&  !boost::algorithm::contains(tmp_sel,old_com)){
+	    if (debug)std::cout<<"not found "<<old_com<<std::endl;
+	    continue;
+	  }
+	  boost::replace_all(tmp_command,old_com,new_com);
+	  boost::replace_all(tmp_sel,old_com,new_com);
+	}
+	std::cout<<"error hist "<<tmp_name<<" "<<tmp_command<<std::endl;
+	
+	TH1F* tmp_hist = make_hist(mytree,tmp_command,tmp_sel,hist.binning);
 	//if(tmp_hist->GetEntries()==0)continue;
 	if(debug)cout<<dir_errors_nick[error_nick]<<" number of entries "<<tmp_hist->GetEntries()<<endl;
 	if(debug)cout<<"tmp hist name "<<tmp_name <<endl;
@@ -375,12 +398,12 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 
   string eta = "2.4";
  
-  string chiprob_chi2_f = "";//"&& Chi2Dis.chi<0.04";
-  string chiprob_toptag_f = "";//"&& TopTagDis.chi<0.04";
-  string chiprob_chi2_c = "";//"&& Chi2Dis.chi<0.04";
-  string chiprob_toptag_c = "";//"&& TopTagDis.chi<0.04";
+  string chiprob_chi2_f = "&& Chi2Dis.recoTyp == 12";//"&& Chi2Dis.chi<0.08";
+  string chiprob_toptag_f ="";/// "&& TopTagDis.chi<0.4";
+  string chiprob_chi2_c = "&& Chi2Dis.recoTyp == 12";/// "&& Chi2Dis.chi<0.08";
+  string chiprob_toptag_c = "";//"&& TopTagDis.chi<0.4";
   
-  string factor_forwardjet = forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
+  string factor_forwardjet = "";//forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
   string factors = "";
   if(boost::algorithm::contains(channel,"Ele")) {
 	factors = "("+eletriggerscale()+"*(1-isRealData)+isRealData)*";
@@ -392,6 +415,9 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 
   string cmssw_version = "8_0_24_patch1";
   string errordir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/";
+
+
+  factors += "(abs(Chi2Dis.forwardJet.eta())<=4)*";
 
   cout<<"Factors: "<<factors<<endl; 
   /*
@@ -494,7 +520,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
        //mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
 
 
-    }
+    }  
     if(errors){
       mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
       mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
@@ -526,14 +552,24 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 	mainClass.AddWeightError("weight_sfmu_muonTrigger_down/weight_sfmu_muonTrigger","muontrigger__minus");
       
       }
-      mainClass.AddDirError(errordir+"/sig_jec_jer_up_"+channel+"SigSelUNC/"  ,"jec__plus");
-      mainClass.AddDirError(errordir+"/sig_jec_jer_down_"+channel+"SigSelUNC/","jec__minus");
+      mainClass.AddDirError(errordir+"/sig_jer_up_"+channel+"SigSelUNC/"  ,"jer__plus");
+      mainClass.AddDirError(errordir+"/sig_jer_down_"+channel+"SigSelUNC/","jer__minus");
 
+      mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus");
+      mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus");
+      /*/
+      mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus","TopTagDis","toptag_dis_jec_up");
+      mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus","TopTagDis","toptag_dis_jec_down");
+      mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus","WTagDis.mass>0","wtag_dis_jec_up");
+      mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus","WTagDis.mass>0","wtag_dis_jec_down");
+      /*/
       
-      mainClass.AddWeightError("1","toptagJEC__plus",TreeDrawMain::error_method::envelop,"TopTagDis","toptag_dis_jec_up");
+      /*/
+      mainClass.AddWeightError("1","toptagJEC__plus",TreeDrawMain::error_method::envelop,"TopTagDis","tag_dis_jec_up");
       mainClass.AddWeightError("1","toptagJEC__minus",TreeDrawMain::error_method::envelop,"TopTagDis","toptag_dis_jec_down");
       mainClass.AddWeightError("1","wtagJEC__plus",TreeDrawMain::error_method::envelop,"WTagDis","wtag_dis_jec_up");
       mainClass.AddWeightError("1","wtagJEC__minus",TreeDrawMain::error_method::envelop,"WTagDis","wtag_dis_jec_down");
+      /*/
     }
     
     mainClass.create_file(resultfile);
@@ -592,7 +628,7 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
       mainClass.AddHistCategory("TopTagDis.mass",factors+"weight*(TopTagDis.mass >0 && TopTagDis.topHad.pt()>400 "+chiprob_toptag_c+" && abs(TopTagDis.forwardJet.eta())<"+eta+")","TopTag:background",binning,background_weights[4]);
     }
   }
-  //errors = false;
+  //errors = false;  
   if(errors){
     mainClass.AddWeightError("scaleWeight_up","scaleWeight__plus");
     mainClass.AddWeightError("scaleWeight_down","scaleWeight__minus");
@@ -608,8 +644,8 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
     mainClass.AddDirError(errordir+"/jer_up_"+channel+"SelUNC/"  ,"jer__plus");
     mainClass.AddDirError(errordir+"/jer_down_"+channel+"SelUNC/","jer__minus");
     /*/
-    mainClass.AddWeightError("("+factor_forwardjet+"1)","forwardjet__minus");
-    mainClass.AddWeightError("(1/"+factor_forwardjet+"1)","forwardjet__plus");
+    //mainClass.AddWeightError("("+factor_forwardjet+"1)","forwardjet__minus");
+    //mainClass.AddWeightError("(1/"+factor_forwardjet+"1)","forwardjet__plus");
     vector<string> channel_dirs;
     if(channel.empty() || boost::iequals(channel,"Ele")) channel_dirs.push_back("Ele");
     if(channel.empty() || boost::iequals(channel,"Mu")) channel_dirs.push_back("Mu");
@@ -630,23 +666,17 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
       mainClass.AddWeightError("weight_sfmu_muonTrigger_down/weight_sfmu_muonTrigger","muontrigger__minus");
       
     }
-    /*/
-    mainClass.AddDirError(errordir+"/jec_up_"+channel+"SelUNC/"  ,"jec__plus");
-    mainClass.AddDirError(errordir+"/jec_down_"+channel+"SelUNC/","jec__minus");
-    mainClass.AddDirError(errordir+"/jer_up_"+channel+"SelUNC/"  ,"jer__plus");
-    mainClass.AddDirError(errordir+"/jer_down_"+channel+"SelUNC/","jer__minus");
-    /*/
-    /*/
-    mainClass.AddDirError(errordir+"/sig_jec_jer_up_"+channel+"SigSelUNC/"  ,"jec__plus");
-    mainClass.AddDirError(errordir+"/sig_jec_jer_down_"+channel+"SigSelUNC/","jec__minus");
-
-    mainClass.AddWeightError("1","toptagJEC__plus",TreeDrawMain::error_method::envelop,"TopTagDis.mass","toptag_dis_jec_up.mass");
-    mainClass.AddWeightError("1","toptagJEC__minus",TreeDrawMain::error_method::envelop,"TopTagDis.mass","toptag_dis_jec_down.mass");
-    mainClass.AddWeightError("1","wtagJEC__plus",TreeDrawMain::error_method::envelop,"","","WTagDis","wtag_dis_jec_up");
-    mainClass.AddWeightError("1","wtagJEC__minus",TreeDrawMain::error_method::envelop,"","","WTagDis","wtag_dis_jec_down");
-    //mainClass.AddDirError(errordir+"/sig_jer_up_"+channel+"SigSelUNC/"  ,"jer__plus");
-    //mainClass.AddDirError(errordir+"/sig_jer_down_"+channel+"SigSelUNC/","jer__minus");
-    /*/
+    
+    mainClass.AddDirError(errordir+"/sig_jer_up_"+channel+"SigSelUNC/"  ,"jer__plus");
+    mainClass.AddDirError(errordir+"/sig_jer_down_"+channel+"SigSelUNC/","jer__minus");
+    
+    mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus","WTagDis.mass==-1","WTagDis.mass==-1","WTagDis.mass>0");
+    mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus","WTagDis.mass==-1","WTagDis.mass==-1","WTagDis.mass>0");
+    mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus","TopTagDis","toptag_dis_jec_up","TopTagDis.mass==-1");
+    mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus","TopTagDis","toptag_dis_jec_down","TopTagDis.mass==-1");
+    mainClass.AddDirError(errordir+"/sig_jec_up_"+channel+"SigSelUNC/"  ,"jec__plus","WTagDis.mass>0","wtag_dis_jec_up.mass>0");
+    mainClass.AddDirError(errordir+"/sig_jec_down_"+channel+"SigSelUNC/","jec__minus","WTagDis.mass>0","wtag_dis_jec_down.mass>0");
+    
   }
 
   mainClass.create_file(resultfile);
