@@ -10,7 +10,7 @@
 
 int main(int argc, char** argv){
   string CMSSW = "8_0_24_patch1";
-  bool electron = false;
+  bool electron = true;
   bool errors = false;
   string resultfile = "plots/doktor/Analysis/";
   bool single = true; 
@@ -36,10 +36,12 @@ int main(int argc, char** argv){
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets*.root","",5,-1,true,"ZJets");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.SingleT*.root","",41,-1,true,"singleT");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.QCD*.root","",4,-1,true,"QCD");
-  
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1100_RH.root","hist",20,-1,false,"Bprimeb_1100GeV_RH",0);
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1700_RH.root","hist",40,-1,false,"Bprimeb_1700GeV_RH",0);
- 
+
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_RH.root","hist",20,-1,false,"BprimeB_800GeV_RH",0);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1100_RH.root","hist",20,-1,false,"BprimeB_1100GeV_RH",0);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1400_RH.root","hist",40,-1,false,"BprimeB_1400GeV_RH",0);
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1700_RH.root","hist",40,-1,false,"BprimeB_1700GeV_RH",0);
+
 
   treehists.SetTree("AnalysisTree");
  
@@ -85,30 +87,31 @@ int main(int argc, char** argv){
 
   //Ak4 jets
   treehists.Draw_ROOT("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events", true, "", channel+"_ak4_pt__");
-  treehists.Draw_ROOT("Sum$(slimmedJets.slimmedJets.m_pt)",factors+"weight","11,-0.5,10.5","Number of ak4","Events", true, "", channel+"_ak4_num__");
+  treehists.Draw_ROOT("Length$(slimmedJets.slimmedJets.m_pt)",factors+"weight","11,-0.5,10.5","Number of ak4","Events", true, "", channel+"_ak4_num__");
   //AK8 Jets
-  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt",factors+"weight","50,170,1200","ak8 p_{T} [GeV]","Events", true, "", channel+"_ak8_pt__");
+  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_pt",factors+"weight","40,170,1200","ak8 p_{T} [GeV]","Events", true, "", channel+"_ak8_pt__");
   treehists.Draw_ROOT("Length$(slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_eta)",factors+"weight","11,-0.5,10.5","Number of ak8","Events", true, "", channel+"_ak8_num__");
-  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau3/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2",factors+"weight","50,0.,1.","#tau_{3}/#tau_{2}","Events", true, "", channel+"_tau32__");
+  treehists.Draw_ROOT("slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau3/slimmedJetsAK8_SoftDrop.slimmedJetsAK8_SoftDrop.m_tau2",factors+"weight","25,0.,1.","#tau_{3}/#tau_{2}","Events", true, "", channel+"_tau32__");
  
   //electron
   if(electron){
-    treehists.Draw_ROOT("slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","70,118,800"," electron p_{T} [GeV]","Events", true, "", channel+"_e_pt__");
-    treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","35,290,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_e_htlep__");
-
+    treehists.Draw_ROOT("slimmedMETs.m_pt","weight","35,60,1000","p^{miss}_{T} [GeV]","Events", true, "", channel+"_e_met__");
+    treehists.Draw_ROOT("slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","35,118,800","e  p_{T} [GeV]","Events", true, "", channel+"_e_pt__");
+    treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","30,290,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_e_htlep__"); 
   }
   //muon
   else{
-    treehists.Draw_ROOT("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","70,55,800"," muon p_{T} [GeV]","Events", true, "", channel+"_mu_pt__");
+    treehists.Draw_ROOT("slimmedMETs.m_pt",factors+"weight","35,50,1000","p^{miss}_{T} [GeV]","Events", true, "", channel+"_mu_met__");
+    treehists.Draw_ROOT("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","35,55,800"," #mu p_{T} [GeV]","Events", true, "", channel+"_mu_pt__");
     treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","30,250,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_mu_htlep__");
   }
 
   
-  treehists.Draw_ROOT("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12)","40,100,350","Mass [GeV]","Events", true, "", channel+"_chi2_topHad_mass__");
+  treehists.Draw_ROOT("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && Chi2Dis.num_whad>1)","40,100,350","mass [GeV]","Events", true, "", channel+"_chi2_topHad_mass__");
   treehists.Draw_ROOT("Chi2Dis.topLep.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11)","40,100,350","Mass [GeV]","Events", true, "", channel+"_chi2_topLep_mass__");
-  treehists.Draw_ROOT("sqrt(Chi2Dis.wHad.M2())",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12)","40,40,250","Mass [GeV]","Events", true, "", channel+"_chi2_whad_mass__");
+  treehists.Draw_ROOT("sqrt(Chi2Dis.wHad.M2())",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && Chi2Dis.num_whad>1)","40,40,250","mass [GeV]","Events", true, "", channel+"_chi2_whad_mass__");
   treehists.Draw_ROOT("Chi2Dis.wLep.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11)","40,100,1500" ,"p_{T} [GeV]","Events", true, "", channel+"_chi2_wlep_pt__");
-  treehists.Draw_ROOT("sqrt(TopTagDis.topHad.M2())",factors+"weight*("+toptag_central_string+")","40,100,350","Mass [GeV]","Events", true, "", channel+"_toptag_tophad_mass__");
+  treehists.Draw_ROOT("sqrt(TopTagDis.topHad.M2())",factors+"weight*("+toptag_central_string+")","40,100,350","mass [GeV]","Events", true, "", channel+"_toptag_tophad_mass__");
   treehists.Draw_ROOT("TopTagDis.wLep.pt()",factors+"weight*("+toptag_central_string+")","40,100,1500","p_{T} [GeV]","Events", true, "", channel+"_toptag_wlep_pt__");
 
   
