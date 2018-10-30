@@ -30,7 +30,7 @@ int main(int argc, char** argv){
   TreeRootHist treehists(resultfile,single);
   treehists.SetLegend(0.6, 0.3, 0.86, 0.86);
   
-  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/Merge_Data.root","PE",1,20,false,"DATA");
+  treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/eletrigger_data.root","PE",1,20,false,"DATA");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt*.root","",3,-1,true,"WJets");
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_*.root","",2,-1,true,"ttbar");  
   treehists.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.ZJets*.root","",5,-1,true,"ZJets");
@@ -84,7 +84,7 @@ int main(int argc, char** argv){
   string toptag_forward_string = "(TopTagDis.mass>-1&& TopTagDis.topHad.pt()>=400) && abs(TopTagDis.forwardJet.eta()) >="+eta;
   string toptag_scalefactor = "1.01";
   //string wtag_scalefactor = "";
-
+  /*/
   //Ak4 jets
   treehists.Draw_ROOT("slimmedJets.slimmedJets.m_pt",factors+"weight","70,30,900","ak4 p_{T} [GeV]","Events", true, "", channel+"_ak4_pt__");
   treehists.Draw_ROOT("Length$(slimmedJets.slimmedJets.m_pt)",factors+"weight","11,-0.5,10.5","Number of ak4","Events", true, "", channel+"_ak4_num__");
@@ -105,18 +105,42 @@ int main(int argc, char** argv){
     treehists.Draw_ROOT("slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","35,55,800"," #mu p_{T} [GeV]","Events", true, "", channel+"_mu_pt__");
     treehists.Draw_ROOT("slimmedMETs.m_pt + slimmedMuonsUSER.slimmedMuonsUSER.m_pt",factors+"weight","30,250,1000","H_{T,lep} [GeV]","Events", true, "", channel+"_mu_htlep__");
   }
+  /*/
+  //treehists.Draw_ROOT("Chi2Dis.chi*(TopTagDis.mass<=0)+TopTagDis.chi*(TopTagDis.mass>0)",factors+"weight","50,0,1","Prob.(#chi^{2})","Events", true, "", channel+"_prob__");
+
+  treehists.Draw_ROOT("slimmedElectronsUSER.slimmedElectronsUSER.m_pt",factors+"weight","35,118,800","e  p_{T} [GeV]","Events", true, "", channel+"_e_pt__");
+
+  //treehists.Draw_ROOT("sqrt(Chi2Dis.wHad.M2())",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11 && Chi2Dis.num_whad>1)","40,0,250","mass [GeV]","Events", true, "", channel+"_chi2_whad_mass__");
+  return 0;
+
+
+  treehists.Draw_ROOT("Chi2Dis.mass",factors+"weight*(TopTagDis.mass<=0 && Chi2Dis.btagEventNumber==0)","30,500,3000","m_{reco} [GeV]","Events", true, "", channel+"_chi2_mass_0btag__");
+  treehists.Draw_ROOT("Chi2Dis.mass",factors+"weight*(TopTagDis.mass<=0 && Chi2Dis.btagEventNumber==1)","30,500,3000","m_{reco} [GeV]","Events", true, "", channel+"_chi2_mass_1btag__");
+  treehists.Draw_ROOT("Chi2Dis.mass",factors+"weight*(TopTagDis.mass<=0 && Chi2Dis.btagEventNumber> 1)","30,500,3000","m_{reco} [GeV]","Events", true, "", channel+"_chi2_mass_2btag__");
+  treehists.Draw_ROOT("Chi2Dis.mass",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && WTagDis.mass>-1 && abs(Chi2Dis.forwardJet.eta()) < 2.4 )","50,500,3000","m_{reco} [GeV]","Events", true, "", channel+"_chi2_mass_Wtag__");
+
+  treehists.Draw_ROOT("TopTagDis.mass",factors+"weight*(TopTagDis.mass>0 )","30,500,3000","m_{reco} [GeV]","Events", true, "", channel+"_toptag_mass__");
+
+
+
+  return 0;
+  treehists.Draw_ROOT("Chi2Dis.chi",factors+"weight*(TopTagDis.mass<=0)","20,0,1","#it{Prob.(#chi^{2},ndof)}","Events", true, "", channel+"_chi2_prob__");
+  treehists.Draw_ROOT("TopTagDis.chi",factors+"weight*(TopTagDis.mass>0)","20,0,1","#it{Prob.(#chi^{2},ndof)}","Events", true, "", channel+"_ttag_prob__");
+  treehists.Draw_ROOT("Chi2Dis.forwardJet.eta()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.forwardJet.pt()>0)","20,-5,5","forward ak4 jet #eta","Events", true, "", channel+"_chi2_forwardjet_fulleta__");
+  treehists.Draw_ROOT("TopTagDis.forwardJet.eta()",factors+"weight*(TopTagDis.mass>-1 && TopTagDis.forwardJet.pt()>0)","20,-5,5","forward ak4 jet #eta","Events", true, "", channel+"_toptag_forwardjet_fulleta__");
 
   
-  treehists.Draw_ROOT("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && Chi2Dis.num_whad>1)","40,100,350","mass [GeV]","Events", true, "", channel+"_chi2_topHad_mass__");
+  return 0;
+  treehists.Draw_ROOT("Chi2Dis.topHad.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && (Chi2Dis.num_whad+Chi2Dis.num_top)>1)","40,0,350","mass [GeV]","Events", true, "", channel+"_chi2_topHad_mass__");
   treehists.Draw_ROOT("Chi2Dis.topLep.M()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11)","40,100,350","Mass [GeV]","Events", true, "", channel+"_chi2_topLep_mass__");
-  treehists.Draw_ROOT("sqrt(Chi2Dis.wHad.M2())",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && Chi2Dis.num_whad>1)","40,40,250","mass [GeV]","Events", true, "", channel+"_chi2_whad_mass__");
+  treehists.Draw_ROOT("sqrt(Chi2Dis.wHad.M2())",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 12 && Chi2Dis.num_whad>1)","40,0,250","mass [GeV]","Events", true, "", channel+"_chi2_whad_mass__");
   treehists.Draw_ROOT("Chi2Dis.wLep.pt()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && Chi2Dis.recoTyp == 11)","40,100,1500" ,"p_{T} [GeV]","Events", true, "", channel+"_chi2_wlep_pt__");
   treehists.Draw_ROOT("sqrt(TopTagDis.topHad.M2())",factors+"weight*("+toptag_central_string+")","40,100,350","mass [GeV]","Events", true, "", channel+"_toptag_tophad_mass__");
   treehists.Draw_ROOT("TopTagDis.wLep.pt()",factors+"weight*("+toptag_central_string+")","40,100,1500","p_{T} [GeV]","Events", true, "", channel+"_toptag_wlep_pt__");
 
-  
   treehists.Draw_ROOT("Chi2Dis.forwardJet.eta()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && fabs(Chi2Dis.forwardJet.eta())>=2.4)","20,-5,5","forward ak4 jet #eta","Events", true, "", channel+"_chi2_forwardjet_eta__");
   treehists.Draw_ROOT("TopTagDis.forwardJet.eta()",factors+"weight*((TopTagDis.mass==-1|| TopTagDis.topHad.pt()<400) && fabs(Chi2Dis.forwardJet.eta())>=2.4)","20,-5,5","forward ak4 jet #eta","Events", true, "", channel+"_toptag_forwardjet_eta__");
 
+  
   
 }

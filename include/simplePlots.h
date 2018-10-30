@@ -43,6 +43,7 @@ using namespace std;
 class simplePlots: public HistsBase{
  public:
   simplePlots(string saveName, bool single=false);
+  void setLegendTitle(string leg_title_e){leg_title = leg_title_e;}
   void addLegendEntry(string legendEntry){legend.push_back(legendEntry);}
   void setLegend(double x1, double y1, double x2, double y2){ legx1=x1;legx2=x2;legy1=y1;legy2=y2;}
 
@@ -57,6 +58,7 @@ class simplePlots: public HistsBase{
   void plotHists(int options=0, bool logy=false); 
   void plotTH2(int options=0); 
   void normToArea(bool area=true, double max_ =-1){normArea=area;max=max_;}
+  void setPerGeV(bool switchPerGeV=true){perGeV=switchPerGeV;}
   void setErrorBand(double min_, double max_){errorband_max = max_; errorband_min =min_;}//used for the ratio plot
   void change_colors(bool col){changecolors = col;}
   void switch_ratio(bool rat_){draw_ratio=rat_;}
@@ -81,6 +83,7 @@ class simplePlots: public HistsBase{
   void clearAll(){clearHists();clearLegend();clearFiles();clearStack();clearGraphs();clearFunc();}
 
  private:
+  TH1F* normtoGeV(TH1F* hist);
   TH1F* ratio(TH1F* num, TH1F* denom, bool norm, bool zeroBinAsOne=false);
   vector<TGraph*> graphs;
   vector<TF1*> functions;
@@ -90,6 +93,7 @@ class simplePlots: public HistsBase{
   std::vector<std::string> plotting_styles, func_plotting,graph_plotting;
   vector<bool> plotInratio;
   string ratio_ytitle = "Data/MC", hist_ytitle = "events", xtitle="", hist_title="";
+  string leg_title = "";
   string ratio_drawopt_nom = "e2", ratio_drawopt_next="same E0";
   double ratio_min = 0.1, ratio_max = 2.9;
   double errorband_max = 2, errorband_min = 0;
@@ -99,6 +103,7 @@ class simplePlots: public HistsBase{
   double max;
   THStack* stack;
   bool using_stack=false;
+  bool perGeV=false;
   bool draw_ratio =true;
   bool fit_ratio = false;
   int page_number =0;

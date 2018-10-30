@@ -38,19 +38,21 @@ int main(){
 
   //cmssw_version = "CMSSW_7_4_9";
   i=5;
-  string sel_folder = "MuSel_wtag_topjetcorr";//"/MuSel_v"+to_string(i);
+  string sel_folder = "MuSel_new";//"/MuSel_v"+to_string(i);
   //BprimeB-1000_LH
 
 
   cutFlow SelectionCutFlow("sel_cutflow_v"+to_string(i)+".txt");
   SelectionCutFlow.set_separator("&","\\\\");
-  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.DATA.SingleMuData.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.Merge_Data.root");
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Tune.root");
-  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.WJets_Pt.root");
-  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.ZJets.root");
-  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.QCD.root");
-  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.SingleT.root");
-
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt700to1000.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.TTbar_Mtt1000toInf.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.WJets*.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.ZJets*.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.QCD*.root");
+  SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.SingleT*.root");
+  /*/
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-800_RH.root");
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1000_RH.root");
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeT-1500_RH.root");
@@ -63,7 +65,8 @@ int main(){
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-800_LH.root");
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1000_LH.root");
   SelectionCutFlow.addFile("/nfs/dust/cms/user/gonvaq/CMSSW/"+cmssw_version+"/src/UHH2/VLQToTopAndLepton/config/"+sel_folder+"/uhh2.AnalysisModuleRunner.MC.BprimeB-1500_LH.root");
-
+  /*/
+  
   SelectionCutFlow.normToCut(0);
   SelectionCutFlow.setPrecision(4);
   SelectionCutFlow.printToFile("cutflow/Tags");
@@ -73,7 +76,7 @@ int main(){
 
 
   i = 1;
-  sel_folder =  "EleSel_cross";//+to_string(i);
+  sel_folder =  "EleSel_new";//+to_string(i);
 
   cutFlow EleSelCutFlow("ele_sel_cutflow_v"+to_string(i)+".txt");
   EleSelCutFlow.set_separator("&","\\\\");

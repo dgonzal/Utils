@@ -32,11 +32,12 @@ void effiPlots::plotTH(){
 
 void effiPlots::loadHists(string s_denominator, string s_numerator, string leg_entry_graph){
   std::vector<std::string> sample_nicks = get_nicknames();
+  leg_title=leg_entry_graph;
   int count  =-1;
   for(const auto & fileDir : get_filedirs()){
     count ++;
     if(debug)std::cout<< "leg entry " << leg_entry_graph<<" nick sample "<<sample_nicks[count]<<std::endl;
-    if(!leg_entry_graph.empty() || !sample_nicks[count].empty())legend_entries.push_back(leg_entry_graph+" "+sample_nicks[count]); 
+    if(!leg_entry_graph.empty() || !sample_nicks[count].empty())legend_entries.push_back(sample_nicks[count]); 
     else legend_entries.push_back("");
     if(debug)cout<<"Denom "<<s_denominator<<" Num "<<s_numerator<<endl;
     TFile* file = new TFile(fileDir.c_str());
@@ -104,8 +105,9 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   double maximum = 0;
   TMultiGraph * resultGraphs = new TMultiGraph();
   //get_can()->SetLogy();
-  TLegend* multigraphLeg = new TLegend(0.5,0.2,0.7,0.6); 
+  TLegend* multigraphLeg = new TLegend(0.3,0.2,0.5,0.4); 
   multigraphLeg->SetBorderSize(0);
+  multigraphLeg->SetTextSize(0.03);
   for(unsigned int i = 0; i < histos.size(); ++i ){
     /*
     gStyle->SetPadTickY(1);
@@ -180,7 +182,8 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
     //graph->SetTitle((string(histos[i].numerator->GetTitle())+" Efficiency").c_str());//+"/"+string(histos[i].denominator->GetTitle())).c_str());
     if(debug) std::cout<<"legend size "<<legend_entries.size()<<" entry "<< legend_entries[i]<<std::endl;
     if(!legend_entries[i].empty()){
-      multigraphLeg->AddEntry(graph,legend_entries[i].c_str(),"lp");
+      multigraphLeg->SetHeader(leg_title.c_str());
+      multigraphLeg->AddEntry(graph,legend_entries[i].c_str(),"l");
       graph->SetTitle(legend_entries[i].c_str());    }
     graph->SetMinimum(0.0);
     graph->Draw("sameap");

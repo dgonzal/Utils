@@ -158,8 +158,8 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
                model.add_lognormal_uncertainty('mu_trigger_rate'   , math.log(eletrigger), p, obsname='TopTagMu')         
 
        
-    #400% on the normalization
-    uncer = 5.
+    #100% on the normalization
+    uncer = 2.
     names_tup =[('Anti-b-tag_rate','Chi2_AntiBTag'),('1-b-tag_rate','Chi2_1_BTag'),('2-b-tag_rate','Chi2_2_BTag'),('W-tag_rate','Chi2_WTag'),('top-tag_rate','TopTag')]
 
     for unc in names_tup:
@@ -184,8 +184,8 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
 
     if mass:
        discovery_val= discovery(model, Z_error_max=0.2, maxit=10, n=500, n_expected=500, input_expected='data', options=options)
-       options.set('minimizer', 'minuit_tolerance_factor', '100')
-       impact(model,"impact_significance_"+mass+".pdf",options,my_group) 
+       #options.set('minimizer', 'minuit_tolerance_factor', '100')
+       #impact(model,"impact_significance_"+mass+".pdf",options,1,my_group) 
     
     print 'Limits based on MC!'
     print "expected limit "+Chirality+' '+channel +":"
@@ -195,11 +195,6 @@ def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "Bprime
     print 'discovery'
     #for item in discovery_val: 
     #    print item
-
-
-    
-
-
 
     return exp,obs,discovery_val    
         

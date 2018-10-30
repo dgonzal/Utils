@@ -39,7 +39,7 @@ def impact(model, output, options=None, factor = 1, signal_process=''):
     beta_signal = -1
     
     for key,p in fit.iteritems():
-        print key
+        #print key
         max_beta = max([x[0] for x in p['beta_signal']])
         if beta_signal < max_beta:
             tmp_fitnumber, tmp_best_chi2 = chi2_selector(p['__chi2'])
@@ -66,11 +66,8 @@ def impact(model, output, options=None, factor = 1, signal_process=''):
     print par_values
     
     nuisance_constraint = get_fixed_dist_at_values(par_values)
-    nuisance_constraint.distributions.pop('beta_signal',None) # ['beta_signal'] = {'width': 0.0, 'range': [-100,100], 'typ': 'gauss', 'mean':0}
-    
-    #print nuisance_constraint.distributions
-    #exit(0)
-    
+    nuisance_constraint.distributions.pop('beta_signal',None) 
+        
     result_plus = {}
     result_minus = {}
     for p in model.get_parameters(selected_signal_string):
@@ -78,21 +75,25 @@ def impact(model, output, options=None, factor = 1, signal_process=''):
         sigma   = fit[selected_signal][p][fitnumber][1]
         nominal = fit[selected_signal][p][fitnumber][0]
         #print p, nominal,'+-',sigma
-
-        nuisance_constraint.distributions[p] = {'width': 0.0, 'range': [nominal+sigma,nominal+sigma], 'typ': 'gauss', 'mean':nominal+sigma}
-        impact_fit_plus = mle(model, input='data',n=1, options=options,nuisance_constraint=nuisance_constraint, signal_process_groups=selected_signal_process)
-        result_plus[p] = {'beta_signal':impact_fit_plus[selected_signal]['beta_signal'],'paramter':nominal+sigma} #beta_signal and error
+        plus = nominal+sigma
+        minus = nominal-sigma
         
-        nuisance_constraint.distributions[p] = {'width': 0.0, 'range': [nominal-sigma,nominal-sigma], 'typ': 'gauss', 'mean':nominal-sigma}
-        impact_fit_minus = mle(model, input='data',n=1, options=options,nuisance_constraint=nuisance_constraint, signal_process_groups=selected_signal_process)
-        result_minus[p] = {'beta_signal':impact_fit_minus[selected_signal]['beta_signal'],'paramter':nominal-sigma} #beta_signal and error
-
+        nuisance_constraint.distributions[p] = {'width': 0.0, 'range': [plus,plus], 'typ': 'gauss', 'mean':plus}
+        impact_fit_plus = mle(model, input='data',n=100, options=options,nuisance_constraint=nuisance_constraint, signal_process_groups=selected_signal_process,chi2=True)
+        l =  impact_fit_plus[selected_signal]['__chi2']
+        min_chi2, idx = min((l[i],i) for i in xrange(len(l)))
+        result_plus[p] = {'beta_signal':[impact_fit_plus[selected_signal]['beta_signal'][idx]],'paramter':plus} #beta_signal and error
+        
+        nuisance_constraint.distributions[p] = {'width': 0.0, 'range': [minus,minus], 'typ': 'gauss', 'mean':minus}
+        impact_fit_minus = mle(model, input='data',n=100, options=options,nuisance_constraint=nuisance_constraint, signal_process_groups=selected_signal_process,chi2=True)
+        #print impact_fit_minus
+        l =  impact_fit_minus[selected_signal]['__chi2']
+        min_chi2, idx = min((l[i],i) for i in xrange(len(l)))
+        result_minus[p] = {'beta_signal':[impact_fit_minus[selected_signal]['beta_signal'][idx]],'paramter':minus} #beta_signal and error
+        
         #set back to nominal values
         nuisance_constraint.distributions[p] = {'width': 0.0, 'range': [nominal,nominal], 'typ': 'gauss', 'mean':nominal}
-        #print 'beta signal plus', impact_fit_plus[selected_signal]['beta_signal'], 'minus',impact_fit_minus[selected_signal]['beta_signal']
-        
-    #print result_plus
-    #print result_minus
+       
     results = []
     
     for p in model.get_parameters(selected_signal_string):

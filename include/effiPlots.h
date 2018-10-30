@@ -67,6 +67,7 @@ class effiPlots: public HistsBase{
   TGraphAsymmErrors* compute_scalefactorerrors(TH1F* num_h, TH1F* den_h,TGraphAsymmErrors* scaledenom, TGraphAsymmErrors* scalenum);
   TLegend* leg;
   bool legend_bool;
+  string leg_title = "";
   std::vector<std::string> legend_entries;
   std::vector<std::string> title;
   std::vector<effiContainer> histos;

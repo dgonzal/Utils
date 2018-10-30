@@ -17,7 +17,7 @@ from injection_merge import *
 from impact import *
 
 def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, injected_signal = "", beta_sig=0.0, glob_prefix=""):
-    write_report = True        
+    write_report = False        
     if write_report:config.report.reopen_file()
     #exit(0)
     factor = 1#.5 
@@ -128,10 +128,8 @@ def run_cutopt(fname, Chirality, channel = "", particle = "BprimeB", write_repor
         """
         limit_file.close()
     
-    #exit(0)
     options.set('main', 'n_threads', '1')
-    #options.set('minimizer', 'minuit_tolerance_factor', '100')
-    #model.scale_predictions(1/factor, procname=particle+'*', obsname='*')
+    options.set('minimizer', 'minuit_tolerance_factor', '1')
     try:
         impact(model, output_directory+"/impact.pdf", options)
     except:

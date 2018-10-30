@@ -228,8 +228,17 @@ void simplePlots::plotHists(int options, bool logy){
 	else
 	  histos[m]->DrawNormalized(plotting_styles[m].c_str())->SetMaximum(maximum);
       }
+      else if(perGeV){
+	histos[m]->SetMaximum(maximum*1.3);
+	TH1F* h_hist = normtoGeV((TH1F*)histos[m]->Clone());
+	if(changecolors)h_hist->SetMarkerStyle(20);
+	if(plotting_styles[m].empty())
+	  h_hist->Draw("p");
+	else
+	  h_hist->Draw(plotting_styles[m].c_str());
+      }
       else{
-	histos[m]->SetMaximum(maximum*1.2);
+	histos[m]->SetMaximum(maximum*1.3);
 	if(changecolors)histos[m]->SetMarkerStyle(20);
 	if(plotting_styles[m].empty())
 	  histos[m]->Draw("p");
@@ -243,7 +252,13 @@ void simplePlots::plotHists(int options, bool logy){
 	  histos[m]->DrawNormalized(("same"+plotting_styles[m]).c_str());
 	else
 	  histos[m]->DrawNormalized("same hist");
-      } 
+      }
+      else if(perGeV){
+	TH1F* h_hist = normtoGeV((TH1F*)histos[m]->Clone());
+	if(!plotting_styles[m].empty())
+	   h_hist->Draw(plotting_styles[m].c_str());
+	else  h_hist->Draw("same hist");
+      }
       else if(!plotting_styles[m].empty())
 	histos[m]->Draw(plotting_styles[m].c_str());
       else histos[m]->Draw("same hist"); 
@@ -344,6 +359,7 @@ void simplePlots::plotHists(int options, bool logy){
   }
   
   get_can()->Update();
+  if(!leg_title.empty())leg->SetHeader(leg_title.c_str());
   leg->Draw();
   if(single_plots){
     get_can()->Print(singlefile_result);
@@ -408,4 +424,16 @@ TH1F* simplePlots::ratio(TH1F* num, TH1F* denom, bool norm, bool zeroBinAsOne){
   //eAsym->SetLineWidth(1);
   //eAsym->SetFillStyle(3245);
   return ratio;
+}
+
+TH1F* simplePlots::normtoGeV(TH1F* hist){
+  double cont = -1, err = -1, width= -1;
+  for(unsigned int i =0; i< hist->GetNcells(); i++){
+    cont   = hist->GetBinCenter(i);
+    err    = hist->GetBinError(i);
+    width  = hist->GetBinWidth(i);
+    hist->SetBinContent(i,cont/width);
+    hist->SetBinError(i,err/width);
+  }
+  return hist;
 }

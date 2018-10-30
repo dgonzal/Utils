@@ -8,13 +8,13 @@ productions = ['B','T'] #'B','T']
 chiralities = ['RH','LH'] #['RH','LH']
 witdths =['','10','20','30']
 
-signal_prefixes = ['Bprime']
-#signal_prefixes = ['X53']
+#signal_prefixes = ['Bprime']
+signal_prefixes = ['X53']
 channels = ['']
 #channels = ['']
-productions = ['B']
-chiralities = ['LH']
-witdths =['10']
+productions = ['']
+chiralities = ['RH']
+witdths =['']
 
 xmldir = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/common/datasets/RunII_80X_v3/Bprime/'
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/config/'
@@ -23,9 +23,9 @@ sourcedirs = ['/MuSigSel_v1/','/EleSigSel_v1']
 rootDir = 'ROOTDataShape_50_0_3500_eta4/'
 prefix = 'Eta4_'
 createfiles = False 
-limits = True
+limits =  True
 do_discovery = False  
-single_cat = False 
+single_cat = True 
 
 if not os.path.exists(rootDir):
     os.makedirs(rootDir)
