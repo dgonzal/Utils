@@ -94,12 +94,12 @@ int main(){
 
   
   for(unsigned int i =2; i<jet_ele_cut.size(); ++i ){  
-     mc_pre->Add(jet_ele_cut[i]);
+     mc_pre ->Add(jet_ele_cut[i]);
      mc_post->Add(eletrigger_jet_ele_cut[i]);
   }
 
   if(rebin.size()>0){ 
-    data_pre = (TH1F*)data_pre->Rebin(rebin.size()-1,"", (double*) &rebin[0]);
+    data_pre  = (TH1F*)data_pre->Rebin(rebin.size()-1,"", (double*) &rebin[0]);
     data_post = (TH1F*)data_post->Rebin(rebin.size()-1,"", (double*) &rebin[0]);
 
     mc_pre = (TH1F*)mc_pre->Rebin(rebin.size()-1,"", (double*) &rebin[0]);

@@ -2,7 +2,8 @@ import ROOT
 from copy import deepcopy
 from numpy import linalg
 import numpy as np
-
+import math 
+import numpy
 
 execfile("distribution.py")
 

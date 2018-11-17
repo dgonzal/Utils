@@ -14,7 +14,7 @@ import time
 from shutil import copyfile
 import math
 import random
-
+import glob
 import array
 
 def find_files(dirstring):

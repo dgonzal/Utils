@@ -7,7 +7,7 @@ using namespace std;
 
 simplePlots::simplePlots(string saveName, bool single): HistsBase(saveName, single){
   normArea=false;
-  legx1=0.6; legx2= 0.8; legy1=0.6; legy2=0.8;
+  legx1=0.45; legx2= 0.7; legy1=0.5; legy2=0.8;
   max=-1;
   stack = new THStack("hs","stacked histograms");
 }
@@ -115,7 +115,7 @@ void simplePlots::plotHists(int options, bool logy){
   leg->SetBorderSize(0);
   leg->SetTextFont(42);
   leg->SetFillStyle(0);
-
+  leg->SetTextSize(0.05);
 
   //  coordinates:
   //  			 
@@ -155,24 +155,6 @@ void simplePlots::plotHists(int options, bool logy){
   else
     pad1->SetLogy(0);
 
-
-  /*
-  //pad1->SetTopMargin(0.1); pad1->SetLeftMargin(0.19);
-  pad1->SetTopMargin(0.1);pad1->SetBottomMargin(0.0);pad1->SetLeftMargin(0.19);pad1->SetRightMargin(0.1);
-  //pad2->SetTopMargin(0.04); pad2->SetLeftMargin(0.19);
-  pad2->SetTopMargin(0.0); pad2->SetBottomMargin(0.25);  pad2->SetLeftMargin(0.19); pad2->SetRightMargin(0.1);
-  pad1->SetFillColor(0);
-  pad2->SetFillColor(0);
-
-  //TPad *pad1 = new TPad("pad1","This is pad1",0.02,0.02,0.48,0.83,33);
-  //TPad *pad2 = new TPad("pad2","This is pad2",0.52,0.02,0.98,0.83,33);
-  //pad1->SetFillColor(0);
-  //pad2->SetFillColor(0);
-
-  if(logy) get_can()->SetLogy();
-  */
-
-  
   double maximum =0;
   for(unsigned int m = 0; m < histos.size(); ++m ){
     if(histos[m]->GetMaximum() > maximum) maximum = histos[m]->GetMaximum();
@@ -330,6 +312,7 @@ void simplePlots::plotHists(int options, bool logy){
     gPad->RedrawAxis();  
     //stack->GetHistogram()->Draw("same");	
   }
+  /*/
   //go back to first pad!
   if(draw_ratio)pad1->cd();
   if(using_stack || histos.size()>0){
@@ -344,7 +327,7 @@ void simplePlots::plotHists(int options, bool logy){
       else
 	histos[0]->Draw(("same "+plotting_styles[0]).c_str());
   }
-
+  /*/
   for(unsigned int i=histos.size();i<legend.size();++i)
      if(!legend[i].empty())leg->AddEntry((TObject*)0, legend[i].c_str(), "");
 
@@ -369,8 +352,8 @@ void simplePlots::plotHists(int options, bool logy){
   }
   
   if(logy) get_can()->SetLogy(0);
-  if(draw_ratio)pad1->Close();
-  if(draw_ratio)pad2->Close();
+  //if(draw_ratio)pad1->Close();
+  //if(draw_ratio)pad2->Close();
   get_can()->Clear();
 }
 

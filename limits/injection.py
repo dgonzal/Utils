@@ -6,6 +6,16 @@ from matplotlib.backends.backend_pdf import PdfPages
 import glob
 from shutil import copyfile
 
+sys.path.append('/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/')
+sys.path.append('/nfs/dust/cms/user/gonvaq/theta/utils2/theta_auto')
+
+from signal_background_uncertainty import *    
+from backgroundfit import *
+from injection_merge import *
+from calc_chi2 import *
+from invert_bin_content import *
+
+
 prod_channels = ['Mu','Ele']# 'Mu','Ele',''
 
 release = '/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/config/'
@@ -34,13 +44,11 @@ cross_sec = [4.339,3.016,2.219,1.653,1.192,0.896,0.679,0.529,0.415,0.319,0.248,0
 cross_sec = [x*0.25 for x in cross_sec]
 
 #cross_sec = [1.5, 0.9, 0.4, 0.2, 0.12, 0.11, 0.08, 0.09, 0.08, 0.05, 0.05, 0.07]
-create = False 
-
-
+create = True 
 
 print cross_sec
 
-exit(0)
+#exit(0)
 
 if not os.path.exists(rootDir):
     os.makedirs(rootDir)
@@ -48,10 +56,10 @@ if not os.path.exists("h_"+rootDir):
     os.makedirs("h_"+rootDir)
 
 
-execfile("signal_background_uncertainty.py")
-execfile("invert_bin_content.py")
-execfile("backgroundfit.py")
-execfile("injection_merge.py")
+#execfile("signal_background_uncertainty.py")
+#execfile("invert_bin_content.py")
+#execfile("backgroundfit.py")
+#execfile("injection_merge.py")
 #execfile("histogram_rebinning.py")
 
 

@@ -8,16 +8,25 @@
 //#include "filefinder.h"
 
 #include <boost/algorithm/string.hpp> // include Boost, a C++ library
-
+#include <math.h>       /* round, floor, ceil, trunc */
+#include <iomanip>
 
 using namespace std;
+
+string m_to_string(double x){
+  std::ostringstream streamObj;
+  streamObj<< std::setprecision(2); 
+  //Add double to stream
+  streamObj << x;
+  return streamObj.str();
+}
 
 int main(){
   string CMSSW = "8_0_24_patch1";
   string folder ="MuSigSel";
   string dir = "/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_"+CMSSW+"/src/UHH2/VLQToTopAndLepton/config/"+folder+"/uhh2.AnalysisModuleRunner.MC.";
-  string output ="plots/recofitMu.ps";
-  bool single = false;
+  string output ="plots/recofitMu_phd/";
+  bool single = true;
   
   //vector<string> filenames ={"BprimeB-800_LH","BprimeB-900_LH","BprimeB-1000_LH","BprimeB-1100_LH","BprimeB-1200_LH","BprimeB-1300_LH","BprimeB-1400_LH","BprimeB-1500_LH","BprimeB-1600_LH","BprimeB-1700_LH","BprimeB-1800_LH","BprimeB-800_RH","BprimeB-900_RH","BprimeB-1000_RH","BprimeB-1100_RH","BprimeB-1200_RH","BprimeB-1300_RH","BprimeB-1400_RH","BprimeB-1500_RH","BprimeB-1600_RH","BprimeB-1700_RH","BprimeB-1800_RH"};
   //vector<string> filenames ={"BprimeT-800_LH","BprimeT-900_LH","BprimeT-1000_LH","BprimeT-1100_LH","BprimeT-1200_LH","BprimeT-1300_LH","BprimeT-1400_LH","BprimeT-1500_LH","BprimeT-1600_LH","BprimeT-1700_LH","BprimeT-1800_LH","BprimeT-800_RH","BprimeT-900_RH","BprimeT-1000_RH","BprimeT-1100_RH","BprimeT-1200_RH","BprimeT-1300_RH","BprimeT-1400_RH","BprimeT-1500_RH","BprimeT-1600_RH","BprimeT-1700_RH","BprimeT-1800_RH"};
@@ -27,9 +36,9 @@ int main(){
   vector<string> nicks;
   for(auto name : filenames){
     string copy = name;
-    boost::replace_all(copy, "primeT-", "+t M(");
-    boost::replace_all(copy, "primeB-", "+b M(");
-    boost::replace_all(copy, "_", ") ");
+    boost::replace_all(copy, "primeT-", "+t, m_{B} = ");
+    boost::replace_all(copy, "primeB-", "+b, m_{B} = ");
+    boost::replace_all(copy, "0_", "GeV");
     //cout<<copy<<endl;
     nicks.push_back(copy);
   }
@@ -91,12 +100,12 @@ int main(){
   TF1* gaus = new TF1("gaus","gaus");
   simplePlots recofit(output,single);
   recofit.switch_ratio(false);
-  recofit.set_histYTitle("AU");
+  recofit.set_histYTitle("arbritary units");
   recofit.set_title(" ");
   for(unsigned int i=0; i<mass_toplep.size();++i){
     if(mass_toplep[i]->GetEntries()<50) continue;
 
-    recofit.set_XTitle("B mass [GeV]");
+    recofit.set_XTitle("m_{reco} [GeV]");
     recofit.loadHists(mass_toplep[i],nicks[i]+" top_{lep}","PE");
     recofit.plotHists(2,false);
     recofit.clearAll();
@@ -109,36 +118,39 @@ int main(){
     //cout<<"mean "<<gaus->GetParameter(1)<<endl;
     //cout<<"rms "<<gaus->GetParameter(2)<<endl;;
 
-    recofit.set_XTitle("top mass [GeV]");
+    recofit.set_XTitle("mass [GeV]");
     top_toplep[i]->Fit(gaus,"","",120,210);
     fitmean_toplep.push_back(gaus->GetParameter(1));
     fitrms_toplep.push_back(gaus->GetParameter(2));
-    recofit.loadHists(top_toplep[i],nicks[i]+" top_{lep}","PE");
-    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
-    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
+    recofit.loadHists(top_toplep[i],nicks[i],"PE");
+    recofit.addLegendEntry("top_{lep}");
+    recofit.addLegendEntry("#mu ="+m_to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma ="+m_to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
 
     top_tophad[i]->Fit(gaus,"","",120,210);
     fitmean_tophad.push_back(gaus->GetParameter(1));
     fitrms_tophad.push_back(gaus->GetParameter(2));
-    recofit.loadHists(top_tophad[i],nicks[i]+" top_{had}","PE");
-    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
-    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
+    recofit.loadHists(top_tophad[i],nicks[i],"PE");
+    recofit.addLegendEntry("top_{had}");
+    recofit.addLegendEntry("#mu ="+m_to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma ="+m_to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
 
-    recofit.set_XTitle("W mass [GeV]");
-    recofit.loadHists(w_tophad[i],nicks[i]+" top_{had}","PE");
+    recofit.set_XTitle("mass [GeV]");
+    recofit.loadHists(w_tophad[i],nicks[i]+", top_{had}","PE");
     recofit.plotHists(2,false);
     recofit.clearAll();
 
     w_toplep[i]->Fit(gaus,"","",65,100);
     fitmean_whad.push_back(gaus->GetParameter(1));
     fitrms_whad.push_back(gaus->GetParameter(2));
-    recofit.loadHists(w_toplep[i],nicks[i]+" top_{lep}","PE");
-    recofit.addLegendEntry("#mu "+to_string(gaus->GetParameter(1)));
-    recofit.addLegendEntry("#sigma "+to_string(gaus->GetParameter(2)));
+    recofit.loadHists(w_toplep[i],nicks[i],"PE");
+    recofit.addLegendEntry("top_{lep}");
+    recofit.addLegendEntry("#mu "+m_to_string(gaus->GetParameter(1)));
+    recofit.addLegendEntry("#sigma "+m_to_string(gaus->GetParameter(2)));
     recofit.plotHists(2,false);
     recofit.clearAll();
     

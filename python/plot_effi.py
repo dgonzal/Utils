@@ -80,8 +80,8 @@ execfile("lumi_signal.py")
 plot_handles =[]
 
 
-input_path = r'../limits/ROOTDataShape_50_0_3500_eta4/*BprimeT*_rebinned.root' 
-result_path =  r'Bt.pdf'
+input_path = r'../limits/ROOTDataShape_50_0_3500_eta4/*X53*_rebinned.root' 
+result_path =  r'Xt.pdf'
 
 for res_file in sorted(glob.iglob(input_path),key=lambda x: x[::-1]):
     if 'Mu' in res_file or 'Ele' in res_file:
@@ -112,19 +112,19 @@ for res_file in sorted(glob.iglob(input_path),key=lambda x: x[::-1]):
         x_range.append(item.mass)
         y_range.append(item.entries/divisor)
 
-    legend = legend.replace('BprimeB','B+b')
-    legend = legend.replace('BprimeT','B+t')
+    legend = legend.replace('BprimeB','')#'B+b')
+    legend = legend.replace('BprimeT','')#'B+t')
     legend = legend.replace('_Width','')
     legend = legend.replace('_',' ')
-    legend = legend.replace('X53',r'$X_{5/3}$')
-    legend = legend.replace('0p','0%')
-    legend = legend.replace('RH','$\Gamma / \mathrm{m_{VLQ}}$ RH')
-    legend = legend.replace('LH','$\Gamma / \mathrm{m_{VLQ}}$ LH')
+    legend = legend.replace('X53',r'')#'$X_{5/3}$')
+    legend = legend.replace('0p',r'0%')
+    legend = legend.replace('RH',r'$(\Gamma / \mathrm{m)_{VLQ}}$, RH')
+    legend = legend.replace('LH',r'$(\Gamma / \mathrm{m)_{VLQ}}$, LH')
 
 
     if '0%' not in legend:
-	legend = legend.replace('$\G','1% $\G') 
-
+       legend = legend.replace(r'$(\G',r'1% $(\G') 
+       
     print result[0],'->',legend
     plot_handles.append(plt.plot(x_range, y_range,label=str(legend)))
 
@@ -138,9 +138,10 @@ plt.ylim(0.1,12.5)
 plt.xlim(700,1800)
     
 fontsize=15
-plt.legend(loc='lower right',frameon=False,fontsize=fontsize,ncol=2)
-plt.xlabel('VLQ mass [GeV]',fontsize=fontsize)#, loc='right')
-plt.ylabel('$\epsilon_{signal} [\%]$',fontsize=fontsize)
+m_leg = plt.legend(loc=0,frameon=False,fontsize=16,ncol=2,title='$X_{5/3}$+t')
+plt.setp(m_leg.get_title(),fontsize=18)
+plt.xlabel('VLQ mass [GeV]',fontsize=18)#, loc='right')
+plt.ylabel('$\epsilon_{signal} [\%]$',fontsize=20)
 #plt.title('CMS $\it{Preliminary}$', loc='left',fontsize=fontsize)
 #plt.title('Signal efficiency', loc='right',fontsize=fontsize)
 

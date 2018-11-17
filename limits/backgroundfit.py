@@ -3,10 +3,16 @@ from scipy.stats import chisqprob
 import time
 import copy
 import ROOT
+import sys
 ROOT.TH1.AddDirectory(0)
 
-execfile("PostFitUncertainties.py")
-execfile("ThetaPostFitPlot.py")
+sys.path.append('/nfs/dust/cms/user/gonvaq/CMSSW/CMSSW_8_0_24_patch1/src/UHH2/VLQToTopAndLepton/Utils/limits/')
+sys.path.append('/nfs/dust/cms/user/gonvaq/theta/utils2/theta_auto')
+
+from PostFitUncertainties import *
+from ThetaPostFitPlot import *
+#execfile("PostFitUncertainties.py")
+#execfile("ThetaPostFitPlot.py")
 
 from theta_auto import * 
 from impact import *
@@ -114,7 +120,7 @@ def background_fit(fname, channel = "", write_report = True, glob_prefix="",sign
     return result, resultfile
                     
 def injected_signal_mc_limits(fname, Chirality, channel = "", particle = "BprimeB", write_report = True, glob_prefix="", mass='', beta_sig=0.0):
-    if write_report:report.reopen_file()
+    #if write_report:report.reopen_file()
     print 'building model from',fname
     model = build_model_from_rootfile(fname,include_mc_uncertainties=True)
     #model.fill_histogram_zerobins()

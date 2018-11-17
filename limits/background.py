@@ -22,7 +22,7 @@ sourcedirs = ['/MuSel_new/','/EleSel_new/'] #'/MuSel_wtag_topjetcorr/'
 #sourcedirs = ['/EleSel_new/']
 
 
-rootDir = 'ROOT_50_0_3500_recotyp12/' #ROOT_50_0_3500_eta4/' #ROOT_DataSideband_04/' # ROOT_DataSideband_04/' #ROOT_50_0_3500/' #'60_0_3500/'DataSideband_04/
+rootDir = 'ROOT_50_0_3500_eta4/' #ROOT_50_0_3500_eta4/' #ROOT_DataSideband_04/' # ROOT_DataSideband_04/' #ROOT_50_0_3500/' #'60_0_3500/'DataSideband_04/
 prefix =''
 postfix=''
 

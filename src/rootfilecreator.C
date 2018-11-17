@@ -398,10 +398,10 @@ int RootFileCreator(string signal="LH_25ns.root", string resultfile="TESTME1.roo
 
   string eta = "2.4";
  
-  string chiprob_chi2_f = "&& Chi2Dis.recoTyp == 12";//"&& Chi2Dis.chi<0.08";
-  string chiprob_toptag_f ="";/// "&& TopTagDis.chi<0.4";
-  string chiprob_chi2_c = "&& Chi2Dis.recoTyp == 12";/// "&& Chi2Dis.chi<0.08";
-  string chiprob_toptag_c = "";//"&& TopTagDis.chi<0.4";
+  string chiprob_chi2_f = "&& Chi2Dis.recoTyp == 12 && Chi2Dis.chi<0.08";
+  string chiprob_toptag_f = "&& TopTagDis.chi<0.1";
+  string chiprob_chi2_c = "&& Chi2Dis.recoTyp == 12 && Chi2Dis.chi<0.08";
+  string chiprob_toptag_c = "&& TopTagDis.chi<0.1";
   
   string factor_forwardjet = "";//forwardfit("TopTagDis.mass==-1 || TopTagDis.topHad.pt()<400");
   string factors = "";

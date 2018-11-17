@@ -105,7 +105,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   double maximum = 0;
   TMultiGraph * resultGraphs = new TMultiGraph();
   //get_can()->SetLogy();
-  TLegend* multigraphLeg = new TLegend(0.3,0.2,0.5,0.4); 
+  TLegend* multigraphLeg = new TLegend(0.4,0.13,0.65,0.4); 
   multigraphLeg->SetBorderSize(0);
   multigraphLeg->SetTextSize(0.03);
   for(unsigned int i = 0; i < histos.size(); ++i ){
@@ -205,20 +205,25 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   resultGraphs->SetMinimum(0.5);
   resultGraphs->SetMaximum(1.01);
   resultGraphs->Draw("ap");//should be ap have to change marker style
+  resultGraphs->GetYaxis()->SetTitleSize(0.06);
+  resultGraphs->GetYaxis()->SetTitleOffset(0.8);
   resultGraphs->GetYaxis()->SetTitle("Efficiency");
+  resultGraphs->GetXaxis()->SetTitleSize(0.05);
+  resultGraphs->GetXaxis()->SetTitleOffset(0.89);
   resultGraphs->GetXaxis()->SetTitle(x_axis.c_str());
   if(rangeMax!=rangeMin){
     get_can()->Modified();  
     resultGraphs->GetXaxis()->SetLimits(rangeMin,rangeMax);
   }
-  
+
+  multigraphLeg->SetTextSize(0.04);
   //if(imposeDistri)histos[0].denominator->DrawNormalized("hist same"); 
   multigraphLeg->Draw(); 
   //resultGraphs->Draw("ap");//should be ap have to change marker style
   //get_can()->BuildLegend();
   //resultGraphs->SetMinimum(0.9);
   //if(imposeDistri)drawDistri(0);
-  if(legend_bool)get_can()->BuildLegend(0.15, 0.15, 0.8, 0.5);
+  if(legend_bool)get_can()->BuildLegend(0.35, 0.15, 0.8, 0.7);
   if(single_plots){
     get_can()->Print(create_resultfilename(summary_number,true));
   }
@@ -228,7 +233,7 @@ void effiPlots::plotEffi(int options, vector<pair<int,int>> scalefactor){
   if(scalefactor.size()>0){
     TList * graphlist = (TList*)resultGraphs->GetListOfGraphs ();
     TMultiGraph* scale_ratios = new TMultiGraph();
-    TLegend* multiratioLeg = new TLegend(0.2,0.2,0.7,0.4);
+    TLegend* multiratioLeg = new TLegend(0.4,0.2,0.7,0.7);
     multiratioLeg->SetBorderSize(0); 
     int counter =-1;
     for(auto tuple : scalefactor){
